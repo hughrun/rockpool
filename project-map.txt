@@ -1,0 +1,13 @@
+settings.py (all env variables and settings go here, e.g. how many hours between posting to Twitter)
+main.py
+  - ingest.py (checks all the feeds in the DB every X minutes)
+  - search.py (functions for returning search/browse results to web & possibly in future to twitter/mastodon queries)
+  - tweet.py
+  - toot.py
+  - (website files)
+  - pocket.py
+  - send_email.py
+  - admin.py (actions by or for app admins)
+  - user.py  (actions by publication (blog) owners)
+  - alerts.py (triggers for emails and other notifications - e.g. Twitter DMs)
+  - feeds.py (for building RSS feed and OPML file as needed)
