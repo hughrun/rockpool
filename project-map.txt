@@ -2,16 +2,16 @@ settings.py (all env variables and settings go here, e.g. how many hours between
 assets (images, css etc)
 main.py (module imports & basic glueing together)
 functions
-  - ingest.py (checks all the feeds in the DB every X minutes)
-  - search.py (functions for returning search/browse results to web & possibly in future to twitter/mastodon queries)
-  - tweet.py
-  - toot.py
-  - pocket.py (for Pocket related stuff: adding accounts, sending links, managing subscriptions)
-  - send_email.py
-  - authentication.py
-  - admin.py (actions by or for app admins)
-  - user.py  (actions by publication (blog) owners)
-  - alerts.py (triggers for emails and other notifications - e.g. Twitter DMs)
-  - feeds.py (for building RSS feed and OPML file as needed)
+  - rockpool_ingest.py (checks all the feeds in the DB every X minutes)
+  - rockpool_search.py (functions for returning search/browse results to web & possibly in future to twitter/mastodon queries)
+  - rockpool_tweet.py
+  - rockpool_toot.py
+  - rockpool_pocket.py (for Pocket related stuff: adding accounts, sending links, managing subscriptions)
+  - rockpool_send_email.py
+  - rockpool_authentication.py
+  - rockpool_admin.py (actions by or for app admins)
+  - rockpool_user.py  (actions by publication (blog) owners)
+  - rockpool_alerts.py (triggers for emails and other notifications - e.g. Twitter DMs)
+  - rockpool_feeds.py (for building RSS feed and OPML file as needed)
   web
     - (website files)
