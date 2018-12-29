@@ -10,8 +10,10 @@ def newpost(article, author):
   if use_hashtag:
     template = '{title} by {author} {separator} {url} {hashtag}'
     msg = template.format(title=title, author=author, separator=separator, url=url, hashtag=hashtag)
+    print('TWEETING')
     print(msg)
   else:
     template = '{title} by {author} {separator} {url}'
     msg = template.format(title=title, author=author, separator=separator, url=url)
+    print('TWEETING')
     print(msg)

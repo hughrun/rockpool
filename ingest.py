@@ -47,11 +47,9 @@ for url in feeds:
         article = db.upsert(e, categories_normalised, pubdate)
         if not old:
           if settings.use_twitter:
-            print('TWEETING')
             author = e.author if hasattr(e, 'author') else publication.feed.author
             tweet.newpost(article, author)
           if settings.use_mastodon:
             author = e.author if hasattr(e, 'author') else publication.feed.author
-            print('TOOTING')
             toot.newpost(article, author)
-          # r_pocket.send(article)
+          # pocket.send(article)
