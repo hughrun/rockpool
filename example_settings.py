@@ -35,14 +35,16 @@ announce_this_many_times_on_mastodon = 2
 # Pocket
 use_pocket = False
 pocket_consumer_key = 'YOUR_CONSUMER_KEY_HERE'
-additional_tag_to_use_on_pocket = 'from rockpool'
-include_article_tags_on_pocket = False
+additional_tag_to_use_on_pocket = 'rockpool'
+include_article_tags_on_pocket = False # TODO: make this a user-assigned option instead, as well as inclusion of 'special' tags (see below)
 
 # Timings etc
-minutes_between_checking_new_articles = 15
+minutes_between_checking_new_articles = 60 # this takes a while because it has to fetch each feed - you really don't want to do it more frequently than every 15 minutes
+minutes_between_checking_articles_to_announce = 5 # the larger the number of publications and the more frequently authors post articles, the smaller this number should be.
 max_days_age_of_articles_to_announce = 7
 
 # tags
 special_tags_to_announce = ['rockpoolblogclub', 'blogclub'] # use normalised (lowercase alphanum only)
 hashtag_to_use_for_special_announcements = '#RockpoolBlogClub' # this is the hashtag that will be posted if the blog post has any of the tags in special_tags_to_announce
+# TODO: can hashtag_to_use_for_special_announcements be optionally included in Pocket?
 filtered_tags = ['notrockpool'] # use normalised (lowercase alphanum only)
