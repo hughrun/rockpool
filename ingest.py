@@ -37,7 +37,6 @@ for publication in publications:
       # check whether the article is already listed.
       # recorded = mongo.articles.find_one({'guid': post_id}) # TODO: it should be this once DB is migrated
       recorded = mongo.articles.find_one({'link': e.link})
-      # recorded = False # for TEST:
       if not recorded:
         # normalise tags
         tags = [tag.term for tag in e.tags] if hasattr(e, 'tags') else []
@@ -75,14 +74,22 @@ for publication in publications:
             # TODO: twHandle will become 'twitter' instead of 'twHandle' after migration
             tw_author = publication['twHandle'] if 'twHandle' in publication else e.author if hasattr(e, 'author') else publication['author'] if 'author' in publication else None
             # TODO: what we actually need to do here is queue the tweet, not send it
-            tweet.newpost(recorded, tw_author)
+            tweet.queue(recorded, tw_author)
         # here we should check how many times and when last the article has been tooted
         # and queue a toot if necessary          
         if settings.use_mastodon:
-          mast_author = publication['mastodon'] if 'mastodon' in publication else e.author if hasattr(e, 'author') else publication['author'] if 'author' in publication else None
-          # TODO: what we actually need to do here is queue the toot, not send it
-          toot.newpost(recorded, mast_author)
-        # pocket.send(article)
+          # here we check how many times and when last the article has been tooted and queue a toot if necessary
+          # TODO: change 'tweeted' below to 'tooted' after DB migrated- this is for testing with legacy DB            
+          toots_completed = 'tweeted' in recorded and not recorded['tweeted']['times'] < settings.announce_this_many_times_on_mastodon
+          hours = settings.hours_between_announcing_same_article_on_mastodon
+          due_date = pytz.utc.localize(recorded['tweeted']['date']) + timedelta(hours=hours)         
+          if due_date > now and not toots_completed:       
+            mast_author = publication['mastodon'] if 'mastodon' in publication else e.author if hasattr(e, 'author') else publication['author'] if 'author' in publication else None
+            # TODO: what we actually need to do here is queue the toot, not send it
+            toot.queue(recorded, mast_author)
+        if settings.use_pocket:
+          pass
+          # pocket.send(article)
     else:
       # if there's no publication date, it's probably a page that accidentally got added to the RSS feed.
       pass

@@ -1,6 +1,11 @@
 import settings
 
-def newpost(article, author):
+# TODO:
+
+def queue(article, author):
+  pass
+
+def post(article, author):
   title = article['title']
   url = article['link']
 
