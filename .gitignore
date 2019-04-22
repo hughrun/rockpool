@@ -1,1 +1,7 @@
 settings.py
+notes/
+feeds/
+public/assets/*.svg
+public/assets/*.svg_old
+public/assets/fonts/*
+!public/assets/**/.gitkeep

@@ -1,0 +1,12 @@
+{>head}
+	{>header}
+	<div class="main">
+		<section class="latest">
+      <h3>Posts {if searchterm} about {searchterm} {/if}{if monthName}from {monthName}{/if}</h3>
+			{>articleList}
+      {>searchNav}
+    </section>
+		{>search}
+	</div>
+	{>footer}
+{>foot}
