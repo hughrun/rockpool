@@ -5,10 +5,8 @@ const env = process.env.NODE_ENV // are we in production or development?
 // Mongo
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
-// database settings
-console.log(settings[env])
-url = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}`
-dbName = settings[env].mongo_db
+const url = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}`
+const dbName = settings[env].mongo_db
 
 // moment
 const moment = require('moment');
@@ -30,7 +28,7 @@ const getTopTags = new Promise( function (resolve, reject) {
         assert.strictEqual(err, null); // check for errors
         const allTags = docs.map(x => x = x.categories) // remove everything from the article record except the tags
         .reduce((acc, arr) => acc.concat(arr)) // flatten the array
-        .filter(tag => tag != 'uncategorized') // filter out 'uncategorized' TODO: make this a setting
+        .filter(tag => settings.filtered_tags.includes(tag) != true) // filter out system tags
 
         // make an object like {tag: number-of-times-used}
         const tagObj = {};
@@ -141,7 +139,8 @@ const getArticles = function(tag, page, searchterm, month) {
 const processArticlesForView = function(docs){
   // clean up listings
   docs.map(x => {
-    x.categories = x.categories.filter(tag => tag != 'uncategorized') // filter out 'uncategorized' from tags
+    x.categories = x.categories
+    .filter(tag => settings.filtered_tags.includes(tag) != true) // filter out system tags
     x.relativeDate = moment(x.date).fromNow(); // add a relative date on the fly
     // URI encode the tags for use in URLs
     x.categories = x.categories.map(t => {

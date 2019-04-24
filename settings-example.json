@@ -24,5 +24,6 @@
     "#rockpoolblogclub" : "rockpool blog club",
     "blogjune" : "blog june",
     "#blogjune" : "blog june"
-  }
+  },
+  "filtered_tags" : ["uncategorized", "uncategorised", "post", "page"]
 }
