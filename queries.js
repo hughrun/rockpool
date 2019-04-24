@@ -1,18 +1,21 @@
+// settings
+const settings = require('./settings.json')
+const env = process.env.NODE_ENV // are we in production or development?
+
 // Mongo
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
+// database settings
+console.log(settings[env])
+url = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}`
+dbName = settings[env].mongo_db
 
 // moment
 const moment = require('moment');
 
-// special tags etc
-const config = require('./public-config.js');
-
 // GET TOP TAGS
 const getTopTags = new Promise( function (resolve, reject) {
 
-  const url = process.env.MONGO_URL; // Connection URL
-  const dbName = process.env.MONGO_DB_NAME; // Database Name
   // Use connect method to connect to the server
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
     assert.strictEqual(null, err); // throws error if there is an error i.e. assert that error === null
@@ -27,7 +30,7 @@ const getTopTags = new Promise( function (resolve, reject) {
         assert.strictEqual(err, null); // check for errors
         const allTags = docs.map(x => x = x.categories) // remove everything from the article record except the tags
         .reduce((acc, arr) => acc.concat(arr)) // flatten the array
-        .filter(tag => tag != 'uncategorized') // filter out 'uncategorized'
+        .filter(tag => tag != 'uncategorized') // filter out 'uncategorized' TODO: make this a setting
 
         // make an object like {tag: number-of-times-used}
         const tagObj = {};
@@ -40,7 +43,7 @@ const getTopTags = new Promise( function (resolve, reject) {
         for (t in tagObj) {
           tagArray.push({tag: t, total: tagObj[t]})
         }
-
+        // TODO: at this point merge all the variations from settings.tag_transforms
         const sorted = tagArray.sort( (a, b) => b.total - a.total) // now we need to sort it
         var topTags = sorted.slice(0, 10) // and truncate to just the top 10
           // URI encode the tags for use in URLs
@@ -63,15 +66,7 @@ const getTopTags = new Promise( function (resolve, reject) {
 
 // GET ARTICLES WITH TAG
 const getArticles = function(tag, page, searchterm, month) {
-
 	return new Promise( function (resolve, reject) {
-
-		// Connection URL
-		const url = process.env.MONGO_URL;
-
-		// Database Name
-		const dbName = process.env.MONGO_DB_NAME;
-
     // Use connect method to connect to the server
 		MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
 		  assert.equal(null, err);
@@ -95,9 +90,9 @@ const getArticles = function(tag, page, searchterm, month) {
 
         // normalise tag if there is a tag
         if (tag){
-          for (x in config.tags) {
-            if (x === tag) { // if tag is in the special tags from public-config.js
-              tag = config.tags[x] // replace it with the specified replacement value
+          for (x in settings.tag_transforms) {
+            if (x === tag) { // if tag is in the special tags from settings.tag_transforms
+              tag = settings.tag_transforms[x] // replace it with the specified replacement value
             }
           }
           // if tag includes any spaces or punctuation, replace with '.*'
@@ -119,27 +114,21 @@ const getArticles = function(tag, page, searchterm, month) {
           var monthName = month === '0' ? moment().format('MMMM') : moment().subtract(1, 'months').format('MMMM')
           query = {$and: [ query, dateQuery ]};
         }
-
+        // construct the query string
         if (page) {
           collection = articles.find(query).skip(page*10) // if it's a paged result we want to skip all the results we already looked at
         } else {
           collection = articles.find(query)
           }
-
+        // run the query
         collection.limit(10).sort({'date': -1}).toArray(function(err, docs) {
-          assert.strictEqual(err, null);
-
-          // add relative dates and URI encode searchterm/tag
-          processArticlesForView(docs) // this is called lower down
-
+          assert.strictEqual(err, null); // check for errors
+          processArticlesForView(docs) // add relative dates and URI encode searchterm/tag - this is called lower down
           docs.page = page + 1 // iterate the page number
-
           resolve({articles: docs, monthName: monthName}) // resolve promise with docs
-
-          callback(); // close the connection
+          callback(); // close the connection once completed
         });
       }
-
       // this calls the function above and then closes the connection
       findDocuments(db, function() {
         client.close();

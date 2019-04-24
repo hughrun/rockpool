@@ -19,7 +19,8 @@ Work In Progress: **Definitely not production-ready yet!**
 
 ## Documentation
 
-1. [Searching](manual/search.md)
+1. [Installation](manual/installation.md)
+2. [Searching](manual/search.md)
 
 ## License
 

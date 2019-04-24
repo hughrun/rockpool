@@ -1,9 +1,11 @@
 {
-  "name": "rockpool",
+  "name": "rockpool-app",
   "version": "1.0.0",
   "description": "An aggregator for community blogs, making subscriptions available via a Twitter bot, Mastodon bot, RSS, email, Pocket, or OPML file.",
   "main": "index.js",
   "scripts": {
+    "start": "NODE_ENV=production node app.js",
+    "dev": "NODE_ENV=development node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -14,11 +16,14 @@
     "express",
     "nodejs"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hughrun/rockpool.git"
+  },
   "author": "Hugh Rundle",
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "consolidate": "^0.15.1",
-    "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "moment": "^2.22.2",
     "mongodb": "^3.1.3",

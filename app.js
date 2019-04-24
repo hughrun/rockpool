@@ -1,25 +1,27 @@
 // require modules
-require('dotenv').config() // environment variables from the .env file THIS ALWAYS AT THE TOP
+const settings = require('./settings.json') // local settings file (leave at top)
 const express = require('express') // express
 const app = express(); // still express
 const engines = require('consolidate') // use consolidate for template engine
 const db = require('./queries.js'); // local database queries file
-const MongoClient = require('mongodb').MongoClient // Mongo to connect to DB
-const assert = require('assert') // Assert for error checking
 
 // set template views
 app.set('views', __dirname + '/views');
+app.set('partials', __dirname + '/partials');
 app.engine('html', engines.whiskers);
 app.set('view engine', 'html');
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
 
+/*
+
 // create text index
+// TODO: this is in the wrong place. Pull it all out into a separate file to be run once on install.
 const url = process.env.MONGO_URL // Connection URL
 const dbName = process.env.MONGO_DB_NAME // Database Name
 MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
   assert.equal(null, err);
   console.log("Connected successfully to server");
-  const db = client.db(dbName); // TODO: can we module.exports this so there's an always-on DB connection? Should we?
+  const db = client.db(dbName);
   // create text index for search to work
   db.collection('articles').createIndex(
     {
@@ -49,7 +51,9 @@ MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
   )
 })
 
-// NOTE: we never actually close the DB here? Can this connection be 'exported'?
+// TODO: we never actually close the DB here? Fix.
+
+*/
 
 // ++++++++++
 // NAVIGATION
@@ -66,16 +70,18 @@ app.get('/', (req, res) =>
 		}, {});
 		res.render('index', {
 			partials: {
-				toptags: __dirname+'/partials/toptags.html',
-				articleList: __dirname+'/partials/articleList.html',
-				search: __dirname+'/partials/search.html',
-				head: __dirname+'/partials/head.html',
-				foot: __dirname+'/partials/foot.html',
-				header: __dirname+'/partials/header.html',
-				footer: __dirname+'/partials/footer.html'
-			},
+        articleList: __dirname+'/partials/articleList.html',
+        foot: __dirname+'/partials/foot.html',
+        footer: __dirname+'/partials/footer.html',
+        head: __dirname+'/partials/head.html',
+        header: __dirname+'/partials/header.html',
+        search: __dirname+'/partials/search.html',
+        searchNav: __dirname+'/partials/searchNav.html',
+        toptags: __dirname+'/partials/toptags.html'
+      },
 			articles: newVals.articles,
-      tags: newVals.tags
+      tags: newVals.tags,
+      test: app.locals.localstest
 		})
 	})
 	.catch(err => console.error(err))
@@ -95,6 +101,7 @@ app.get('/search/', (req, res) => db.getArticles(req.query.tag, req.query.page, 
 			},
 			articles: docs.articles,
       searchterm: req.query.tag ? req.query.tag : req.query.q,
+      tag: req.query.tag,
       searchTermEncoded: req.query.tag ? 'tag=' + encodeURIComponent(req.query.tag) : req.query.q ? 'q=' + encodeURIComponent(req.query.q) : '',
       next: req.query.page ? Number(req.query.page) + 1 : 1,
       prev: Number(req.query.page) - 1,
@@ -118,7 +125,13 @@ app.get('/subscribe', function (req, res) {
   })
 })
 
-// TODO: letmein (register and login)
+// TODO: /letmein (register and login)
+
+// TODO: /user
+
+// TODO: /author (for verifying owners)
+
+// TODO: /admin
 
 // 404
 app.use(function (req, res, next) {
