@@ -33,6 +33,10 @@ const getTopTags = new Promise( function (resolve, reject) {
         // make an object like {tag: number-of-times-used}
         const tagObj = {};
         for (x of allTags) {
+          let transforms = Object.keys(settings.tag_transforms) // get the keys (tags to transform)
+          if (transforms.includes(x)) { // check if the tag needs to be normalised
+            x = settings.tag_transforms[x] // use the transform value instead of the original tag
+          }
           tagObj[x] = (tagObj[x] + 1) || 1;
         }
 
@@ -41,11 +45,11 @@ const getTopTags = new Promise( function (resolve, reject) {
         for (t in tagObj) {
           tagArray.push({tag: t, total: tagObj[t]})
         }
-        // TODO: at this point merge all the variations from settings.tag_transforms
         const sorted = tagArray.sort( (a, b) => b.total - a.total) // now we need to sort it
         var topTags = sorted.slice(0, 10) // and truncate to just the top 10
           // URI encode the tags for use in URLs
           // Use encodeURIComponent so we encode valid path elements e.g. # ? /
+          console.log(topTags)
           topTags = topTags.map(t => {
             t.encoded = encodeURIComponent(t.tag)
             return t
