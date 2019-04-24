@@ -47,11 +47,8 @@ const getTopTags = new Promise( function (resolve, reject) {
         }
         const sorted = tagArray.sort( (a, b) => b.total - a.total) // now we need to sort it
         var topTags = sorted.slice(0, 10) // and truncate to just the top 10
-          // URI encode the tags for use in URLs
-          // Use encodeURIComponent so we encode valid path elements e.g. # ? /
-          console.log(topTags)
           topTags = topTags.map(t => {
-            t.encoded = encodeURIComponent(t.tag)
+            t.encoded = encodeURIComponent(t.tag) // URI encode the tags for safe use in URLs
             return t
           })
         resolve({tags: topTags}) // resolve promise with docs

@@ -1,14 +1,14 @@
 // require modules
 const settings = require('./settings.json') // local settings file (leave at top)
+const path = require('path') // nodejs native package
 const express = require('express') // express
 const app = express(); // still express
 const engines = require('consolidate') // use consolidate for template engine
-const db = require('./queries.js'); // local database queries file
+const db = require('./queries.js') // local database queries file
 
 // set template views
-app.set('views', __dirname + '/views');
-app.set('partials', __dirname + '/partials');
-app.engine('html', engines.whiskers);
+app.set('views', path.join(__dirname, 'views'))
+app.engine('html', engines.whiskers)
 app.set('view engine', 'html');
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
 
@@ -70,14 +70,14 @@ app.get('/', (req, res) =>
 		}, {});
 		res.render('index', {
 			partials: {
-        articleList: __dirname+'/partials/articleList.html',
-        foot: __dirname+'/partials/foot.html',
-        footer: __dirname+'/partials/footer.html',
-        head: __dirname+'/partials/head.html',
-        header: __dirname+'/partials/header.html',
-        search: __dirname+'/partials/search.html',
-        searchNav: __dirname+'/partials/searchNav.html',
-        toptags: __dirname+'/partials/toptags.html'
+        articleList: __dirname+'/views/partials/articleList.html',
+        foot: __dirname+'/views/partials/foot.html',
+        footer: __dirname+'/views/partials/footer.html',
+        head: __dirname+'/views/partials/head.html',
+        header: __dirname+'/views/partials/header.html',
+        search: __dirname+'/views/partials/search.html',
+        searchNav: __dirname+'/views/partials/searchNav.html',
+        toptags: __dirname+'/views/partials/toptags.html'
       },
 			articles: newVals.articles,
       tags: newVals.tags,
@@ -91,13 +91,13 @@ app.get('/', (req, res) =>
 app.get('/search/', (req, res) => db.getArticles(req.query.tag, req.query.page, req.query.q, req.query.month)
 	.then( docs => res.render('tag', {
 			partials: {
-				articleList: __dirname+'/partials/articleList.html',
-				search: __dirname+'/partials/search.html',
-				head: __dirname+'/partials/head.html',
-				foot: __dirname+'/partials/foot.html',
-				header: __dirname+'/partials/header.html',
-        footer: __dirname+'/partials/footer.html',
-        searchNav: __dirname+'/partials/searchNav.html',
+				articleList: __dirname+'/views/partials/articleList.html',
+				search: __dirname+'/views/partials/search.html',
+				head: __dirname+'/views/partials/head.html',
+				foot: __dirname+'/views/partials/foot.html',
+				header: __dirname+'/views/partials/header.html',
+        footer: __dirname+'/views/partials/footer.html',
+        searchNav: __dirname+'/views/partials/searchNav.html',
 			},
 			articles: docs.articles,
       searchterm: req.query.tag ? req.query.tag : req.query.q,
@@ -117,10 +117,10 @@ app.get('/search/', (req, res) => db.getArticles(req.query.tag, req.query.page, 
 app.get('/subscribe', function (req, res) {
   res.render('subscribe', {
     partials: {
-      head: __dirname+'/partials/head.html',
-      header: __dirname+'/partials/header.html',
-      foot: __dirname+'/partials/foot.html',
-      footer: __dirname+'/partials/footer.html'
+      head: __dirname+'/views/partials/head.html',
+      header: __dirname+'/views/partials/header.html',
+      foot: __dirname+'/views/partials/foot.html',
+      footer: __dirname+'/views/partials/footer.html'
     }
   })
 })
