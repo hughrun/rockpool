@@ -4,56 +4,13 @@ const path = require('path') // nodejs native package
 const express = require('express') // express
 const app = express(); // still express
 const engines = require('consolidate') // use consolidate for template engine
-const db = require('./queries.js') // local database queries file
+const db = require('./lib/queries.js') // local database queries file
 
 // set template views
 app.set('views', path.join(__dirname, 'views'))
 app.engine('html', engines.whiskers)
 app.set('view engine', 'html');
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
-
-/*
-
-// create text index
-// TODO: this is in the wrong place. Pull it all out into a separate file to be run once on install.
-const url = process.env.MONGO_URL // Connection URL
-const dbName = process.env.MONGO_DB_NAME // Database Name
-MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
-  assert.equal(null, err);
-  console.log("Connected successfully to server");
-  const db = client.db(dbName);
-  // create text index for search to work
-  db.collection('articles').createIndex(
-    {
-      blog: "text",
-      categories: "text",
-      title: "text"
-    }, function(err, result) {
-      if (err) {
-        console.error(`Error with text index: ${err.codeName}`)
-      }
-      else {
-        console.log('text index ok')
-      }
-    }
-  )
-  // create categories index for faster tag browsing
-  db.collection('articles').createIndex(
-    {
-      categories : 1
-    }, function(err, result) {
-      if (err) {
-        console.error(err.codeName)
-      } else {
-        console.log('categories index ok')
-      }
-    }
-  )
-})
-
-// TODO: we never actually close the DB here? Fix.
-
-*/
 
 // ++++++++++
 // NAVIGATION

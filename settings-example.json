@@ -7,14 +7,14 @@
   "blog_club_url" : "https://example.com/blog-club",
   "production" : {
     "mongo_url" : "mongodb://example.com",
-    "mongo_port" : 35776,
+    "mongo_port" : "35776",
     "mongo_user" : "user",
     "mongo_password:" : "password",
     "mongo_db" : "rockpool"
   },
   "development" : {
     "mongo_url" : "mongodb://localhost",
-    "mongo_port" : 27017,
+    "mongo_port" : "27017",
     "mongo_user" : "user",
     "mongo_password:" : "password",
     "mongo_db" : "rockpool"
