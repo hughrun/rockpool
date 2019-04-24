@@ -79,7 +79,7 @@ const getArticles = function(tag, page, searchterm, month) {
         // we will have to craft the query differently, which is what everything between here
         // and collection.limit(10)... is doing
 
-        var collection // declare this here to make things simpler later
+        var collection, hasNext // declare these here to make things simpler later
 
         // check here that searchterm and tag are strings
         // if not, just make them null so we don't do anything dangerous to the DB
@@ -114,18 +114,42 @@ const getArticles = function(tag, page, searchterm, month) {
           query = {$and: [ query, dateQuery ]};
         }
         // construct the query string
-        if (page) {
+        if (page && Number(page) > 0) {
           collection = articles.find(query).skip(page*10) // if it's a paged result we want to skip all the results we already looked at
+          hasPage = true
         } else {
           collection = articles.find(query)
+          hasPage = false
           }
         // run the query
         collection.limit(10).sort({'date': -1}).toArray(function(err, docs) {
           assert.strictEqual(err, null); // check for errors
           processArticlesForView(docs) // add relative dates and URI encode searchterm/tag - this is called lower down
           docs.page = page + 1 // iterate the page number
-          resolve({articles: docs, monthName: monthName}) // resolve promise with docs
-          callback(); // close the connection once completed
+
+          // check if there are next queries
+          if (hasPage) {
+            hasNext = articles.find(query).skip((page*10)+10).hasNext() // are there more on the page after this one?
+            hasPrev = true // if page > 0 there must be previous results
+          } else {
+            hasNext = articles.find(query).skip(10).hasNext() // are there more on the page after this one?
+            hasPrev = false // if the page is nonexistent or zero, there can't be previous results
+          }
+          // articles.find() is a Promise, so we need to use hasNext.then() to get the result
+          hasNext
+          .then( function(x) {
+            hasNext = x
+            hasNext = hasNext ? true : false
+            resolve(
+              {
+                articles: docs,
+                monthName: monthName,
+                hasNext: hasNext,
+                hasPrev: hasPrev
+              }
+              ) // resolve promise with docs
+            callback(); // close the connection once completed
+          })
         });
       }
       // this calls the function above and then closes the connection

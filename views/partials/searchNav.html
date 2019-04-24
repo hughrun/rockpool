@@ -1,10 +1,12 @@
 <nav class="paged">
 <div class="prev">
-    {if prevExists}
-    ← <a href="search?{searchTermEncoded}&page={prev}&month={month}">prev</a>
+  {if hasPrev}
+  ← <a href="search?{searchTermEncoded}&page={prev}&month={month}">prev</a>
   {/if}
-  </div>
+</div>
 <div class="next">
+  {if hasNext}
   <a href="search?{searchTermEncoded}&page={next}&month={month}">next</a> →
+  {/if}
 </div>
 </nav>

@@ -107,7 +107,9 @@ app.get('/search/', (req, res) => db.getArticles(req.query.tag, req.query.page, 
       prev: Number(req.query.page) - 1,
       prevExists: Number(req.query.page) != NaN ? Number(req.query.page) : false,
       month: req.query.month,
-      monthName: docs.monthName
+      monthName: docs.monthName,
+      hasNext: docs.hasNext,
+      hasPrev: docs.hasPrev
 		})
 	)
   .catch(err => console.error(err))
