@@ -139,4 +139,10 @@ app.use(function (req, res, next) {
 })
 
 // listen on server
-app.listen(3000, () => console.log('rockpool is listening on port 3000!'));
+app.listen(3000, function() {
+  console.log('    *****************************************************************************')
+  console.log('     👂  Rockpool is listening on port 3000')
+  console.log(`     👟  You are running in ${process.env.NODE_ENV.toUpperCase()} mode`)
+  console.log(`     🗃  Connected to database at ${settings[process.env.NODE_ENV].mongo_url}`)
+  console.log('    *****************************************************************************')
+})
