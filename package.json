@@ -23,8 +23,11 @@
   "author": "Hugh Rundle",
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "axios": "^0.18.0",
+    "cheerio": "^1.0.0-rc.3",
     "consolidate": "^0.15.1",
     "express": "^4.16.3",
+    "feedparser-promised": "^2.0.0",
     "moment": "^2.22.2",
     "mongodb": "^3.1.3",
     "whiskers": "^0.4.0"

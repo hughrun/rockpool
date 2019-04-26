@@ -2,9 +2,11 @@
 const settings = require('./settings.json') // local settings file (leave at top)
 const path = require('path') // nodejs native package
 const express = require('express') // express
-const app = express(); // still express
-const engines = require('consolidate') // use consolidate for template engine
-const db = require('./lib/queries.js') // local database queries file
+const app = express(); // create local instance of express
+const engines = require('consolidate') // use consolidate with whiskers template engine
+const axios = require('axios') // for requesting web resources
+const db = require('./lib/queries.js') // local database queries module
+const feedFinder = require('./lib/feed-finder.js') // local feed-finder module
 
 // set template views
 app.set('views', path.join(__dirname, 'views'))
