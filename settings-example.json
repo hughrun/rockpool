@@ -10,14 +10,24 @@
     "mongo_port" : "35776",
     "mongo_user" : "user",
     "mongo_password:" : "password",
-    "mongo_db" : "rockpool"
+    "mongo_db" : "rockpool",
+    "email" : {
+      "user": "postmaster@example.com",
+      "pass": "password",
+      "host": "smtp.example.com"
+    }
   },
   "development" : {
     "mongo_url" : "mongodb://localhost",
     "mongo_port" : "27017",
     "mongo_user" : "user",
     "mongo_password:" : "password",
-    "mongo_db" : "rockpool"
+    "mongo_db" : "rockpool",
+    "email" : {
+      "user": "postmaster@example.com",
+      "pass": "password",
+      "host": "smtp.example.com"
+    }
   },
   "tag_transforms" : {
     "rockpoolblogclub" : "rockpool blog club",

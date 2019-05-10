@@ -1,5 +1,6 @@
 // require modules
 const settings = require('./settings.json') // local settings file (leave at top)
+const env = process.env.NODE_ENV // are we in production or development?
 const path = require('path') // nodejs native package
 const express = require('express') // express
 const app = express(); // create local instance of express
@@ -7,6 +8,71 @@ const engines = require('consolidate') // use consolidate with whiskers template
 const axios = require('axios') // for requesting web resources
 const db = require('./lib/queries.js') // local database queries module
 const feedFinder = require('./lib/feed-finder.js') // local feed-finder module
+
+// set up router
+// const router = express.Router();
+const bodyParser = require('body-parser')
+var urlencodedParser = bodyParser.urlencoded({ extended: false })
+// session
+
+const session = require('express-session')
+const sess = {
+  resave: false,
+  saveUninitialized: true,
+  secret: settings[env].express_session_secret,
+  cookie: {}
+}
+
+if (env === 'production') { // in production force https
+  app.set('trust proxy', 1) // trust first proxy
+  sess.cookie.secure = true // serve secure cookies
+}
+
+app.use(session(sess))
+
+
+// ######################
+// #### PASSWORDLESS ####
+// ######################
+// TODO: move most of this into a module that can be required by other modules
+
+// passwordless requires
+const passwordless = require('passwordless');
+const MongoStore = require('passwordless-mongostore');
+const email   = require('emailjs');
+// MongoDB TokenStore for login tokens
+const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // separate mongo collection for tokens
+passwordless.init(new MongoStore(pathToMongoDb))
+
+// emailjs setup
+var smtpServer  = email.server.connect({
+  user:    settings[env].email.user,
+  password: settings[env].email.password,
+  host:    settings[env].email.host,
+  ssl:     true
+})
+
+// Set up a delivery service for passwordless
+passwordless.addDelivery(
+	function(tokenToSend, uidToSend, recipient, callback, req) {
+		smtpServer.send({
+			text:    'Hello!\nAccess your account here: ' + settings[env].app_url + '/?token=' + tokenToSend + '&uid='
+			+ encodeURIComponent(uidToSend),
+			from: settings[env].email.from,
+			to: recipient,
+			subject: 'Log in to ' + settings.app_name
+		}, function(err, message) {
+			if(err) {
+				console.log(err);
+			}
+			callback(err);
+		});
+});
+
+app.use(passwordless.sessionSupport()) // makes session persistent
+app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
+
+// ### END PASSWORDLESS
 
 // set template views
 app.set('views', path.join(__dirname, 'views'))
@@ -86,9 +152,51 @@ app.get('/subscribe', function (req, res) {
   })
 })
 
-// TODO: /letmein (register and login)
+/* GET login screen. */
+app.get('/login', function(req, res) {
+  res.render('login', {
+    partials: {
+      head: __dirname+'/views/partials/head.html',
+      header: __dirname+'/views/partials/header.html',
+      foot: __dirname+'/views/partials/foot.html',
+      footer: __dirname+'/views/partials/footer.html'
+    }
+  })
+})
 
-// TODO: /user
+/* POST login email address */
+app.post('/sendtoken', urlencodedParser,
+	passwordless.requestToken(
+		function(user, delivery, callback, req) {
+      // TODO: need some validity checking here and/or in browser
+      const userEmail = `${user.toLowerCase()}`
+      return callback(null, userEmail)
+		}),
+		function(req, res) {
+      // success!
+		  res.redirect('/')
+})
+
+// user - once logged in show user page
+// TODO: This needs a check to see whether the email is registered.
+// TODO: If not, need to create a new user. If so, need to retrieve details.
+app.use('/user', passwordless.restricted()) // restrict to logged in users only
+app.get('/user',
+  function(req, res) {
+  res.render('user', {
+    partials: {
+      head: __dirname+'/views/partials/head.html',
+      header: __dirname+'/views/partials/header.html',
+      foot: __dirname+'/views/partials/foot.html',
+      footer: __dirname+'/views/partials/footer.html'
+    }
+  })
+})
+
+app.get('/logout', passwordless.logout(),
+	function(req, res) {
+		res.redirect('/');
+})
 
 // TODO: /author (for verifying owners)
 

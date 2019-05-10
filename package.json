@@ -24,12 +24,17 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "axios": "^0.18.0",
+    "body-parser": "^1.19.0",
     "cheerio": "^1.0.0-rc.3",
     "consolidate": "^0.15.1",
+    "emailjs": "^2.2.0",
     "express": "^4.16.3",
+    "express-session": "^1.16.1",
     "feedparser-promised": "^2.0.0",
     "moment": "^2.22.2",
     "mongodb": "^3.1.3",
+    "passwordless": "^1.1.3",
+    "passwordless-mongostore": "^0.1.4",
     "whiskers": "^0.4.0"
   }
 }
