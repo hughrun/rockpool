@@ -20,7 +20,9 @@ const sess = {
   resave: false,
   saveUninitialized: true,
   secret: settings[env].express_session_secret,
-  cookie: {}
+  cookie: {
+    maxAge: 6048e5 // expire cookies after a week
+  }
 }
 
 if (env === 'production') { // in production force https
@@ -55,19 +57,23 @@ var smtpServer  = email.server.connect({
 // Set up a delivery service for passwordless
 passwordless.addDelivery(
 	function(tokenToSend, uidToSend, recipient, callback, req) {
-		smtpServer.send({
-			text:    'Hello!\nAccess your account here: ' + settings[env].app_url + '/?token=' + tokenToSend + '&uid='
+    var message =  {
+			text: 'Hello!\nAccess your account here: ' + settings[env].app_url + '/?token=' + tokenToSend + '&uid='
 			+ encodeURIComponent(uidToSend),
 			from: settings[env].email.from,
 			to: recipient,
-			subject: 'Log in to ' + settings.app_name
-		}, function(err, message) {
-			if(err) {
-				console.log(err);
-			}
-			callback(err);
-		});
-});
+      subject: 'Log in to ' + settings.app_name,
+      attachment: [
+        {data: `<html><p>Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please <a href="${settings[env].app_url + '/?token=' + tokenToSend + '&uid='
+        + encodeURIComponent(uidToSend)}">log in in</a> now.</p><p>If it wasn't you, simply delete this email.</p></html>`, alternative: true}
+      ]
+    }
+    smtpServer.send(message,
+      function(err, message) {
+        console.log(err || `Email sent to ${recipient}`)
+        callback(err);
+      })
+})
 
 app.use(passwordless.sessionSupport()) // makes session persistent
 app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
@@ -178,15 +184,27 @@ app.post('/sendtoken', urlencodedParser,
 		}),
 		function(req, res) {
       // success!
-		  res.redirect('/')
+		  res.redirect('/token-sent') // this should go to a page indicating what's happening
+})
+
+app.get('/token-sent', function(req, res) {
+  res.render( 'checkEmail', {
+  partials: {
+    head: __dirname+'/views/partials/head.html',
+    header: __dirname+'/views/partials/header.html',
+    foot: __dirname+'/views/partials/foot.html',
+    footer: __dirname+'/views/partials/footer.html'
+    }
+  })
 })
 
 // user - once logged in show user page
-// TODO: This needs a check to see whether the email is registered.
-// TODO: If not, need to create a new user. If so, need to retrieve details.
 app.use('/user', passwordless.restricted({ failureRedirect: '/letmein' })) // restrict to logged in users only
 app.get('/user',
   function(req, res) {
+  console.log(req.session.passwordless) // the email address is returned here, can be used to check database
+  // TODO: if new user, show a welcome page to guide them through getting set up
+  // if an existing user, show a welcome-back page
   res.render('user', {
     partials: {
       head: __dirname+'/views/partials/head.html',
@@ -197,6 +215,7 @@ app.get('/user',
   })
 })
 
+// LOGOUT
 app.get('/logout', passwordless.logout(),
 	function(req, res) {
 		res.redirect('/');
