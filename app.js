@@ -90,6 +90,15 @@ app.use(express.static(__dirname + '/public')) // serve static files from 'publi
 // NAVIGATION
 // ++++++++++
 
+app.locals.pageTitle = settings.app_name
+app.locals.appName = settings.app_name
+app.locals.appTagline = settings.app_tagline
+app.locals.appDescription = settings.app_description
+app.locals.orgName = settings.org_name
+app.locals.orgUrl = settings.org_url
+app.locals.blogClub = settings.blog_club_name
+app.locals.blogClubUrl = settings.blog_club_url
+
 // home
 app.get('/', (req, res) =>
   Promise.all([db.getArticles(), db.getTopTags])
@@ -112,11 +121,7 @@ app.get('/', (req, res) =>
       },
 			articles: newVals.articles,
       tags: newVals.tags,
-      pageTitle: settings.app_name,
-      orgName: settings.org_name,
-      orgUrl: settings.org_url,
-      blogClub: settings.blog_club_name,
-      blogClubUrl: settings.blog_club_url
+      user: req.session.passwordless
 		})
 	})
 	.catch(err => console.error(err))
@@ -144,7 +149,8 @@ app.get('/search/', (req, res) => db.getArticles(req.query.tag, req.query.page, 
       month: req.query.month,
       monthName: docs.monthName,
       hasNext: docs.hasNext,
-      hasPrev: docs.hasPrev
+      hasPrev: docs.hasPrev,
+      user: req.session.passwordless
 		})
 	)
   .catch(err => console.error(err))
@@ -158,7 +164,8 @@ app.get('/subscribe', function (req, res) {
       header: __dirname+'/views/partials/header.html',
       foot: __dirname+'/views/partials/foot.html',
       footer: __dirname+'/views/partials/footer.html'
-    }
+    },
+    user: req.session.passwordless
   })
 })
 
@@ -170,7 +177,8 @@ app.get('/letmein', function(req, res) {
       header: __dirname+'/views/partials/header.html',
       foot: __dirname+'/views/partials/foot.html',
       footer: __dirname+'/views/partials/footer.html'
-    }
+    },
+    user: req.session.passwordless
   })
 })
 
@@ -194,7 +202,8 @@ app.get('/token-sent', function(req, res) {
     header: __dirname+'/views/partials/header.html',
     foot: __dirname+'/views/partials/foot.html',
     footer: __dirname+'/views/partials/footer.html'
-    }
+    },
+    user: req.session.passwordless
   })
 })
 
@@ -211,7 +220,8 @@ app.get('/user',
       header: __dirname+'/views/partials/header.html',
       foot: __dirname+'/views/partials/foot.html',
       footer: __dirname+'/views/partials/footer.html'
-    }
+    },
+    user: req.session.passwordless
   })
 })
 

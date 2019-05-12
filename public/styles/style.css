@@ -32,10 +32,12 @@ a {
 	max-width: 800px;
 }
 
+/* footer */
+
 .footer {
 	text-align: center;
 	font-family: "Helsinki";
-	padding: 1em;
+	padding: 2em 1em 1em 1em;
 	background: #ff748c;
 	color: #fff;
 }
@@ -44,6 +46,17 @@ a {
 	color: #3a3a3a;
 	text-decoration: none;
 	font-weight: normal;
+}
+
+.credits {
+  font-size: 0.9em;
+  text-align: right;
+  font-family: "SourceSansPro";
+  color: #3a3a3a;
+}
+
+.credits a {
+  border-bottom: 2px dotted #fff
 }
 
 .icon {
@@ -196,7 +209,6 @@ header a {
 	display: inline-block;
 	font-size: 0.85em;
   border: 1px solid #ff748c;
-	/* border: 1px solid #3a3a3a; */
 	border-radius: 5px;
   background: #fff;
 	margin: 2px 1px;
