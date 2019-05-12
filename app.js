@@ -92,7 +92,7 @@ app.get('/', (req, res) =>
 			let key = Object.keys(item)[0];
 			result[key] = item[key]
 			return result
-		}, {});
+    }, {})
 		res.render('index', {
 			partials: {
         articleList: __dirname+'/views/partials/articleList.html',
@@ -106,7 +106,11 @@ app.get('/', (req, res) =>
       },
 			articles: newVals.articles,
       tags: newVals.tags,
-      test: app.locals.localstest
+      pageTitle: settings.app_name,
+      orgName: settings.org_name,
+      orgUrl: settings.org_url,
+      blogClub: settings.blog_club_name,
+      blogClubUrl: settings.blog_club_url
 		})
 	})
 	.catch(err => console.error(err))
@@ -153,7 +157,7 @@ app.get('/subscribe', function (req, res) {
 })
 
 /* GET login screen. */
-app.get('/login', function(req, res) {
+app.get('/letmein', function(req, res) {
   res.render('login', {
     partials: {
       head: __dirname+'/views/partials/head.html',
@@ -180,7 +184,7 @@ app.post('/sendtoken', urlencodedParser,
 // user - once logged in show user page
 // TODO: This needs a check to see whether the email is registered.
 // TODO: If not, need to create a new user. If so, need to retrieve details.
-app.use('/user', passwordless.restricted()) // restrict to logged in users only
+app.use('/user', passwordless.restricted({ failureRedirect: '/letmein' })) // restrict to logged in users only
 app.get('/user',
   function(req, res) {
   res.render('user', {
