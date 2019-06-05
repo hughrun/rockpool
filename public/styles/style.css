@@ -124,14 +124,16 @@ header a {
 
 }
 
-.article-search input[type="text"] {
+.article-search input[type="text"],
+input[type="email"].email-signup {
   margin: auto;
   font-size: 2em;
   text-align: center;
   max-width: 100%;
 }
 
-.article-search button {
+.article-search button,
+input[type="submit"].email-signup {
   margin: 1em auto 0;
   font-family: "Helsinki";
   font-size: 1.2em;

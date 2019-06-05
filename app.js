@@ -40,7 +40,7 @@ app.use(session(sess))
 
 // passwordless requires
 const passwordless = require('passwordless');
-const MongoStore = require('passwordless-mongostore');
+const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // TODO: do this properly with a new module
 const email   = require('emailjs');
 // MongoDB TokenStore for login tokens
 const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // separate mongo collection for tokens
@@ -58,13 +58,13 @@ var smtpServer  = email.server.connect({
 passwordless.addDelivery(
 	function(tokenToSend, uidToSend, recipient, callback, req) {
     var message =  {
-			text: 'Hello!\nAccess your account here: ' + settings[env].app_url + '/?token=' + tokenToSend + '&uid='
+			text: 'Hello!\nAccess your account here: ' + settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid='
 			+ encodeURIComponent(uidToSend),
-			from: settings[env].email.from,
+			from: `${settings.app_name} <${settings[env].email.from}>`,
 			to: recipient,
       subject: 'Log in to ' + settings.app_name,
       attachment: [
-        {data: `<html><p>Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please <a href="${settings[env].app_url + '/?token=' + tokenToSend + '&uid='
+        {data: `<html><p>Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please <a href="${settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid='
         + encodeURIComponent(uidToSend)}">log in in</a> now.</p><p>If it wasn't you, simply delete this email.</p></html>`, alternative: true}
       ]
     }
@@ -189,7 +189,7 @@ app.post('/sendtoken', urlencodedParser,
       // TODO: need some validity checking here and/or in browser
       const userEmail = `${user.toLowerCase()}`
       return callback(null, userEmail)
-		}),
+		}, { failureRedirect: '/logged-out' }),
 		function(req, res) {
       // success!
 		  res.redirect('/token-sent') // this should go to a page indicating what's happening
@@ -208,8 +208,7 @@ app.get('/token-sent', function(req, res) {
 })
 
 // user - once logged in show user page
-app.use('/user', passwordless.restricted({ failureRedirect: '/letmein' })) // restrict to logged in users only
-app.get('/user',
+app.get('/user', passwordless.restricted({ failureRedirect: '/letmein' }),
   function(req, res) {
   console.log(req.session.passwordless) // the email address is returned here, can be used to check database
   // TODO: if new user, show a welcome page to guide them through getting set up
@@ -228,7 +227,20 @@ app.get('/user',
 // LOGOUT
 app.get('/logout', passwordless.logout(),
 	function(req, res) {
-		res.redirect('/');
+		res.redirect('/logged-out') // this should redirect to a logged out page instead
+})
+
+// EXPIRED TOKEN
+app.get('/tokens', function(req, res) {
+  res.render('expired', {
+    partials: {
+      head: __dirname+'/views/partials/head.html',
+      header: __dirname+'/views/partials/header.html',
+      foot: __dirname+'/views/partials/foot.html',
+      footer: __dirname+'/views/partials/footer.html'
+    },
+    user: req.session.passwordless
+  })
 })
 
 // TODO: /author (for verifying owners)
