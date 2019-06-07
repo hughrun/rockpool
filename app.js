@@ -7,14 +7,15 @@ const app = express(); // create local instance of express
 const engines = require('consolidate') // use consolidate with whiskers template engine
 const axios = require('axios') // for requesting web resources
 const db = require('./lib/queries.js') // local database queries module
+const users = require('./lib/users.js') // local database queries module
 const feedFinder = require('./lib/feed-finder.js') // local feed-finder module
 
 // set up router
 // const router = express.Router();
 const bodyParser = require('body-parser')
 var urlencodedParser = bodyParser.urlencoded({ extended: false })
-// session
 
+// session
 const session = require('express-session')
 const sess = {
   resave: false,
@@ -37,6 +38,7 @@ app.use(session(sess))
 // #### PASSWORDLESS ####
 // ######################
 // TODO: move most of this into a module that can be required by other modules
+// TODO: probably with other user logic e.g. checking users in DB, updating information
 
 // passwordless requires
 const passwordless = require('passwordless');
@@ -209,25 +211,24 @@ app.get('/token-sent', function(req, res) {
 
 // user - once logged in show user page
 app.get('/user', passwordless.restricted({ failureRedirect: '/letmein' }),
-  function(req, res) {
-  console.log(req.session.passwordless) // the email address is returned here, can be used to check database
-  // TODO: if new user, show a welcome page to guide them through getting set up
-  // if an existing user, show a welcome-back page
-  res.render('user', {
+  (req, res) => users.getUserDetails(req.session.passwordless)
+  .then(
+    doc => res.render('user', {
     partials: {
       head: __dirname+'/views/partials/head.html',
       header: __dirname+'/views/partials/header.html',
       foot: __dirname+'/views/partials/foot.html',
       footer: __dirname+'/views/partials/footer.html'
     },
-    user: req.session.passwordless
+    user: doc.user,
+    new: doc.new
   })
-})
+))
 
 // LOGOUT
 app.get('/logout', passwordless.logout(),
 	function(req, res) {
-		res.redirect('/logged-out') // this should redirect to a logged out page instead
+		res.redirect('/')
 })
 
 // EXPIRED TOKEN

@@ -2,19 +2,26 @@
 	{>header}
 	<div class="main">
     <p>Hello! You are logged in.</p>
-    <button>Claim Blog</button><br>
-    <button>Register Blog</button><br>
-    <button>Subscribe via Pocket</button><br>
-    <p>Name</p>
-    <p>Email</p>
-    <p>Twitter</p>
-    <p>Mastodon</p>
+    <button>Claim Blog</button><br> <!--goes to new page-->
+    <button>Register Blog</button><br> <!--goes to new page-->
+    <button>Subscribe via Pocket</button><br> <!--goes to new page-->
+    <button>Admin</button><br> <!--goes to new page - only appears if they are an admin-->
+    <!--effectively a prepopulated form-->
+    {if new}
+    <div>Welcome to Rockpool - please fill in your details and register your blog.</div>
+    {else}
+    <div>Welcome back!</div>
+    {/if}
+    <p>Email: {user.email}</p> <!--if this is changed, need to log out user-->
+    <p>Twitter: {user.twitter}</p>
+    <p>Mastodon: {user.mastodon}</p>
     <div>
-      <ol>
-        <li>First Blog</li>
-        <li>Additional Blog</li>
+      <ol> <!--update will re-fetch the blog info to update the DB, delete will only delete the listing, not any articles-->
+        {for blog in user.blogs}
+          <li>{blog.name} <button>Update</button><button>Delete</button></li>
+        {/for}
       </ol>
     </div>
   </div>
-{>footer}
+  {>footer}
 {>foot}
