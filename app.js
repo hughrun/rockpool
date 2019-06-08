@@ -37,15 +37,13 @@ app.use(session(sess))
 // ######################
 // #### PASSWORDLESS ####
 // ######################
-// TODO: move most of this into a module that can be required by other modules
-// TODO: probably with other user logic e.g. checking users in DB, updating information
 
 // passwordless requires
 const passwordless = require('passwordless');
 const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // TODO: do this properly with a new module
 const email   = require('emailjs');
 // MongoDB TokenStore for login tokens
-const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // separate mongo collection for tokens
+const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collection for tokens
 passwordless.init(new MongoStore(pathToMongoDb))
 
 // emailjs setup
@@ -187,7 +185,6 @@ app.get('/letmein', function(req, res) {
 
 /* POST login email address */
 app.post('/sendtoken',
-  // at this point we want some kind of progress spinner thing..?
   urlencodedParser,
 	passwordless.requestToken(
 		function(user, delivery, callback, req) {
@@ -197,7 +194,7 @@ app.post('/sendtoken',
 		}, { failureRedirect: '/logged-out' }),
   function(req, res) {
     // success!
-    res.redirect('/token-sent') // this should go to a page indicating what's happening
+    res.redirect('/token-sent')
 })
 
 app.get('/token-sent', function(req, res) {
@@ -248,8 +245,6 @@ app.get('/tokens', function(req, res) {
     user: req.session.passwordless
   })
 })
-
-// TODO: /author (for verifying owners)
 
 // TODO: /admin
 
