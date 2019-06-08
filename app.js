@@ -92,6 +92,7 @@ app.use(express.static(__dirname + '/public')) // serve static files from 'publi
 // NAVIGATION
 // ++++++++++
 
+// locals (global values for all routes)
 app.locals.pageTitle = settings.app_name
 app.locals.appName = settings.app_name
 app.locals.appTagline = settings.app_tagline
@@ -185,16 +186,18 @@ app.get('/letmein', function(req, res) {
 })
 
 /* POST login email address */
-app.post('/sendtoken', urlencodedParser,
+app.post('/sendtoken',
+  // at this point we want some kind of progress spinner thing..?
+  urlencodedParser,
 	passwordless.requestToken(
 		function(user, delivery, callback, req) {
       // TODO: need some validity checking here and/or in browser
       const userEmail = `${user.toLowerCase()}`
       return callback(null, userEmail)
 		}, { failureRedirect: '/logged-out' }),
-		function(req, res) {
-      // success!
-		  res.redirect('/token-sent') // this should go to a page indicating what's happening
+  function(req, res) {
+    // success!
+    res.redirect('/token-sent') // this should go to a page indicating what's happening
 })
 
 app.get('/token-sent', function(req, res) {
@@ -221,7 +224,9 @@ app.get('/user', passwordless.restricted({ failureRedirect: '/letmein' }),
       footer: __dirname+'/views/partials/footer.html'
     },
     user: doc.user,
-    new: doc.new
+    admin: doc.user.permission === "admin",
+    new: doc.new,
+    legacy: settings.legacy_db
   })
 ))
 

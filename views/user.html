@@ -1,26 +1,32 @@
 {>head}
 	{>header}
 	<div class="main">
-    <p>Hello! You are logged in.</p>
-    <button>Claim Blog</button><br> <!--goes to new page-->
-    <button>Register Blog</button><br> <!--goes to new page-->
-    <button>Subscribe via Pocket</button><br> <!--goes to new page-->
-    <button>Admin</button><br> <!--goes to new page - only appears if they are an admin-->
-    <!--effectively a prepopulated form-->
     {if new}
-    <div>Welcome to Rockpool - please fill in your details and register your blog.</div>
+    <p>Welcome to {appName} - please fill in your details and register your blog.</p>
     {else}
-    <div>Welcome back!</div>
+    <p>Welcome back to {appName}!</p>
     {/if}
-    <p>Email: {user.email}</p> <!--if this is changed, need to log out user-->
-    <p>Twitter: {user.twitter}</p>
-    <p>Mastodon: {user.mastodon}</p>
+    {if admin}<button>Admin</button><br>{/if} <!--goes to new page - only appears if they are an admin (but other server-side checks prevent non-admins doing anything on this page) -->
+    <h2>Contacts</h2>
+    <p>Your email address is required for logging in to your account, and contacting you about any account activity (e.g. your blog being approved). Your Twitter and Mastodon handles will be included in the tweet/toot when posting alerts about new blog posts.</p>
+    <!--effectively a prepopulated form-->
+    <form>
+      <label for="email">Email: </label>
+      <input type="text" name="email" required value="{user.email}"><br/> <!--if this is changed, need to log out user-->
+      <label for="twitter">Twitter: </label>
+      <input type="text" name="twitter" required value="{user.twitter}"><br/>
+      <label for="mastodon">Mastodon: </label>
+      <input type="text" name="mastodon" required value="{user.mastodon}"><br/>
+    </form>
     <div>
-      <ol> <!--update will re-fetch the blog info to update the DB, delete will only delete the listing, not any articles-->
+      <h2>Blogs</h2>
+      <ul> <!--update will re-fetch the blog info to update the DB, delete will only delete the listing, not any articles-->
         {for blog in user.blogs}
           <li>{blog.name} <button>Update</button><button>Delete</button></li>
         {/for}
-      </ol>
+      </ul>
+      {if legacy}<button>Claim Blog</button> <!--goes to new page-->{/if}
+      <button>Register Blog</button><br> <!--goes to new page-->
     </div>
   </div>
   {>footer}
