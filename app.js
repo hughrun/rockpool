@@ -1,4 +1,7 @@
-// require modules
+/*  ######################################
+    ###         require modules        ###
+    ######################################
+*/
 const settings = require('./settings.json') // local settings file (leave at top)
 const env = process.env.NODE_ENV // are we in production or development?
 const path = require('path') // nodejs native package
@@ -9,14 +12,23 @@ const axios = require('axios') // for requesting web resources
 const db = require('./lib/queries.js') // local database queries module
 const users = require('./lib/users.js') // local database queries module
 const feedFinder = require('./lib/feed-finder.js') // local feed-finder module
+const debug = require('debug') // debug for development
+const session = require('express-session') // sessions so people can log in
+const passwordless = require('passwordless') // passwordless for ...passwordless logins
+const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // for creating and storing passwordless tokens
+// TODO: do passwordless-mongostore-bcrytpr.js properly as a new npm module
+const email   = require('emailjs') // to send email from the server
+const bodyParser = require('body-parser') // bodyparser for session to work
 
-// set up router
-// const router = express.Router();
-const bodyParser = require('body-parser')
+/*  ######################################
+    ### initiate and configure modules ###
+    ######################################
+*/
+
+// set up bodyParser
 var urlencodedParser = bodyParser.urlencoded({ extended: false })
 
-// session
-const session = require('express-session')
+// set up session params
 const sess = {
   resave: false,
   saveUninitialized: true,
@@ -31,20 +43,9 @@ if (env === 'production') { // in production force https
   sess.cookie.secure = true // serve secure cookies
 }
 
-app.use(session(sess))
-
-
-// ######################
-// #### PASSWORDLESS ####
-// ######################
-
-// passwordless requires
-const passwordless = require('passwordless');
-const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // TODO: do this properly with a new module
-const email   = require('emailjs');
-// MongoDB TokenStore for login tokens
+// MongoDB TokenStore for passwordless login tokens
 const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collection for tokens
-passwordless.init(new MongoStore(pathToMongoDb))
+passwordless.init(new MongoStore(pathToMongoDb)) // initiate store
 
 // emailjs setup
 var smtpServer  = email.server.connect({
@@ -54,7 +55,7 @@ var smtpServer  = email.server.connect({
   ssl:     true
 })
 
-// Set up a delivery service for passwordless
+// Set up an email delivery service for passwordless logins
 passwordless.addDelivery(
 	function(tokenToSend, uidToSend, recipient, callback, req) {
     var message =  {
@@ -75,20 +76,21 @@ passwordless.addDelivery(
       })
 })
 
-app.use(passwordless.sessionSupport()) // makes session persistent
-app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
+/*  ######################################
+    ###     app settings and routing   ###
+    ######################################
+*/
 
-// ### END PASSWORDLESS
-
-// set template views
+// template views
 app.set('views', path.join(__dirname, 'views'))
 app.engine('html', engines.whiskers)
-app.set('view engine', 'html');
-app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
+app.set('view engine', 'html')
 
-// ++++++++++
-// NAVIGATION
-// ++++++++++
+// routing middleware
+app.use(session(sess)) // use sessions
+app.use(passwordless.sessionSupport()) // makes session persistent
+app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
+app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
 
 // locals (global values for all routes)
 app.locals.pageTitle = settings.app_name
@@ -99,6 +101,11 @@ app.locals.orgName = settings.org_name
 app.locals.orgUrl = settings.org_url
 app.locals.blogClub = settings.blog_club_name
 app.locals.blogClubUrl = settings.blog_club_url
+
+/*  ######################################
+    ###              routes            ###
+    ######################################
+*/
 
 // home
 app.get('/', (req, res) =>
@@ -197,6 +204,7 @@ app.post('/sendtoken',
     res.redirect('/token-sent')
 })
 
+// info screen after login token sent
 app.get('/token-sent', function(req, res) {
   res.render( 'checkEmail', {
   partials: {
@@ -227,13 +235,13 @@ app.get('/user', passwordless.restricted({ failureRedirect: '/letmein' }),
   })
 ))
 
-// LOGOUT
+// logout (log out and redirect)
 app.get('/logout', passwordless.logout(),
 	function(req, res) {
 		res.redirect('/')
 })
 
-// EXPIRED TOKEN
+// show token expired screen if token already used or too old
 app.get('/tokens', function(req, res) {
   res.render('expired', {
     partials: {
@@ -248,7 +256,7 @@ app.get('/tokens', function(req, res) {
 
 // TODO: /admin
 
-// 404
+// 404 errors: this should always be the last route
 app.use(function (req, res, next) {
   res.status(404).render("404")
 })
