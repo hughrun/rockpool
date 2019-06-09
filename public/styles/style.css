@@ -221,3 +221,20 @@ input[type="submit"].email-signup {
   text-decoration: none;
   color: #3a3a3a;
 }
+
+/* user dashboard */
+
+.user-form-vals {
+	display: grid;
+	grid-template-columns: max-content minmax(8em, 16em);
+}
+
+.profile-value {
+	border: none;
+	border-bottom: 1px dotted #3a3a3a;
+	font-family: "SourceSansPro";
+	font-size: 0.8em;
+}
+.submit-button {
+	margin-top: 1em;
+}

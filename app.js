@@ -43,10 +43,6 @@ if (env === 'production') { // in production force https
   sess.cookie.secure = true // serve secure cookies
 }
 
-// MongoDB TokenStore for passwordless login tokens
-const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collection for tokens
-passwordless.init(new MongoStore(pathToMongoDb)) // initiate store
-
 // emailjs setup
 var smtpServer  = email.server.connect({
   user:    settings[env].email.user,
@@ -54,6 +50,10 @@ var smtpServer  = email.server.connect({
   host:    settings[env].email.host,
   ssl:     true
 })
+
+// MongoDB TokenStore for passwordless login tokens
+const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collection for tokens
+passwordless.init(new MongoStore(pathToMongoDb)) // initiate store
 
 // Set up an email delivery service for passwordless logins
 passwordless.addDelivery(
