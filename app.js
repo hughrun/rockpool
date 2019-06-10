@@ -12,13 +12,14 @@ const axios = require('axios') // for requesting web resources
 const db = require('./lib/queries.js') // local database queries module
 const users = require('./lib/users.js') // local database queries module
 const feedFinder = require('./lib/feed-finder.js') // local feed-finder module
-const debug = require('debug') // debug for development
+const debug = require('debug'), name = 'Rockpool' // debug for development
 const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
 const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // for creating and storing passwordless tokens
 // TODO: do passwordless-mongostore-bcrytpr.js properly as a new npm module
 const email   = require('emailjs') // to send email from the server
-const bodyParser = require('body-parser') // bodyparser for session to work
+const bodyParser = require('body-parser') // bodyparser for form data
+const flash = require('ez-flash') // flash messages
 
 /*  ######################################
     ### initiate and configure modules ###
@@ -26,8 +27,8 @@ const bodyParser = require('body-parser') // bodyparser for session to work
 */
 
 // set up bodyParser
-var urlencodedParser = bodyParser.urlencoded({ extended: false })
-
+//var urlencodedParser = bodyParser.urlencoded({ extended: false }) // NOTE: or 'app.use' ?
+app.use(bodyParser.urlencoded({ extended: false }))
 // set up session params
 const sess = {
   resave: false,
@@ -44,7 +45,7 @@ if (env === 'production') { // in production force https
 }
 
 // emailjs setup
-var smtpServer  = email.server.connect({
+const smtpServer  = email.server.connect({
   user:    settings[env].email.user,
   password: settings[env].email.password,
   host:    settings[env].email.host,
@@ -91,7 +92,7 @@ app.use(session(sess)) // use sessions
 app.use(passwordless.sessionSupport()) // makes session persistent
 app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
-
+app.use(flash.middleware) // use flash messages
 // locals (global values for all routes)
 app.locals.pageTitle = settings.app_name
 app.locals.appName = settings.app_name
@@ -192,7 +193,7 @@ app.get('/letmein', function(req, res) {
 
 /* POST login email address */
 app.post('/sendtoken',
-  urlencodedParser,
+  // urlencodedParser,
 	passwordless.requestToken(
 		function(user, delivery, callback, req) {
       // TODO: need some validity checking here and/or in browser
@@ -218,7 +219,8 @@ app.get('/token-sent', function(req, res) {
 })
 
 // user - once logged in show user page
-app.get('/user', passwordless.restricted({ failureRedirect: '/letmein' }),
+app.get('/user',
+  passwordless.restricted({ failureRedirect: '/letmein' }),
   (req, res) => users.getUserDetails(req.session.passwordless)
   .then(
     doc => res.render('user', {
@@ -235,12 +237,6 @@ app.get('/user', passwordless.restricted({ failureRedirect: '/letmein' }),
   })
 ))
 
-// logout (log out and redirect)
-app.get('/logout', passwordless.logout(),
-	function(req, res) {
-		res.redirect('/')
-})
-
 // show token expired screen if token already used or too old
 app.get('/tokens', function(req, res) {
   res.render('expired', {
@@ -254,7 +250,59 @@ app.get('/tokens', function(req, res) {
   })
 })
 
+// user dashboard
+
+/* POST user update */
+app.post('/update-user',
+  function(req, res, next) {
+    debug.log(req.body)
+    // here we need to check for other users with the same email
+    users.checkEmailIsUnique(req.body)
+      .then(users.updateUserDetails)
+      .then(() => {
+        debug.log('user updated')
+        if (req.body.email != req.session.passwordless) {
+          res.redirect('/email-updated') // force logout if email has changed
+        } else {
+          next() // otherwise reload the page with update info
+        }
+      })
+      .catch(err => {
+        if (err.type == 'duplicateUser') {
+          debug.log('email is already in use')
+          flash.flash("warning", "That email address is already in use")
+          next()
+        } else {
+          debug.log(err)
+          flash.flash("warning", "Sorry, something went wrong")
+          next()
+        }
+      })
+  },
+    (req, res) =>
+    res.redirect('/user')
+)
+
 // TODO: /admin
+
+// logout
+app.get('/logout', passwordless.logout(),
+	function(req, res) {
+		res.redirect('/')
+})
+
+// email-updated
+app.get('/email-updated', passwordless.logout(),
+	function(req, res) {
+    res.render('emailUpdated', {
+      partials: {
+        head: __dirname+'/views/partials/head.html',
+        header: __dirname+'/views/partials/header.html',
+        foot: __dirname+'/views/partials/foot.html',
+        footer: __dirname+'/views/partials/footer.html'
+      }
+    })
+  })
 
 // 404 errors: this should always be the last route
 app.use(function (req, res, next) {
