@@ -91,7 +91,7 @@ app.set('view engine', 'html')
 
 // routing middleware
 app.use(bodyParser.urlencoded({ extended: false })) // use bodyParser
-app.use(cookieParser('my secret string')) // TODO: change this once working
+app.use(cookieParser(settings[env].cookie_parser_secret))
 app.use(session(sess)) // use sessions
 app.use(passwordless.sessionSupport()) // makes session persistent
 app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
@@ -266,20 +266,20 @@ app.get('/tokens', function(req, res) {
 
 /* POST user update */
 app.post('/update-user',
-    // TODO: this is a good place to check values are valid
     [
       // normalise email
       body('email').isEmail().normalizeEmail(),
       // validate twitter with custom check
       body('twitter').custom( val => {
-        var valid = val.match(/^@+[A-Za-z0-9_]*$/)
+        let valid = val.match(/^@+[A-Za-z0-9_]*$/) || val == ""
         return valid
       }).withMessage("Twitter handles must start with '@' and contain only alphanumerics or underscores"),
       // validate twitter length
       body('twitter').isLength({max: 16}).withMessage("Twitter handles must contain fewer than 16 characters"),
       // validate mastodon with custom check
       body('mastodon').custom( val => {
-        return val.match(/^@+\S*@+\S*/)
+        let valid = val.match(/^@+\S*@+\S*/) || val == ""
+        return valid
       }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
     ],
     (req, res, next) => {
