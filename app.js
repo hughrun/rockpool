@@ -26,9 +26,6 @@ const flash = require('ez-flash') // flash messages
     ######################################
 */
 
-// set up bodyParser
-//var urlencodedParser = bodyParser.urlencoded({ extended: false }) // NOTE: or 'app.use' ?
-app.use(bodyParser.urlencoded({ extended: false }))
 // set up session params
 const sess = {
   resave: false,
@@ -88,11 +85,13 @@ app.engine('html', engines.whiskers)
 app.set('view engine', 'html')
 
 // routing middleware
+app.use(bodyParser.urlencoded({ extended: false })) // use bodyParser
 app.use(session(sess)) // use sessions
 app.use(passwordless.sessionSupport()) // makes session persistent
 app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
 app.use(flash.middleware) // use flash messages
+
 // locals (global values for all routes)
 app.locals.pageTitle = settings.app_name
 app.locals.appName = settings.app_name
@@ -218,7 +217,7 @@ app.get('/token-sent', function(req, res) {
   })
 })
 
-// user - once logged in show user page
+// user dashboard
 app.get('/user',
   passwordless.restricted({ failureRedirect: '/letmein' }),
   (req, res) => users.getUserDetails(req.session.passwordless)
@@ -250,8 +249,6 @@ app.get('/tokens', function(req, res) {
   })
 })
 
-// user dashboard
-
 /* POST user update */
 app.post('/update-user',
   function(req, res, next) {
@@ -264,6 +261,7 @@ app.post('/update-user',
         if (req.body.email != req.session.passwordless) {
           res.redirect('/email-updated') // force logout if email has changed
         } else {
+          flash.flash("success", "Your details have been updated")
           next() // otherwise reload the page with update info
         }
       })
@@ -283,16 +281,22 @@ app.post('/update-user',
     res.redirect('/user')
 )
 
+// TODO: pocket routes
+
+// TODO: /rss
+
 // TODO: /admin
 
 // logout
-app.get('/logout', passwordless.logout(),
+app.get('/logout',
+  passwordless.logout(),
 	function(req, res) {
 		res.redirect('/')
 })
 
 // email-updated
-app.get('/email-updated', passwordless.logout(),
+app.get('/email-updated',
+  passwordless.logout(), // force logout
 	function(req, res) {
     res.render('emailUpdated', {
       partials: {

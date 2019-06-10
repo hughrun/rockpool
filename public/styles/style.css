@@ -238,3 +238,21 @@ input[type="submit"].email-signup {
 .submit-button {
 	margin-top: 1em;
 }
+
+/* flash messages */
+
+.flash-success {
+	padding: 0.5em;
+	border-radius: 5px;
+	color: #000;
+	background: lightgreen;
+	text-align: center;
+}
+
+.flash-warning {
+	padding: 0.5em;
+	border-radius: 5px;
+	color: #000;
+	background: lightcoral;
+	text-align: center;
+}

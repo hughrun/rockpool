@@ -3,7 +3,10 @@
 	<div class="main">
     {if flash}
       {if flash.warning}
-      <div class="warning">{flash.warning}</div>
+      <div class="flash-warning">{flash.warning}</div>
+      {/if}
+      {if flash.success}
+      <div class="flash-success">{flash.success}</div>
       {/if}
     {/if}
     {if new}
