@@ -1,20 +1,51 @@
 {>head}
 	{>header}
 	<div class="main">
-    <p>Hello! You are logged in.</p>
-    <button>Claim Blog</button><br>
-    <button>Register Blog</button><br>
-    <button>Subscribe via Pocket</button><br>
-    <p>Name</p>
-    <p>Email</p>
-    <p>Twitter</p>
-    <p>Mastodon</p>
+    {if new}
+      <p>Welcome to {appName} - please fill in your details and save your profile to get started.</p>
+    {else}
+      {if errors}
+        {for msg in errors}<div class="flash-error">{msg}</div>{/for}
+      {/if}
+      {if warnings}
+        {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
+      {/if}
+      {if success}
+        {for msg in success}<div class="flash-success">{msg}</div>{/for}
+      {/if}
+      <p>Welcome back to {appName}!</p>
+    {/if}
+    {if admin}<button>Admin</button><br>{/if} <!--goes to new page - only appears if they are an admin (but other server-side checks prevent non-admins doing anything on this page) -->
+      <h2>Contacts</h2>
+    {if new}
+      <p>Your email address is required for logging in to your account, and contacting you about any account activity (e.g. your blog being approved). Your Twitter and Mastodon handles will be included in the tweet/toot when posting alerts about new blog posts.</p>
+    {/if}
+    <form action="/update-user" method="post" class="user-form-vals">
+      <input name="id" value="{user._id}" type="hidden">
+      <label for="email" class="profile-label">Email:&nbsp;</label>
+      <input type="text" name="email" class="profile-value" required value="{user.email}"> <!--if this is changed, need to log out user-->
+      <label for="twitter" class="profile-label">Twitter:&nbsp;</label>
+      <input type="text" name="twitter" class="profile-value" value="{user.twitter}">
+      <label for="mastodon" class="profile-label">Mastodon:&nbsp;</label>
+      <input type="text" name="mastodon" class="profile-value" value="{user.mastodon}">
+      {if new}
+        <input type="submit" class="submit-button" value="Save">
+      {else}
+        <input type="submit" class="submit-button" value="Update">
+      {/if}
+    </form>
+    {if not new}
     <div>
-      <ol>
-        <li>First Blog</li>
-        <li>Additional Blog</li>
-      </ol>
+      <h2>Blogs</h2>
+      <ul> <!--update will re-fetch the blog info to update the DB, delete will only delete the listing, not any articles-->
+        {for blog in user.blogs}
+          <li>{blog.name} <button>Update</button><button>Delete</button></li>
+        {/for}
+      </ul>
+      {if legacy}<button>Claim Blog</button> <!--goes to new page-->{/if}
+      <button>Register Blog</button><br> <!--goes to new page-->
     </div>
+    {/if}
   </div>
-{>footer}
+  {>footer}
 {>foot}

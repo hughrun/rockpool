@@ -5,6 +5,7 @@
   "org_url" : "https://example.com",
   "blog_club_name" : "Blog Club",
   "blog_club_url" : "https://example.com/blog-club",
+  "legacy_db" : false,
   "production" : {
     "mongo_url" : "mongodb://example.com",
     "mongo_port" : "35776",

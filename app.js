@@ -1,4 +1,7 @@
-// require modules
+/*  ######################################
+    ###         require modules        ###
+    ######################################
+*/
 const settings = require('./settings.json') // local settings file (leave at top)
 const env = process.env.NODE_ENV // are we in production or development?
 const path = require('path') // nodejs native package
@@ -7,18 +10,31 @@ const app = express(); // create local instance of express
 const engines = require('consolidate') // use consolidate with whiskers template engine
 const axios = require('axios') // for requesting web resources
 const db = require('./lib/queries.js') // local database queries module
+const users = require('./lib/users.js') // local database queries module
 const feedFinder = require('./lib/feed-finder.js') // local feed-finder module
+const debug = require('debug'), name = 'Rockpool' // debug for development
+const session = require('express-session') // sessions so people can log in
+const passwordless = require('passwordless') // passwordless for ...passwordless logins
+const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // for creating and storing passwordless tokens
+// TODO: do passwordless-mongostore-bcrytpr.js properly as a new npm module
+const email   = require('emailjs') // to send email from the server
+var cookieParser = require('cookie-parser') // cookies
+var sessionStore = new session.MemoryStore // cookie storage
+const bodyParser = require('body-parser') // bodyparser for form data
+const flash = require('express-flash') // flash messages
+const { body, validationResult } = require('express-validator/check') // validate
+const { sanitizeBody } = require('express-validator/filter') // sanitise
 
-// set up router
-// const router = express.Router();
-const bodyParser = require('body-parser')
-var urlencodedParser = bodyParser.urlencoded({ extended: false })
-// session
+/*  ######################################
+    ### initiate and configure modules ###
+    ######################################
+*/
 
-const session = require('express-session')
+// set up session params
 const sess = {
   resave: false,
   saveUninitialized: true,
+  store: sessionStore,
   secret: settings[env].express_session_secret,
   cookie: {
     maxAge: 6048e5 // expire cookies after a week
@@ -30,31 +46,19 @@ if (env === 'production') { // in production force https
   sess.cookie.secure = true // serve secure cookies
 }
 
-app.use(session(sess))
-
-
-// ######################
-// #### PASSWORDLESS ####
-// ######################
-// TODO: move most of this into a module that can be required by other modules
-
-// passwordless requires
-const passwordless = require('passwordless');
-const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // TODO: do this properly with a new module
-const email   = require('emailjs');
-// MongoDB TokenStore for login tokens
-const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // separate mongo collection for tokens
-passwordless.init(new MongoStore(pathToMongoDb))
-
 // emailjs setup
-var smtpServer  = email.server.connect({
-  user:    settings[env].email.user,
+const smtpServer  = email.server.connect({
+  user: settings[env].email.user,
   password: settings[env].email.password,
-  host:    settings[env].email.host,
-  ssl:     true
+  host: settings[env].email.host,
+  ssl: true
 })
 
-// Set up a delivery service for passwordless
+// MongoDB TokenStore for passwordless login tokens
+const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collection for tokens
+passwordless.init(new MongoStore(pathToMongoDb)) // initiate store
+
+// Set up an email delivery service for passwordless logins
 passwordless.addDelivery(
 	function(tokenToSend, uidToSend, recipient, callback, req) {
     var message =  {
@@ -75,21 +79,26 @@ passwordless.addDelivery(
       })
 })
 
-app.use(passwordless.sessionSupport()) // makes session persistent
-app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
+/*  ######################################
+    ###     app settings and routing   ###
+    ######################################
+*/
 
-// ### END PASSWORDLESS
-
-// set template views
+// template views
 app.set('views', path.join(__dirname, 'views'))
 app.engine('html', engines.whiskers)
-app.set('view engine', 'html');
+app.set('view engine', 'html')
+
+// routing middleware
+app.use(bodyParser.urlencoded({ extended: false })) // use bodyParser
+app.use(cookieParser(settings[env].cookie_parser_secret))
+app.use(session(sess)) // use sessions
+app.use(passwordless.sessionSupport()) // makes session persistent
+app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
+app.use(flash()) // use flash messages
 
-// ++++++++++
-// NAVIGATION
-// ++++++++++
-
+// locals (global values for all routes)
 app.locals.pageTitle = settings.app_name
 app.locals.appName = settings.app_name
 app.locals.appTagline = settings.app_tagline
@@ -98,6 +107,11 @@ app.locals.orgName = settings.org_name
 app.locals.orgUrl = settings.org_url
 app.locals.blogClub = settings.blog_club_name
 app.locals.blogClubUrl = settings.blog_club_url
+
+/*  ######################################
+    ###              routes            ###
+    ######################################
+*/
 
 // home
 app.get('/', (req, res) =>
@@ -183,18 +197,27 @@ app.get('/letmein', function(req, res) {
 })
 
 /* POST login email address */
-app.post('/sendtoken', urlencodedParser,
+app.post('/sendtoken',
+  // urlencodedParser,
 	passwordless.requestToken(
 		function(user, delivery, callback, req) {
-      // TODO: need some validity checking here and/or in browser
-      const userEmail = `${user.toLowerCase()}`
-      return callback(null, userEmail)
-		}, { failureRedirect: '/logged-out' }),
-		function(req, res) {
-      // success!
-		  res.redirect('/token-sent') // this should go to a page indicating what's happening
+      body('user').isEmail().normalizeEmail() // check it's email and downcases everything
+      if (validationResult(req).isEmpty()) {
+        return callback(null, user)
+      } else {
+        debug.log('ERROR: %O', validationResult(req)) // log errors
+        return res.status(422) // return error status
+        // NOTE: given the field is an 'email' field, the only way to get to this error
+        // is if someone is using a really old browser and enters something that is not an email address
+      }
+      },
+      { failureRedirect: '/logged-out' }),
+  function(req, res) {
+    // success!
+    res.redirect('/token-sent')
 })
 
+// info screen after login token sent
 app.get('/token-sent', function(req, res) {
   res.render( 'checkEmail', {
   partials: {
@@ -207,30 +230,36 @@ app.get('/token-sent', function(req, res) {
   })
 })
 
-// user - once logged in show user page
-app.get('/user', passwordless.restricted({ failureRedirect: '/letmein' }),
-  function(req, res) {
-  console.log(req.session.passwordless) // the email address is returned here, can be used to check database
-  // TODO: if new user, show a welcome page to guide them through getting set up
-  // if an existing user, show a welcome-back page
-  res.render('user', {
+// user dashboard
+app.get('/user',
+  passwordless.restricted({ failureRedirect: '/letmein' }),
+  (req, res) => users.getUserDetails(req.session.passwordless)
+  .then(
+    doc => {
+      if (!doc.blogs || doc.blogs.length < 1) {
+        req.flash('warning', 'You have not registered a blog yet')
+        return doc
+      }
+    })
+    .then(
+    doc => res.render('user', {
     partials: {
       head: __dirname+'/views/partials/head.html',
       header: __dirname+'/views/partials/header.html',
       foot: __dirname+'/views/partials/foot.html',
       footer: __dirname+'/views/partials/footer.html'
     },
-    user: req.session.passwordless
+    user: doc.user,
+    admin: doc.user.permission === "admin",
+    new: doc.new,
+    legacy: settings.legacy_db,
+    warnings: req.flash('warning'),
+    success: req.flash('success'),
+    errors: req.flash('error')
   })
-})
+))
 
-// LOGOUT
-app.get('/logout', passwordless.logout(),
-	function(req, res) {
-		res.redirect('/logged-out') // this should redirect to a logged out page instead
-})
-
-// EXPIRED TOKEN
+// show token expired screen if token already used or too old
 app.get('/tokens', function(req, res) {
   res.render('expired', {
     partials: {
@@ -243,11 +272,101 @@ app.get('/tokens', function(req, res) {
   })
 })
 
-// TODO: /author (for verifying owners)
+/* POST user update */
+app.post('/update-user',
+    [
+      // normalise email
+      body('email').isEmail().normalizeEmail(),
+      // validate twitter with custom check
+      body('twitter').custom( val => {
+        let valid = val.match(/^@+[A-Za-z0-9_]*$/) || val == ""
+        return valid
+      }).withMessage("Twitter handles must start with '@' and contain only alphanumerics or underscores"),
+      // validate twitter length
+      body('twitter').isLength({max: 16}).withMessage("Twitter handles must contain fewer than 16 characters"),
+      // validate mastodon with custom check
+      body('mastodon').custom( val => {
+        let valid = val.match(/^@+\S*@+\S*/) || val == ""
+        return valid
+      }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
+    ],
+    (req, res, next) => {
+      debug.log('User details: %O', req.body)
+      debug.log(validationResult(req).array())
+      if (!validationResult(req).isEmpty()) {
+        // flash errors
+        let valArray = validationResult(req).array()
+        for (var i=0; i < valArray.length; ++i) {
+          req.flash('error', valArray[i].msg)
+        }
+        // reload page with flashes instead of updating
+        res.redirect('/user')
+      } else {
+        next()
+      }
+    },
+    function(req, res, next) {
+    // here we need to check for other users with the same email
+      users.checkEmailIsUnique(req.body)
+        .then(users.updateUserDetails)
+        .then(() => {
+          debug.log('user updated')
+          if (req.body.email != req.session.passwordless) {
+            res.redirect('/email-updated') // force logout if email has changed
+          } else {
+            req.flash("success", "Your details have been updated")
+            next() // if email unchanged, reload the page with update info
+          }
+        })
+        .catch(err => {
+          if (err.type == 'duplicateUser') {
+            debug.log('email is already in use')
+            req.flash("warning", "That email address is already in use")
+            next()
+          } else {
+            debug.log(err)
+            req.flash("warning", "Sorry, something went wrong")
+            next()
+          }
+        })
+      },
+      (req, res) => {
+        res.redirect('/user')
+      }
+  )
+
+// TODO: pocket routes
+
+// TODO: register blog routes
+
+// TODO: claim blog routes
+
+// TODO: /rss
 
 // TODO: /admin
 
-// 404
+// logout
+app.get('/logout',
+  passwordless.logout(),
+	function(req, res) {
+		res.redirect('/')
+})
+
+// email-updated
+app.get('/email-updated',
+  passwordless.logout(), // force logout
+	function(req, res) {
+    res.render('emailUpdated', {
+      partials: {
+        head: __dirname+'/views/partials/head.html',
+        header: __dirname+'/views/partials/header.html',
+        foot: __dirname+'/views/partials/foot.html',
+        footer: __dirname+'/views/partials/footer.html'
+      }
+    })
+  })
+
+// 404 errors: this should always be the last route
 app.use(function (req, res, next) {
   res.status(404).render("404")
 })

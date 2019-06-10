@@ -221,3 +221,49 @@ input[type="submit"].email-signup {
   text-decoration: none;
   color: #3a3a3a;
 }
+
+/* user dashboard */
+
+.user-form-vals {
+	display: grid;
+	grid-template-columns: max-content minmax(8em, 16em);
+}
+
+.profile-value {
+	border: none;
+	border-bottom: 1px dotted #3a3a3a;
+	font-family: "SourceSansPro";
+	font-size: 0.8em;
+}
+.submit-button {
+	margin-top: 1em;
+}
+
+/* flash messages */
+
+.flash-success {
+	padding: 0.5em;
+	border-radius: 5px;
+	color: #000;
+	background: lightgreen;
+	text-align: center;
+	margin-bottom: 0.5em;
+}
+
+.flash-error {
+	padding: 0.5em;
+	border-radius: 5px;
+	color: #000;
+	background: lightcoral;
+	text-align: center;
+	margin-bottom: 0.5em;
+}
+
+.flash-warning {
+	padding: 0.5em;
+	border-radius: 5px;
+	color: #000;
+	background: lightyellow;
+	text-align: center;
+	margin-bottom: 0.5em;
+}
