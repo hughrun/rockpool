@@ -1,21 +1,24 @@
 {>head}
 	{>header}
 	<div class="main">
-    {if warnings}
-      {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
-    {/if}
-    {if success}
-      {for msg in success}<div class="flash-success">{msg}</div>{/for}
-    {/if}
     {if new}
-    <p>Welcome to {appName} - please fill in your details and save your profile to get started.</p>
+      <p>Welcome to {appName} - please fill in your details and save your profile to get started.</p>
     {else}
-    <p>Welcome back to {appName}!</p>
+      {if errors}
+        {for msg in errors}<div class="flash-error">{msg}</div>{/for}
+      {/if}
+      {if warnings}
+        {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
+      {/if}
+      {if success}
+        {for msg in success}<div class="flash-success">{msg}</div>{/for}
+      {/if}
+      <p>Welcome back to {appName}!</p>
     {/if}
     {if admin}<button>Admin</button><br>{/if} <!--goes to new page - only appears if they are an admin (but other server-side checks prevent non-admins doing anything on this page) -->
-    <h2>Contacts</h2>
+      <h2>Contacts</h2>
     {if new}
-    <p>Your email address is required for logging in to your account, and contacting you about any account activity (e.g. your blog being approved). Your Twitter and Mastodon handles will be included in the tweet/toot when posting alerts about new blog posts.</p>
+      <p>Your email address is required for logging in to your account, and contacting you about any account activity (e.g. your blog being approved). Your Twitter and Mastodon handles will be included in the tweet/toot when posting alerts about new blog posts.</p>
     {/if}
     <form action="/update-user" method="post" class="user-form-vals">
       <input name="id" value="{user._id}" type="hidden">
@@ -26,9 +29,9 @@
       <label for="mastodon" class="profile-label">Mastodon:&nbsp;</label>
       <input type="text" name="mastodon" class="profile-value" value="{user.mastodon}">
       {if new}
-      <input type="submit" class="submit-button" value="Save">
+        <input type="submit" class="submit-button" value="Save">
       {else}
-      <input type="submit" class="submit-button" value="Update">
+        <input type="submit" class="submit-button" value="Update">
       {/if}
     </form>
     {if not new}

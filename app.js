@@ -235,6 +235,13 @@ app.get('/user',
   passwordless.restricted({ failureRedirect: '/letmein' }),
   (req, res) => users.getUserDetails(req.session.passwordless)
   .then(
+    doc => {
+      if (!doc.blogs || doc.blogs.length < 1) {
+        req.flash('warning', 'You have not registered a blog yet')
+        return doc
+      }
+    })
+    .then(
     doc => res.render('user', {
     partials: {
       head: __dirname+'/views/partials/head.html',
@@ -247,7 +254,8 @@ app.get('/user',
     new: doc.new,
     legacy: settings.legacy_db,
     warnings: req.flash('warning'),
-    success: req.flash('success')
+    success: req.flash('success'),
+    errors: req.flash('error')
   })
 ))
 
@@ -289,7 +297,7 @@ app.post('/update-user',
         // flash errors
         let valArray = validationResult(req).array()
         for (var i=0; i < valArray.length; ++i) {
-          req.flash('warning', valArray[i].msg)
+          req.flash('error', valArray[i].msg)
         }
         // reload page with flashes instead of updating
         res.redirect('/user')

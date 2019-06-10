@@ -250,11 +250,20 @@ input[type="submit"].email-signup {
 	margin-bottom: 0.5em;
 }
 
-.flash-warning {
+.flash-error {
 	padding: 0.5em;
 	border-radius: 5px;
 	color: #000;
 	background: lightcoral;
+	text-align: center;
+	margin-bottom: 0.5em;
+}
+
+.flash-warning {
+	padding: 0.5em;
+	border-radius: 5px;
+	color: #000;
+	background: lightyellow;
 	text-align: center;
 	margin-bottom: 0.5em;
 }
