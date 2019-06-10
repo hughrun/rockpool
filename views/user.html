@@ -1,13 +1,11 @@
 {>head}
 	{>header}
 	<div class="main">
-    {if flash}
-      {if flash.warning}
-      <div class="flash-warning">{flash.warning}</div>
-      {/if}
-      {if flash.success}
-      <div class="flash-success">{flash.success}</div>
-      {/if}
+    {if warnings}
+      {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
+    {/if}
+    {if success}
+      {for msg in success}<div class="flash-success">{msg}</div>{/for}
     {/if}
     {if new}
     <p>Welcome to {appName} - please fill in your details and save your profile to get started.</p>

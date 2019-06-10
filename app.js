@@ -18,8 +18,12 @@ const passwordless = require('passwordless') // passwordless for ...passwordless
 const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // for creating and storing passwordless tokens
 // TODO: do passwordless-mongostore-bcrytpr.js properly as a new npm module
 const email   = require('emailjs') // to send email from the server
+var cookieParser = require('cookie-parser') // cookies
+var sessionStore = new session.MemoryStore // cookie storage
 const bodyParser = require('body-parser') // bodyparser for form data
-const flash = require('ez-flash') // flash messages
+const flash = require('express-flash') // flash messages
+const { body, validationResult } = require('express-validator/check') // validate
+const { sanitizeBody } = require('express-validator/filter') // sanitise
 
 /*  ######################################
     ### initiate and configure modules ###
@@ -30,6 +34,7 @@ const flash = require('ez-flash') // flash messages
 const sess = {
   resave: false,
   saveUninitialized: true,
+  store: sessionStore,
   secret: settings[env].express_session_secret,
   cookie: {
     maxAge: 6048e5 // expire cookies after a week
@@ -43,10 +48,10 @@ if (env === 'production') { // in production force https
 
 // emailjs setup
 const smtpServer  = email.server.connect({
-  user:    settings[env].email.user,
+  user: settings[env].email.user,
   password: settings[env].email.password,
-  host:    settings[env].email.host,
-  ssl:     true
+  host: settings[env].email.host,
+  ssl: true
 })
 
 // MongoDB TokenStore for passwordless login tokens
@@ -86,11 +91,12 @@ app.set('view engine', 'html')
 
 // routing middleware
 app.use(bodyParser.urlencoded({ extended: false })) // use bodyParser
+app.use(cookieParser('my secret string')) // TODO: change this once working
 app.use(session(sess)) // use sessions
 app.use(passwordless.sessionSupport()) // makes session persistent
 app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
-app.use(flash.middleware) // use flash messages
+app.use(flash()) // use flash messages
 
 // locals (global values for all routes)
 app.locals.pageTitle = settings.app_name
@@ -195,10 +201,17 @@ app.post('/sendtoken',
   // urlencodedParser,
 	passwordless.requestToken(
 		function(user, delivery, callback, req) {
-      // TODO: need some validity checking here and/or in browser
-      const userEmail = `${user.toLowerCase()}`
-      return callback(null, userEmail)
-		}, { failureRedirect: '/logged-out' }),
+      body('user').isEmail().normalizeEmail() // check it's email and downcases everything
+      if (validationResult(req).isEmpty()) {
+        return callback(null, user)
+      } else {
+        debug.log('ERROR: %O', validationResult(req)) // log errors
+        return res.status(422) // return error status
+        // NOTE: given the field is an 'email' field, the only way to get to this error
+        // is if someone is using a really old browser and enters something that is not an email address
+      }
+      },
+      { failureRedirect: '/logged-out' }),
   function(req, res) {
     // success!
     res.redirect('/token-sent')
@@ -232,7 +245,9 @@ app.get('/user',
     user: doc.user,
     admin: doc.user.permission === "admin",
     new: doc.new,
-    legacy: settings.legacy_db
+    legacy: settings.legacy_db,
+    warnings: req.flash('warning'),
+    success: req.flash('success')
   })
 ))
 
@@ -251,37 +266,72 @@ app.get('/tokens', function(req, res) {
 
 /* POST user update */
 app.post('/update-user',
-  function(req, res, next) {
-    debug.log(req.body)
+    // TODO: this is a good place to check values are valid
+    [
+      // normalise email
+      body('email').isEmail().normalizeEmail(),
+      // validate twitter with custom check
+      body('twitter').custom( val => {
+        var valid = val.match(/^@+[A-Za-z0-9_]*$/)
+        return valid
+      }).withMessage("Twitter handles must start with '@' and contain only alphanumerics or underscores"),
+      // validate twitter length
+      body('twitter').isLength({max: 16}).withMessage("Twitter handles must contain fewer than 16 characters"),
+      // validate mastodon with custom check
+      body('mastodon').custom( val => {
+        return val.match(/^@+\S*@+\S*/)
+      }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
+    ],
+    (req, res, next) => {
+      debug.log('User details: %O', req.body)
+      debug.log(validationResult(req).array())
+      if (!validationResult(req).isEmpty()) {
+        // flash errors
+        let valArray = validationResult(req).array()
+        for (var i=0; i < valArray.length; ++i) {
+          req.flash('warning', valArray[i].msg)
+        }
+        // reload page with flashes instead of updating
+        res.redirect('/user')
+      } else {
+        next()
+      }
+    },
+    function(req, res, next) {
     // here we need to check for other users with the same email
-    users.checkEmailIsUnique(req.body)
-      .then(users.updateUserDetails)
-      .then(() => {
-        debug.log('user updated')
-        if (req.body.email != req.session.passwordless) {
-          res.redirect('/email-updated') // force logout if email has changed
-        } else {
-          flash.flash("success", "Your details have been updated")
-          next() // otherwise reload the page with update info
-        }
-      })
-      .catch(err => {
-        if (err.type == 'duplicateUser') {
-          debug.log('email is already in use')
-          flash.flash("warning", "That email address is already in use")
-          next()
-        } else {
-          debug.log(err)
-          flash.flash("warning", "Sorry, something went wrong")
-          next()
-        }
-      })
-  },
-    (req, res) =>
-    res.redirect('/user')
-)
+      users.checkEmailIsUnique(req.body)
+        .then(users.updateUserDetails)
+        .then(() => {
+          debug.log('user updated')
+          if (req.body.email != req.session.passwordless) {
+            res.redirect('/email-updated') // force logout if email has changed
+          } else {
+            req.flash("success", "Your details have been updated")
+            next() // if email unchanged, reload the page with update info
+          }
+        })
+        .catch(err => {
+          if (err.type == 'duplicateUser') {
+            debug.log('email is already in use')
+            req.flash("warning", "That email address is already in use")
+            next()
+          } else {
+            debug.log(err)
+            req.flash("warning", "Sorry, something went wrong")
+            next()
+          }
+        })
+      },
+      (req, res) => {
+        res.redirect('/user')
+      }
+  )
 
 // TODO: pocket routes
+
+// TODO: register blog routes
+
+// TODO: claim blog routes
 
 // TODO: /rss
 

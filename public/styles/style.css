@@ -247,6 +247,7 @@ input[type="submit"].email-signup {
 	color: #000;
 	background: lightgreen;
 	text-align: center;
+	margin-bottom: 0.5em;
 }
 
 .flash-warning {
@@ -255,4 +256,5 @@ input[type="submit"].email-signup {
 	color: #000;
 	background: lightcoral;
 	text-align: center;
+	margin-bottom: 0.5em;
 }
