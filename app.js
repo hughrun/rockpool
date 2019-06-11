@@ -16,7 +16,7 @@ const debug = require('debug'), name = 'Rockpool' // debug for development
 const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
 const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // for creating and storing passwordless tokens
-// TODO: do passwordless-mongostore-bcrytpr.js properly as a new npm module
+// TODO: do passwordless-mongostore-bcrypt.js properly as a new npm module
 const email   = require('emailjs') // to send email from the server
 var cookieParser = require('cookie-parser') // cookies
 var sessionStore = new session.MemoryStore // cookie storage
@@ -184,6 +184,7 @@ app.get('/subscribe', function (req, res) {
 })
 
 /* GET login screen. */
+// TODO: redirect this to /user if they *are* logged in
 app.get('/letmein', function(req, res) {
   res.render('login', {
     partials: {
@@ -337,13 +338,82 @@ app.post('/update-user',
 
 // TODO: pocket routes
 
-// TODO: register blog routes
+// TODO: register blog
 
-// TODO: claim blog routes
+// TODO: claim blog
+
+// TODO: delete blog
 
 // TODO: /rss
 
-// TODO: /admin
+/* TODO: /admin
+
+      This route needs to be restricted not only to logged in users but also those who have
+      permission = "admin"
+
+    - approve blog
+    - approve claim
+    - delete blog
+    - delete post
+    - add admin
+    - remove admin
+    - audit trails and notes
+    - send emails to users when appropriate
+
+
+app.get('/admin',
+  passwordless.restricted({ failureRedirect: '/letmein' }),
+  (req, res) => users.getUserDetails(req.session.passwordless)
+  .then() // check whether they have admin permissions TODO: put this on all /admin paths?
+          // something like app.all('/admin/*', etc)
+  .then() // get all unapproved blogs
+  .then() // get all claimed blogs
+  .then() // get all blogs with failing feeds
+  )
+*/
+
+app.all('/admin*',
+  passwordless.restricted({ failureRedirect: '/letmein' }),
+  (req, res, next) =>
+    users.getUserDetails(req.session.passwordless)
+    .then( doc => {
+        if (doc.user.permission && doc.user.permission === "admin") {
+          next()
+        } else {
+          req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
+          res.redirect('/user')
+        }
+      })
+      .catch(err => {
+        debug.log(`Error accessing admin page: ${err}`)
+        req.flash('error', 'Something went wrong')
+        res.redirect('/user')
+      })
+)
+
+app.get('/admin', function (req, res) {
+  db.getBlogs({}).then( blogs =>
+    res.render('admin', {
+      partials: {
+        head: __dirname+'/views/partials/head.html',
+        header: __dirname+'/views/partials/header.html',
+        foot: __dirname+'/views/partials/foot.html',
+        footer: __dirname+'/views/partials/footer.html'
+      },
+      blogs: blogs,
+      //user: doc.user, // where is this doc though?
+      legacy: settings.legacy_db,
+      warnings: req.flash('warning'),
+      success: req.flash('success'),
+      errors: req.flash('error')
+    })
+  ).catch(err => {debug.log(err)})
+})
+
+
+// admin/delete
+
+//admin/confirm?action=action&id=id
 
 // logout
 app.get('/logout',

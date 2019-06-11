@@ -1,0 +1,12 @@
+{>head}
+	{>header}
+    <section class="main">
+    <p>You're on the secret admin page</p>
+    <div>
+      {for blog in blogs}
+      <div class="blog-list"><span>{blog.url}</span><button class="delete-button">Delete</button></div>
+      {/for}
+    </div>
+    </section>
+  {>footer}
+{>foot}

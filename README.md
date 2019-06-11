@@ -24,8 +24,9 @@ Work In Progress: **Definitely not production-ready yet!**
 
 ## License
 
-Prior to 10 May 2019: GPL 3.0+
-After 10 May 2019: AGPL 3.0+
+**Prior to 10 May 2019:** GPL 3.0+
+
+**After 10 May 2019:** AGPL 3.0+
 
 Copyright (C) 2019 Hugh Rundle
 
