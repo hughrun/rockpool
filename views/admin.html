@@ -2,7 +2,9 @@
 	{>header}
     <section class="main">
     <p>You're on the secret admin page</p>
-    <div>
+    <div class="failing-feeds">
+      <h2>Failing feeds</h2>
+      <p>These blog feeds are currently failing. Note that this may be a temporary glitch: always do your homework before deleting a blog from {appName}</p>
       {for blog in blogs}
       <div class="blog-list"><span>{blog.url}</span><button class="delete-button">Delete</button></div>
       {/for}

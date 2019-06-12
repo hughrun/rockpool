@@ -392,22 +392,24 @@ app.all('/admin*',
 )
 
 app.get('/admin', function (req, res) {
-  db.getBlogs({}).then( blogs =>
-    res.render('admin', {
-      partials: {
-        head: __dirname+'/views/partials/head.html',
-        header: __dirname+'/views/partials/header.html',
-        foot: __dirname+'/views/partials/foot.html',
-        footer: __dirname+'/views/partials/footer.html'
-      },
-      blogs: blogs,
-      //user: doc.user, // where is this doc though?
-      legacy: settings.legacy_db,
-      warnings: req.flash('warning'),
-      success: req.flash('success'),
-      errors: req.flash('error')
-    })
-  ).catch(err => {debug.log(err)})
+  db.getBlogs({query: {failing: true}}) // get failing blogs
+    //.then() // get all unapproved blogs
+    //.then() // get all claimed blogs
+      .then( args =>
+      res.render('admin', {
+        partials: {
+          head: __dirname+'/views/partials/head.html',
+          header: __dirname+'/views/partials/header.html',
+          foot: __dirname+'/views/partials/foot.html',
+          footer: __dirname+'/views/partials/footer.html'
+        },
+        blogs: args.blogs,
+        legacy: settings.legacy_db,
+        warnings: req.flash('warning'),
+        success: req.flash('success'),
+        errors: req.flash('error')
+      })
+    ).catch(err => {debug.log(err)})
 })
 
 
