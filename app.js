@@ -59,7 +59,7 @@ const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collect
 passwordless.init(new MongoStore(pathToMongoDb)) // initiate store
 
 // Set up an email delivery service for passwordless logins
-passwordless.addDelivery(
+passwordless.addDelivery('email',
 	function(tokenToSend, uidToSend, recipient, callback, req) {
     var message =  {
 			text: 'Hello!\nAccess your account here: ' + settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid='
@@ -78,6 +78,15 @@ passwordless.addDelivery(
         callback(err);
       })
 })
+
+// passwordless for dev (bypass email)
+passwordless.addDelivery('browser',
+  function(tokenToSend, uidToSend, recipient, callback, req) {
+    var address = settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid='
+    + encodeURIComponent(uidToSend)
+    debug.log(address)
+    callback(null, recipient)
+  })
 
 /*  ######################################
     ###     app settings and routing   ###
@@ -193,13 +202,13 @@ app.get('/letmein', function(req, res) {
       foot: __dirname+'/views/partials/foot.html',
       footer: __dirname+'/views/partials/footer.html'
     },
-    user: req.session.passwordless
+    user: req.session.passwordless,
+    delivery: settings[env].deliver_tokens_by // allows bypassing email when in development
   })
 })
 
 /* POST login email address */
 app.post('/sendtoken',
-  // urlencodedParser,
 	passwordless.requestToken(
 		function(user, delivery, callback, req) {
       body('user').isEmail().normalizeEmail() // check it's email and downcases everything
@@ -211,8 +220,9 @@ app.post('/sendtoken',
         // NOTE: given the field is an 'email' field, the only way to get to this error
         // is if someone is using a really old browser and enters something that is not an email address
       }
-      },
-      { failureRedirect: '/logged-out' }),
+    },
+    { failureRedirect: '/logged-out' }
+  ),
   function(req, res) {
     // success!
     res.redirect('/token-sent')
@@ -381,6 +391,7 @@ app.all('/admin*',
           next()
         } else {
           req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
+          res.status(403) // NOTE: I don't really know what this will effectively do: needs testing
           res.redirect('/user')
         }
       })
@@ -392,7 +403,10 @@ app.all('/admin*',
 )
 
 app.get('/admin', function (req, res) {
-  db.getBlogs({query: {failing: true}}) // get failing blogs
+  users.getUserDetails(req.session.passwordless)
+      .then( function (user) {
+        return db.getBlogs({user: user, query: {failing: true}}) // get failing blogs
+      })
     //.then() // get all unapproved blogs
     //.then() // get all claimed blogs
       .then( args =>
@@ -403,7 +417,8 @@ app.get('/admin', function (req, res) {
           foot: __dirname+'/views/partials/foot.html',
           footer: __dirname+'/views/partials/footer.html'
         },
-        blogs: args.blogs,
+        user: args.user,
+        failing: args.blogs,
         legacy: settings.legacy_db,
         warnings: req.flash('warning'),
         success: req.flash('success'),
@@ -414,6 +429,23 @@ app.get('/admin', function (req, res) {
 
 
 // admin/delete
+app.post('/admin/delete', function(req, res) {
+  debug.log(req.body)
+  body().exists({checkNull: true}) // make sure there's a value so we don't accidentally delete everything
+  if (validationResult(req).isEmpty()) {
+    db.deleteBlogs(req.body).then( () => {
+      res.redirect('/admin')
+    }).catch(err => {
+      req.flash('error', err)
+      res.redirect('/admin')
+    })
+  } else {
+    let valArray = validationResult(req).array()
+    debug.log(valArray)
+    req.flash('error', 'There was a problem deleting blogs.')
+    res.redirect('/admin')
+  }
+})
 
 //admin/confirm?action=action&id=id
 
