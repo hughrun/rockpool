@@ -12,6 +12,7 @@
     "mongo_user" : "user",
     "mongo_password:" : "password",
     "mongo_db" : "rockpool",
+    "deliver_tokens_by" : "email",
     "email" : {
       "user": "postmaster@example.com",
       "pass": "password",
@@ -24,6 +25,7 @@
     "mongo_user" : "user",
     "mongo_password:" : "password",
     "mongo_db" : "rockpool",
+    "deliver_tokens_by" : "browser",
     "email" : {
       "user": "postmaster@example.com",
       "pass": "password",

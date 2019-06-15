@@ -430,8 +430,7 @@ app.get('/admin', function (req, res) {
 
 // admin/delete
 app.post('/admin/delete', function(req, res) {
-  debug.log(req.body)
-  body().exists({checkNull: true}) // make sure there's a value so we don't accidentally delete everything
+  body().exists({checkNull: true}) // make sure there's a value
   if (validationResult(req).isEmpty()) {
     db.deleteBlogs(req.body).then( () => {
       res.redirect('/admin')
@@ -447,7 +446,7 @@ app.post('/admin/delete', function(req, res) {
   }
 })
 
-//admin/confirm?action=action&id=id
+//admin/confirm?action=action&id=id ?
 
 // logout
 app.get('/logout',
