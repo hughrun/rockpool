@@ -7,7 +7,7 @@
     "start": "NODE_ENV=production node app.js",
     "dev": "NODE_ENV=development DEBUG=Rockpool node app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "migrate": "NODE_ENV=development node notes/migrator.js"
+    "migrate": "NODE_ENV=development node legacy/migrator.js"
   },
   "keywords": [
     "rss",
