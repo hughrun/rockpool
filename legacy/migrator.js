@@ -281,18 +281,31 @@ function migrateArticles(records) {
   })
 }
 
+// run the functions one after the other
+prepareTags.then(migrateTags).catch(error => {
+  debug.log(error)
+})
+
+prepareBlogs.then(migrateBlogs).catch(error => {
+  debug.log(error)
+})
+
+prepareArticles.then(LinkArticlesToBlogs)
+  .then(migrateArticles)
+  .catch(error => {
+    debug.log(error)
+  })
+
 // TWEETS
 // do not migrate
 
 // UBLOGS
 // do not migrate
 
-// DELETE OLD COLLECTIONS
-// make this a completely separate script to be called, just to be sure
 // NOTE: if you use mongodump with the --collection flag to specify only the collections we want
 // you can avoid having to subsequently dump collections we never needed
 
-// NOTES FOR OTHER FUNCTIONALITY
+  // NOTES FOR OTHER FUNCTIONALITY
 
 // TODO: migration instructions should simply say deal with any unapproved blogs before migrating,
 // to make things simpler
@@ -304,7 +317,6 @@ function migrateArticles(records) {
 
 // ** claiming blogs
 // this should just alert an admin and then you can check it out and decided whether it's legit
-// rather than faffing around with rel=me etc
 
 // NOTE: blogs already listed mostly have a twitter account already listed
 // there needs to be backwards-compatibility so that the announce function uses the owner's twitter
@@ -320,23 +332,6 @@ function migrateArticles(records) {
 // when ingesting we already have access to the blog _id when iterating
 // NOTE: is this a browse feature to add?
 
-  // NOTE: if you migrate pockets and then test pocket, it will send to everyone on the list
-  // with an email address so don't test until absolutely sure!
-  // TODO: update users collection to drop out everyone except hugh@newcardigan.org
-
-  // run the functions one after the other
-prepareTags.then(migrateTags).catch(error => {
-  debug.log(error)
-})
-
-prepareBlogs.then(migrateBlogs).catch(error => {
-  debug.log(error)
-})
-
-// TODO: need this to run AFTER blogs
-// adjust promises?
-prepareArticles.then(LinkArticlesToBlogs)
-  .then(migrateArticles)
-  .catch(error => {
-    debug.log(error)
-  })
+// NOTE: if you migrate pockets and then test pocket, it will send to everyone on the list
+// with an email address so don't test until absolutely sure!
+// TODO: update users collection to drop out everyone except hugh for testing
