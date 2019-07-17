@@ -42,8 +42,11 @@
           <li>{blog.name} <button>Update</button><button>Delete</button></li>
         {/for}
       </ul>
-      {if legacy}<button>Claim Blog</button> <!--goes to new page-->{/if}
-      <button>Register Blog</button><br> <!--goes to new page-->
+      <form>
+        <input type="url" name="url" size="60">
+        <input type="submit" name="register" value="Register New Blog">
+        {if legacy}<input type="submit" name="claim" value="Claim Listed Blog">{/if}
+      </form>
     </div>
     {/if}
   </div>

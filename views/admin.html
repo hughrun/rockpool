@@ -46,7 +46,7 @@
       <p>You have{if failing}{else} no{/if} failing feeds to attend to.</p>
       {if failing}
       <p>These blog feeds are currently failing. Note that this may be a temporary glitch: always do your homework before deleting a blog from {appName}</p>
-      <form action="/admin/delete" method="post"  class="blog-list">
+      <form action="/admin/deleteblogs" method="post"  class="blog-list">
         {for blog in failing}
         <input type="checkbox" name="{blog._id}" class="admin-checkbox"><a href="{blog.feed}">{blog.url}</a><br/>
         {/for}

@@ -352,7 +352,7 @@ app.post('/update-user',
 
 // TODO: claim blog
 
-// TODO: delete blog
+// TODO: delete (own) blog
 
 // TODO: /rss
 
@@ -363,25 +363,15 @@ app.post('/update-user',
 
     - approve blog
     - approve claim
-    - delete blog
+    - delete blog ?
     - delete post
     - add admin
     - remove admin
     - audit trails and notes
     - send emails to users when appropriate
-
-
-app.get('/admin',
-  passwordless.restricted({ failureRedirect: '/letmein' }),
-  (req, res) => users.getUserDetails(req.session.passwordless)
-  .then() // check whether they have admin permissions TODO: put this on all /admin paths?
-          // something like app.all('/admin/*', etc)
-  .then() // get all unapproved blogs
-  .then() // get all claimed blogs
-  .then() // get all blogs with failing feeds
-  )
 */
 
+// restrict all admin paths
 app.all('/admin*',
   passwordless.restricted({ failureRedirect: '/letmein' }),
   (req, res, next) =>
@@ -402,6 +392,7 @@ app.all('/admin*',
       })
 )
 
+// admin home page
 app.get('/admin', function (req, res) {
   users.getUserDetails(req.session.passwordless)
       .then( function (user) {
@@ -427,9 +418,8 @@ app.get('/admin', function (req, res) {
     ).catch(err => {debug.log(err)})
 })
 
-
-// admin/delete
-app.post('/admin/delete', function(req, res) {
+// post admin/deleteblogs
+app.post('/admin/deleteblogs', function(req, res) {
   body().exists({checkNull: true}) // make sure there's a value
   if (validationResult(req).isEmpty()) {
     db.deleteBlogs(req.body).then( () => {
