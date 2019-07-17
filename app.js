@@ -16,7 +16,7 @@ const debug = require('debug'), name = 'Rockpool' // debug for development
 const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
 const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // for creating and storing passwordless tokens
-// TODO: do passwordless-mongostore-bcrytpr.js properly as a new npm module
+// TODO: do passwordless-mongostore-bcrypt.js properly as a new npm module
 const email   = require('emailjs') // to send email from the server
 var cookieParser = require('cookie-parser') // cookies
 var sessionStore = new session.MemoryStore // cookie storage
@@ -59,7 +59,7 @@ const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collect
 passwordless.init(new MongoStore(pathToMongoDb)) // initiate store
 
 // Set up an email delivery service for passwordless logins
-passwordless.addDelivery(
+passwordless.addDelivery('email',
 	function(tokenToSend, uidToSend, recipient, callback, req) {
     var message =  {
 			text: 'Hello!\nAccess your account here: ' + settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid='
@@ -78,6 +78,15 @@ passwordless.addDelivery(
         callback(err);
       })
 })
+
+// passwordless for dev (bypass email)
+passwordless.addDelivery('browser',
+  function(tokenToSend, uidToSend, recipient, callback, req) {
+    var address = settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid='
+    + encodeURIComponent(uidToSend)
+    debug.log(address)
+    callback(null, recipient)
+  })
 
 /*  ######################################
     ###     app settings and routing   ###
@@ -184,6 +193,7 @@ app.get('/subscribe', function (req, res) {
 })
 
 /* GET login screen. */
+// TODO: redirect this to /user if they *are* logged in
 app.get('/letmein', function(req, res) {
   res.render('login', {
     partials: {
@@ -192,13 +202,13 @@ app.get('/letmein', function(req, res) {
       foot: __dirname+'/views/partials/foot.html',
       footer: __dirname+'/views/partials/footer.html'
     },
-    user: req.session.passwordless
+    user: req.session.passwordless,
+    delivery: settings[env].deliver_tokens_by // allows bypassing email when in development
   })
 })
 
 /* POST login email address */
 app.post('/sendtoken',
-  // urlencodedParser,
 	passwordless.requestToken(
 		function(user, delivery, callback, req) {
       body('user').isEmail().normalizeEmail() // check it's email and downcases everything
@@ -210,8 +220,9 @@ app.post('/sendtoken',
         // NOTE: given the field is an 'email' field, the only way to get to this error
         // is if someone is using a really old browser and enters something that is not an email address
       }
-      },
-      { failureRedirect: '/logged-out' }),
+    },
+    { failureRedirect: '/logged-out' }
+  ),
   function(req, res) {
     // success!
     res.redirect('/token-sent')
@@ -337,13 +348,95 @@ app.post('/update-user',
 
 // TODO: pocket routes
 
-// TODO: register blog routes
+// TODO: register blog
 
-// TODO: claim blog routes
+// TODO: claim blog
+
+// TODO: delete (own) blog
 
 // TODO: /rss
 
-// TODO: /admin
+/* TODO: /admin
+
+      This route needs to be restricted not only to logged in users but also those who have
+      permission = "admin"
+
+    - approve blog
+    - approve claim
+    - delete blog ?
+    - delete post
+    - add admin
+    - remove admin
+    - audit trails and notes
+    - send emails to users when appropriate
+*/
+
+// restrict all admin paths
+app.all('/admin*',
+  passwordless.restricted({ failureRedirect: '/letmein' }),
+  (req, res, next) =>
+    users.getUserDetails(req.session.passwordless)
+    .then( doc => {
+        if (doc.user.permission && doc.user.permission === "admin") {
+          next()
+        } else {
+          req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
+          res.status(403) // NOTE: I don't really know what this will effectively do: needs testing
+          res.redirect('/user')
+        }
+      })
+      .catch(err => {
+        debug.log(`Error accessing admin page: ${err}`)
+        req.flash('error', 'Something went wrong')
+        res.redirect('/user')
+      })
+)
+
+// admin home page
+app.get('/admin', function (req, res) {
+  users.getUserDetails(req.session.passwordless)
+      .then( function (user) {
+        return db.getBlogs({user: user, query: {failing: true}}) // get failing blogs
+      })
+    //.then() // get all unapproved blogs
+    //.then() // get all claimed blogs
+      .then( args =>
+      res.render('admin', {
+        partials: {
+          head: __dirname+'/views/partials/head.html',
+          header: __dirname+'/views/partials/header.html',
+          foot: __dirname+'/views/partials/foot.html',
+          footer: __dirname+'/views/partials/footer.html'
+        },
+        user: args.user,
+        failing: args.blogs,
+        legacy: settings.legacy_db,
+        warnings: req.flash('warning'),
+        success: req.flash('success'),
+        errors: req.flash('error')
+      })
+    ).catch(err => {debug.log(err)})
+})
+
+// post admin/deleteblogs
+app.post('/admin/deleteblogs', function(req, res) {
+  body().exists({checkNull: true}) // make sure there's a value
+  if (validationResult(req).isEmpty()) {
+    db.deleteBlogs(req.body).then( () => {
+      res.redirect('/admin')
+    }).catch(err => {
+      req.flash('error', err)
+      res.redirect('/admin')
+    })
+  } else {
+    let valArray = validationResult(req).array()
+    debug.log(valArray)
+    req.flash('error', 'There was a problem deleting blogs.')
+    res.redirect('/admin')
+  }
+})
+
+//admin/confirm?action=action&id=id ?
 
 // logout
 app.get('/logout',

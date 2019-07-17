@@ -1,0 +1,59 @@
+{>head}
+  {>header}
+
+    {if errors}
+      {for msg in errors}<div class="flash-error">{msg}</div>{/for}
+    {/if}
+    {if warnings}
+      {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
+    {/if}
+    {if success}
+      {for msg in success}<div class="flash-success">{msg}</div>{/for}
+    {/if}
+
+    <section class="main">
+    <div class="unapproved-blogs">
+      <h2>Awaiting Approval</h2>
+      <p>You have{if unapproved}{else} no{/if} unapproved blogs to attend to.</p>
+      <div class="blog-list">
+        {for blog in unapproved}
+        <a href="{blog.url}">{blog.url}</a>
+        {/for}
+        {if unapproved}
+        <button class="approve-button">Approve Selected</button>
+        <button class="reject-button">Reject Selected</button>
+        {/if}
+      </div>
+
+    </div>
+    {if legacy}
+    <div class="claimed-blogs">
+      <h2>Claimed Blogs</h2>
+      <p>You have{if claimed}{else} no{/if} claimed blogs to attend to.</p>
+      {for blog in claimed}
+      <div class="blog-list">
+        {blog.url} - claimed by {blog.claimedByName}
+      </div>
+      {/for}
+      {if claimed}
+      <button class="approve-button">Approve Selected</button>
+      <button class="reject-button">Reject Selected</button>
+      {/if}
+    </div>
+    {/if}
+    <div class="failing-feeds">
+      <h2>Failing feeds</h2>
+      <p>You have{if failing}{else} no{/if} failing feeds to attend to.</p>
+      {if failing}
+      <p>These blog feeds are currently failing. Note that this may be a temporary glitch: always do your homework before deleting a blog from {appName}</p>
+      <form action="/admin/deleteblogs" method="post"  class="blog-list">
+        {for blog in failing}
+        <input type="checkbox" name="{blog._id}" class="admin-checkbox"><a href="{blog.feed}">{blog.url}</a><br/>
+        {/for}
+        <input type="submit" id="deleteFailing" class="delete-button" value="Delete Selected">
+      </form>
+      {/if}
+    </div>
+    </section>
+  {>footer}
+{>foot}

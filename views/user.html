@@ -1,12 +1,12 @@
 {>head}
 	{>header}
 	<div class="main">
+    {if errors}
+      {for msg in errors}<div class="flash-error">{msg}</div>{/for}
+    {/if}
     {if new}
       <p>Welcome to {appName} - please fill in your details and save your profile to get started.</p>
     {else}
-      {if errors}
-        {for msg in errors}<div class="flash-error">{msg}</div>{/for}
-      {/if}
       {if warnings}
         {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
       {/if}
@@ -15,7 +15,7 @@
       {/if}
       <p>Welcome back to {appName}!</p>
     {/if}
-    {if admin}<button>Admin</button><br>{/if} <!--goes to new page - only appears if they are an admin (but other server-side checks prevent non-admins doing anything on this page) -->
+    {if admin}<a href="/admin">Admin</a><br>{/if} <!--goes to new page - only appears if they are an admin (but other server-side checks prevent non-admins doing anything on this page) -->
       <h2>Contacts</h2>
     {if new}
       <p>Your email address is required for logging in to your account, and contacting you about any account activity (e.g. your blog being approved). Your Twitter and Mastodon handles will be included in the tweet/toot when posting alerts about new blog posts.</p>
@@ -42,8 +42,11 @@
           <li>{blog.name} <button>Update</button><button>Delete</button></li>
         {/for}
       </ul>
-      {if legacy}<button>Claim Blog</button> <!--goes to new page-->{/if}
-      <button>Register Blog</button><br> <!--goes to new page-->
+      <form>
+        <input type="url" name="url" size="60">
+        <input type="submit" name="register" value="Register New Blog">
+        {if legacy}<input type="submit" name="claim" value="Claim Listed Blog">{/if}
+      </form>
     </div>
     {/if}
   </div>

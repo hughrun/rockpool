@@ -239,6 +239,19 @@ input[type="submit"].email-signup {
 	margin-top: 1em;
 }
 
+.blog-list {
+
+}
+
+.admin-checkbox {
+	margin-right: 2em;
+	width: 24px;
+}
+
+.delete-button {
+	margin-top: 2em
+}
+
 /* flash messages */
 
 .flash-success {

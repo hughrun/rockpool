@@ -30,5 +30,5 @@ TODO
 
 ---
 [Home](/) <br>
-[Installation](installation.md)
+[Installation](installation.md)<br>
 [Search](search.md)
