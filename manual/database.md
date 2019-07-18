@@ -8,8 +8,10 @@ A **user** is a person who interacts with the application in a way that requires
 
 | field | description   |
 | ---:  |   :---        |
-| _id   | `ObjectID` - assigned automatically by Mongo   |
+| _id   | `ObjectId` - assigned automatically by Mongo   |
 | email | `String` - a valid email address |
+| twitter | `String` - a twitter handle in the form _@username_, representing the user |
+| mastodon | `String` - a mastodon handle in the form _@user@example.com_, representing the user |
 | permission | `String` - One of _user_ or _admin_ |
 
 ## rp_blogs
@@ -18,11 +20,12 @@ A **blog** is any web resource with a valid RSS or Atom feed. The generally expe
 
 | field | description   |
 | ---:  |   :---        |
-| _id   | `ObjectID` - assigned automatically by Mongo   |
+| _id   | `ObjectId` - assigned automatically by Mongo   |
 | url   | `String` - a valid URL pointing to the 'homepage' of the resource - expected to point to an HTML file |
 | feed  | `String` - a valid URL pointing to an RSS or Atom feed in the form of an XML file |
 | category | `String` - which category has been assigned to the blog by the owner, using a list provided by the administrator of the particular Rockpool instance |
 | twHandle (_deprecated_) | `String` - a Twitter handle including the '@' symbol. This field only appears in legacy data that has been migrated from _CommunityTweets_, and is used in cases where there is no registered owner for a blog. |
+| claimedBy (_deprecated_) | `ObjectId` - the _id of a user 'claiming' the blog. Only used with legacy _CommunityTweets_ data. |
 | approved | `Boolean` - indicates whether the blog has been approved by an administrator |
 | announced | `Boolean` - indicates whether the blog has been 'announced' on Twitter and/or Mastodon |
 | failing | `Boolean` - indicates whether errors occurred on the last attempt to read the blog's feed |
@@ -33,7 +36,7 @@ An **article** is a standalone _item_ from an RSS/Atom feed, with its own URL. G
 
 | field | description   |
 | ---:  |   :---        |
-| _id   | `ObjectID` - assigned automatically by Mongo   |
+| _id   | `ObjectId` - assigned automatically by Mongo   |
 | link  | `String` - a valid URL pointing to the article. This is taken from the RSS/Atom feed |
 | author  | `String` -  Author of the article. This is taken from the RSS/Atom feed |
 | blogLink  | `String` - URL of the publication this article is a part of. This is taken from the RSS/Atom feed |
@@ -43,7 +46,7 @@ An **article** is a standalone _item_ from an RSS/Atom feed, with its own URL. G
 | tooted | `Object` - An object containing values for `date` (the last time a toot was posted about this article, stored as a UTC `Datetime`), and `times` (an `Integer` listing how many times the article has been tooted) |
 | tags  | `Array` - Metadata tags associated with this article, as an array of strings. This is taken from the _category_ element of the RSS/Atom feed |
 | blogTitle  | `String` - The title of the publication this article is a part of. This is taken from the RSS/Atom feed |
-| blog_id  | `ObjectID` - The `_id` of the parent **blog**. This is recorded so that articles can still be linked back to the parent blog regardless of whether URLs change |
+| blog_id  | `ObjectId` - The `_id` of the parent **blog**. This is recorded so that articles can still be linked back to the parent blog regardless of whether URLs change |
 
 ## rp_tags
 
@@ -51,7 +54,7 @@ A **tag** is a metadata string indicating a topic associated with one or more ar
 
 | field | description   |
 | ---:  |   :---        |
-| _id   | `ObjectID` - assigned automatically by Mongo   |
+| _id   | `ObjectId` - assigned automatically by Mongo   |
 | tag  | `String` - The tag text, e.g. "museums" |
 | total  | `Integer` - The total number of articles using this tag |
 
