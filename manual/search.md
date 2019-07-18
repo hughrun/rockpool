@@ -48,5 +48,7 @@ This changes `glamblogclub` and `#glamblogclub` to `glam blog club` before it is
 Both text searching and tag browsing can be filtered by publication date 'this month' or 'last month'. Simply run the query, then click on the relevant link above the search box. If there is no active query, Rockpool will return all articles with a publication date in the relevant month.
 
 ---
-[Home](/) <br>
-[Installation](installation.md)
+[Home](/)  
+[Database structure](database.md)  
+[Installation](installation.md)  
+[Search](search.md)  

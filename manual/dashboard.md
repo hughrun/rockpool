@@ -29,6 +29,7 @@ TODO
 TODO
 
 ---
-[Home](/) <br>
-[Installation](installation.md)<br>
-[Search](search.md)
+[Home](/)  
+[Database structure](database.md)  
+[Installation](installation.md)  
+[Search](search.md)  
