@@ -31,8 +31,14 @@
       <h2>Claimed Blogs</h2>
       <p>You have{if claimed}{else} no{/if} claimed blogs to attend to.</p>
       {for blog in claimed}
-      <div class="blog-list">
-        {blog.url} - claimed by {blog.claimedByName}
+      <div class="blog-list" name="{blog.idString}">
+        <div class="claimed-blog">{blog.url}</div>
+        <div class="claimer-info">
+          <div>Claimed by:</div>
+          <div>{blog.claimerEmail}</div>
+          <div>{blog.claimerTwitter}</div>
+          <div>{blog.claimerMastodon}</div>
+        </div>
       </div>
       {/for}
       {if claimed}
@@ -48,7 +54,7 @@
       <p>These blog feeds are currently failing. Note that this may be a temporary glitch: always do your homework before deleting a blog from {appName}</p>
       <form action="/admin/deleteblogs" method="post"  class="blog-list">
         {for blog in failing}
-        <input type="checkbox" name="{blog._id}" class="admin-checkbox"><a href="{blog.feed}">{blog.url}</a><br/>
+        <input type="checkbox" name="{blog.idString}" class="admin-checkbox"><a href="{blog.feed}">{blog.url}</a><br/>
         {/for}
         <input type="submit" id="deleteFailing" class="delete-button" value="Delete Selected">
       </form>
