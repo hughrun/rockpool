@@ -44,7 +44,6 @@ const migrateUsers = new Promise( function (resolve, reject) {
 // Potentially we now have some duplicate users (pocket and blog owners)
 // However using the email address as a primary identifier, this should be no problem for blogs
 // And solvable for pocket accounts
-
 const migratePockets = new Promise( function (resolve, reject) {
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
     assert.strictEqual(null, err);
@@ -103,7 +102,6 @@ Promise.all([migrateUsers, migratePockets]).then(x => {
 })
 
 // TAGS
-
 const prepareTags = new Promise( function (resolve, reject) {
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
     assert.strictEqual(null, err)
@@ -145,7 +143,6 @@ function migrateTags(records) {
 }
 
 // BLOGS
-
 const prepareBlogs = new Promise( function (resolve, reject) {
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
     assert.strictEqual(null, err)
@@ -193,8 +190,6 @@ function migrateBlogs(records) {
 }
 
 // ARTICLES
-// NOTE: run this AFTER blogs migration
-
 const prepareArticles = new Promise( function (resolve, reject) {
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
     assert.strictEqual(null, err)
@@ -206,7 +201,6 @@ const prepareArticles = new Promise( function (resolve, reject) {
         delete entry.categories; // rename 'categories' field name to 'tags' for consistency
         entry.blogTitle = entry.blog;
         delete entry.blog; // rename 'blog' to 'blogTitle'
-
         // strip any queries in blogLink url
         // i.e. http://url.com/@user?strip-this-out-including-question-mark)
         const regex = /([^?]*)+(\?)?(.*)/ig;
@@ -295,43 +289,3 @@ prepareArticles.then(LinkArticlesToBlogs)
   .catch(error => {
     debug.log(error)
   })
-
-// TWEETS
-// do not migrate
-
-// UBLOGS
-// do not migrate
-
-// NOTE: if you use mongodump with the --collection flag to specify only the collections we want
-// you can avoid having to subsequently dump collections we never needed
-
-  // NOTES FOR OTHER FUNCTIONALITY
-
-// TODO: migration instructions should simply say deal with any unapproved blogs before migrating,
-// to make things simpler
-
-// ** linking blogs to owners
-// link to owner on _id and use this for finding the social media accounts to mention
-// i.e. the blog _id is listed in the user account once verified (array)
-// and we check for ownership to grab their twitter and mastodon names
-
-// ** claiming blogs
-// this should just alert an admin and then you can check it out and decided whether it's legit
-
-// NOTE: blogs already listed mostly have a twitter account already listed
-// there needs to be backwards-compatibility so that the announce function uses the owner's twitter
-// but falls back to the blog's twitter account listed on the blog itself if there is no verified owner
-// if not twitter at all, use article author
-
-// add a guid field to articles on ingest to avoid doubling up on ingest when post URLs are updated
-// i.e. upsert the article lookig for a guid match, rather than inserting
-// guid is the url if there is nothing else?
-
-// link articles to blog using blog _id (i.e. article.blog_id) 
-// so that if the blog URL changes we can still track it's the same blog
-// when ingesting we already have access to the blog _id when iterating
-// NOTE: is this a browse feature to add?
-
-// NOTE: if you migrate pockets and then test pocket, it will send to everyone on the list
-// with an email address so don't test until absolutely sure!
-// TODO: update users collection to drop out everyone except hugh for testing
