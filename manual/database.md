@@ -41,7 +41,7 @@ An **article** is a standalone _item_ from an RSS/Atom feed, with its own URL. G
 | title  | `String` - Title of the article. This is taken from the RSS/Atom feed |
 | tweeted  | `Object` - An object containing values for `date` (the last time a tweet was posted about this article, stored as a UTC `Datetime`), and `times` (an `Integer` listing how many times the article has been tweeted) |
 | tooted | `Object` - An object containing values for `date` (the last time a toot was posted about this article, stored as a UTC `Datetime`), and `times` (an `Integer` listing how many times the article has been tooted) |
-| tags  | `Array` - Metadata tags associated with this article. This is taken from the _category_ element of the RSS/Atom feed |
+| tags  | `Array` - Metadata tags associated with this article, as an array of strings. This is taken from the _category_ element of the RSS/Atom feed |
 | blogTitle  | `String` - The title of the publication this article is a part of. This is taken from the RSS/Atom feed |
 | blog_id  | `ObjectID` - The `_id` of the parent **blog**. This is recorded so that articles can still be linked back to the parent blog regardless of whether URLs change |
 
