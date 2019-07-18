@@ -10,7 +10,8 @@ const app = express(); // create local instance of express
 const engines = require('consolidate') // use consolidate with whiskers template engine
 const axios = require('axios') // for requesting web resources
 const db = require('./lib/queries.js') // local database queries module
-const users = require('./lib/users.js') // local database queries module
+const rpUsers = require('./lib/users.js') // local database updates module
+const rpBlogs = require('./lib/blogs.js') // local database updates module
 const feedFinder = require('./lib/feed-finder.js') // local feed-finder module
 const debug = require('debug'), name = 'Rockpool' // debug for development
 const session = require('express-session') // sessions so people can log in
@@ -244,7 +245,7 @@ app.get('/token-sent', function(req, res) {
 // user dashboard
 app.get('/user',
   passwordless.restricted({ failureRedirect: '/letmein' }),
-  (req, res) => users.getUserDetails(req.session.passwordless)
+  (req, res) => db.getUserDetails(req.session.passwordless)
   .then(
     doc => {
       if (!doc.blogs || doc.blogs.length < 1) {
@@ -318,8 +319,8 @@ app.post('/update-user',
     },
     function(req, res, next) {
     // here we need to check for other users with the same email
-      users.checkEmailIsUnique(req.body)
-        .then(users.updateUserDetails)
+      db.checkEmailIsUnique(req.body)
+        .then(rpUsers.updateUserDetails)
         .then(() => {
           debug.log('user updated')
           if (req.body.email != req.session.passwordless) {
@@ -350,7 +351,30 @@ app.post('/update-user',
 
 // TODO: register blog
 
-// TODO: claim blog
+// TODO: claim blog (see update user)
+
+app.post('/claim-blog', 
+  function(req, res, next) {
+    var args = {}
+    args.query = { "url" : req.body.url}
+    args.user = req.body.user
+    db.getBlogs(args).then(rpUsers.claimBlog).then( () => {
+      req.flash('success', 'Claimed Blog')
+      next()
+    }).catch( e => {
+      debug.log('**ERROR CLAIMING BLOG**')
+      debug.log(e)
+      req.flash('error', `Something went wrong claiming your blog: ${e}`)
+      next()
+    })
+  }, 
+  function(req, res) {
+    res.redirect('/user')
+  })
+
+      // no need to normalise because we're pulling the data from hidden inputs
+      // call rpBlogs.claimBlog
+      // then return to user page
 
 // TODO: delete (own) blog
 
@@ -375,7 +399,7 @@ app.post('/update-user',
 app.all('/admin*',
   passwordless.restricted({ failureRedirect: '/letmein' }),
   (req, res, next) =>
-    users.getUserDetails(req.session.passwordless)
+    db.getUserDetails(req.session.passwordless)
     .then( doc => {
         if (doc.user.permission && doc.user.permission === "admin") {
           next()
@@ -394,7 +418,7 @@ app.all('/admin*',
 
 // admin home page
 app.get('/admin', function (req, res) {
-  users.getUserDetails(req.session.passwordless)
+  db.getUserDetails(req.session.passwordless)
       .then( function (user) {
         return db.getBlogs({user: user, query: {failing: true}}) // get failing blogs
       })

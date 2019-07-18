@@ -30,20 +30,23 @@
     <div class="claimed-blogs">
       <h2>Claimed Blogs</h2>
       <p>You have{if claimed}{else} no{/if} claimed blogs to attend to.</p>
+      {if claimed}
       {for blog in claimed}
       <div class="blog-list" name="{blog.idString}">
-        <div class="claimed-blog">{blog.url}</div>
+        <div class="claimed-blog"><a href="{blog.url}">{blog.url}</a></div>
         <div class="claimer-info">
+          {if blog.owner}<div class="flash-warning">This blog is already owned by {blog.ownerEmail}</div>{/if}
           <div>Claimed by:</div>
           <div>{blog.claimerEmail}</div>
           <div>{blog.claimerTwitter}</div>
           <div>{blog.claimerMastodon}</div>
         </div>
       </div>
+      <input type="hidden" name="user" value="blog.claimerIdString">
+      <input type="hidden" name="blog" value="blog.IdString">
+      <input type="submit" class="approve-button">Approve Claim</input>
+      <button class="reject-button">Reject Claim</button>
       {/for}
-      {if claimed}
-      <button class="approve-button">Approve Selected</button>
-      <button class="reject-button">Reject Selected</button>
       {/if}
     </div>
     {/if}
