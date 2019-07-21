@@ -13,6 +13,8 @@ A **user** is a person who interacts with the application in a way that requires
 | twitter | `String` - a twitter handle in the form _@username_, representing the user |
 | mastodon | `String` - a mastodon handle in the form _@user@example.com_, representing the user |
 | permission | `String` - One of _user_ or _admin_ |
+| blogs | `Array` - an array of blog _\_ids_ owned by this user |
+| blogsForApproval | `Array` - an array of blog _\_ids_ registered or claimed (for legacy DB) by this user, awaiting approval by an administrator |
 
 ## rp_blogs
 
@@ -25,7 +27,6 @@ A **blog** is any web resource with a valid RSS or Atom feed. The generally expe
 | feed  | `String` - a valid URL pointing to an RSS or Atom feed in the form of an XML file |
 | category | `String` - which category has been assigned to the blog by the owner, using a list provided by the administrator of the particular Rockpool instance |
 | twHandle (_deprecated_) | `String` - a Twitter handle including the '@' symbol. This field only appears in legacy data that has been migrated from _CommunityTweets_, and is used in cases where there is no registered owner for a blog. |
-| claimedBy (_deprecated_) | `ObjectId` - the _id of a user 'claiming' the blog. Only used with legacy _CommunityTweets_ data. |
 | approved | `Boolean` - indicates whether the blog has been approved by an administrator |
 | announced | `Boolean` - indicates whether the blog has been 'announced' on Twitter and/or Mastodon |
 | failing | `Boolean` - indicates whether errors occurred on the last attempt to read the blog's feed |

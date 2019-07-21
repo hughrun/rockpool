@@ -19,7 +19,7 @@ Work In Progress: **Definitely not production-ready yet!**
 ## Documentation
 
 1. [Installation](manual/installation.md)
-2. [Database structure](database.md)  
+2. [Database structure](manual/database.md)  
 3. [Searching](manual/search.md)
 4. [User dashboard](manual/dashboard.md)
 

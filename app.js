@@ -342,7 +342,6 @@ app.post('/update-user',
     },
     function(req, res, next) {
     // here we need to check for other users with the same email
-    // BUG: this doesn't work if we're registering for the first time!
       db.checkEmailIsUnique(req.body)
         .then(rpUsers.updateUserDetails)
         .then(() => {
