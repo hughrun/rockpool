@@ -36,23 +36,19 @@
     </form>
     {if not new}
     <div>
-            <!-- TODO: need to retrive blog information when rendering this page -->
       <h2>Blogs</h2>
-      {if user.claimedBlogs}
-      <h3>Claimed</h3>
+      {if blogs}
       <ul>
-      {for blog in user.claimedBlogs}
-        <li>{blog}</li>
-      {/for}
-      </ul>
-      {/if}
-      {if user.blogs}
-      <h3>Approved</h3>
-      <ul> <!--update will re-fetch the blog info to update the DB, delete will only delete the listing, not any articles-->
-        {for blog in user.blogs}
-          <li>{blog.name} <button>Update</button><button>Delete</button></li>
+        {for blog in blogsForApproval}
+          <li>{blog.url} - awaiting approval</li>
+        {/for}
+ <!--update will re-fetch the blog info to update the DB, delete will only delete the listing, not any articles-->
+        {for blog in ownedBlogs}
+          <li>{blog.url} <button>Update</button><button>Delete</button></li>
         {/for}
       </ul>
+      {else}
+      <div>You currently have no registered{if legacy} or claimed{/if} blogs.</div>
       {/if}
       <form action="/register-blog" method="post">
         <input type="url" name="url" size="60">

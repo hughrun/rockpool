@@ -14,6 +14,7 @@ const rpUsers = require('./lib/users.js') // local database updates module
 const rpBlogs = require('./lib/blogs.js') // local database updates module
 const feedFinder = require('./lib/feed-finder.js') // local feed-finder module
 const debug = require('debug'), name = 'Rockpool' // debug for development
+const clipboardy = require('clipboardy') // write to and from clipboard (for development)
 const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
 const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // for creating and storing passwordless tokens
@@ -83,9 +84,9 @@ passwordless.addDelivery('email',
 // passwordless for dev (bypass email)
 passwordless.addDelivery('browser',
   function(tokenToSend, uidToSend, recipient, callback, req) {
-    var address = settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid='
-    + encodeURIComponent(uidToSend)
-    debug.log(address)
+    var address = settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)
+    clipboardy.writeSync(address)
+    debug.log("link copied to clipboard")
     callback(null, recipient)
   })
 
@@ -245,10 +246,29 @@ app.get('/token-sent', function(req, res) {
 // user dashboard
 app.get('/user',
   passwordless.restricted({ failureRedirect: '/letmein' }),
-  (req, res) => db.getUserDetails(req.session.passwordless)
+  (req, res) => db.getUserDetails(req.session.passwordless) // get user
+  .then( // here we query any blogs in user.blogs or user.blogsForApproval to reduce the number of DB calls
+    doc => {
+      doc.query = {"_id": {$in: doc.user.blogsForApproval}}
+      return doc
+    })
+  .then(db.getBlogs) // get blogs for approval
+  .then( 
+    doc => {
+      doc.blogsForApproval = doc.blogs
+      doc.query = {"_id": {$in: doc.user.blogs}}
+      return doc
+  })
+  .then(db.getBlogs) // get owned blogs
+  .then( 
+    doc => {
+      doc.ownedBlogs = doc.blogs
+      doc.blogs = doc.blogs.concat(doc.blogsForApproval)
+      return doc
+  })
   .then(
     doc => {
-      if (!doc.blogs || doc.blogs.length < 1) {
+      if (!doc.user.blogs || doc.user.blogs.length < 1) {
         req.flash('warning', 'You have not registered a blog yet')
         return doc
       }
@@ -264,6 +284,9 @@ app.get('/user',
     user: doc.user,
     admin: doc.user.permission === "admin",
     new: doc.new,
+    blogs: doc.blogs,
+    ownedBlogs: doc.ownedBlogs,
+    blogsForApproval: doc.blogsForApproval,
     legacy: settings.legacy_db,
     warnings: req.flash('warning'),
     success: req.flash('success'),
@@ -319,6 +342,7 @@ app.post('/update-user',
     },
     function(req, res, next) {
     // here we need to check for other users with the same email
+    // BUG: this doesn't work if we're registering for the first time!
       db.checkEmailIsUnique(req.body)
         .then(rpUsers.updateUserDetails)
         .then(() => {
@@ -333,11 +357,11 @@ app.post('/update-user',
         .catch(err => {
           if (err.type == 'duplicateUser') {
             debug.log('email is already in use')
-            req.flash("warning", "That email address is already in use")
+            req.flash("error", "That email address is already in use")
             next()
           } else {
             debug.log(err)
-            req.flash("warning", "Sorry, something went wrong")
+            req.flash("error", "Sorry, something went wrong")
             next()
           }
         })
@@ -358,7 +382,10 @@ app.post('/claim-blog',
     var args = {}
     args.query = { "url" : req.body.url}
     args.user = req.body.user
-    db.getBlogs(args).then(rpUsers.claimBlog).then( () => {
+    args.action = "register"
+    db.getBlogs(args)
+      .then(rpUsers.updateBlog)
+      .then( () => {
       req.flash('success', 'Claimed Blog')
       next()
     }).catch( e => {
@@ -395,6 +422,14 @@ app.post('/claim-blog',
     - send emails to users when appropriate
 */
 
+// approve blogs
+app.post('/approve-blog', 
+  (req, res, next) => 
+    rpBlogs.approveBlog(req.body)
+      .then(rpUsers.removeBlogFromApprovals)
+      .then() // TODO: finish this
+  )
+
 // restrict all admin paths
 app.all('/admin*',
   passwordless.restricted({ failureRedirect: '/letmein' }),
@@ -422,8 +457,30 @@ app.get('/admin', function (req, res) {
       .then( function (user) {
         return db.getBlogs({user: user, query: {failing: true}}) // get failing blogs
       })
-    //.then() // get all unapproved blogs
-    //.then() // get all claimed blogs
+    //.then() // TODO: // get all claimed blogs
+    .then( 
+      doc => {
+        doc.failing = doc.blogs
+        doc.query = {$where: "this.blogsForApproval && this.blogsForApproval.length > 0"}
+        return doc
+    })
+    .then(db.getUsers)
+    .then( 
+      doc => {
+        // find the claimed blogs from the users
+        // mapping the array returns a Promise for each item in the array
+        // so we eed to return Promise.all() to get a result
+        var mapped = doc.users.map( user => {
+          return db.getBlogs({query: {_id: {$in: user.blogsForApproval}}}).then( blogs => {
+            user.claims = blogs
+            return user
+          })
+        })
+        return Promise.all(mapped).then(updated => {
+          doc.users = updated
+          return doc
+        })
+    }) // TODO: then get all unapproved blogs!
       .then( args =>
       res.render('admin', {
         partials: {
@@ -433,8 +490,9 @@ app.get('/admin', function (req, res) {
           footer: __dirname+'/views/partials/footer.html'
         },
         user: args.user,
-        failing: args.blogs,
+        failing: args.failing,
         legacy: settings.legacy_db,
+        approvals: args.users,
         warnings: req.flash('warning'),
         success: req.flash('success'),
         errors: req.flash('error')
@@ -442,16 +500,35 @@ app.get('/admin', function (req, res) {
     ).catch(err => {debug.log(err)})
 })
 
-// post admin/deleteblogs
-app.post('/admin/deleteblogs', function(req, res) {
+// post admin/deleteblog
+app.post('/admin/deleteblog', function(req, res) {
   body().exists({checkNull: true}) // make sure there's a value
   if (validationResult(req).isEmpty()) {
-    db.deleteBlogs(req.body).then( () => {
-      res.redirect('/admin')
-    }).catch(err => {
-      req.flash('error', err)
-      res.redirect('/admin')
-    })
+    const args = {}
+    args.action = "delete"
+    args.blog = req.body.id
+    db.getUsers({"blogs" : req.body.id}) // get the user with this blog in their 'blogs' array
+      .then( vals => {
+        if (vals[0]) { // if this is a legacy DB there may be no users with this blog listed
+          args.user = vals[0]._id
+          rpUsers.updateBlog(args) // remove the blog _id from the owner's 'blogs' array
+            .then( args => {
+              return args
+            })
+        } else {
+          return args // for legacy DB entry with no blog owner simply skip this step
+        }
+      })
+      .then(rpBlogs.deleteBlog) // delete the document from the blogs collection
+      .then( () => {
+        req.flash('success', 'Blog deleted')
+        res.redirect('/admin')
+      }).catch(err => {
+        const msg = err ? typeof err === String : "Something went wrong whilst deleting 😯"
+        debug.log(err)
+        req.flash('error', msg)
+        res.redirect('/admin')
+      })
   } else {
     let valArray = validationResult(req).array()
     debug.log(valArray)

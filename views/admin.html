@@ -12,55 +12,53 @@
     {/if}
 
     <section class="main">
-    <div class="unapproved-blogs">
+    <div>
       <h2>Awaiting Approval</h2>
-      <p>You have{if unapproved}{else} no{/if} unapproved blogs to attend to.</p>
-      <div class="blog-list">
-        {for blog in unapproved}
-        <a href="{blog.url}">{blog.url}</a>
-        {/for}
-        {if unapproved}
-        <button class="approve-button">Approve Selected</button>
-        <button class="reject-button">Reject Selected</button>
-        {/if}
-      </div>
-
-    </div>
-    {if legacy}
-    <div class="claimed-blogs">
-      <h2>Claimed Blogs</h2>
-      <p>You have{if claimed}{else} no{/if} claimed blogs to attend to.</p>
-      {if claimed}
-      {for blog in claimed}
-      <div class="blog-list" name="{blog.idString}">
-        <div class="claimed-blog"><a href="{blog.url}">{blog.url}</a></div>
-        <div class="claimer-info">
-          {if blog.owner}<div class="flash-warning">This blog is already owned by {blog.ownerEmail}</div>{/if}
-          <div>Claimed by:</div>
-          <div>{blog.claimerEmail}</div>
-          <div>{blog.claimerTwitter}</div>
-          <div>{blog.claimerMastodon}</div>
-        </div>
-      </div>
-      <input type="hidden" name="user" value="blog.claimerIdString">
-      <input type="hidden" name="blog" value="blog.IdString">
-      <input type="submit" class="approve-button">Approve Claim</input>
-      <button class="reject-button">Reject Claim</button>
-      {/for}
+      {if approvals}
+      <div class="flash-warning">You have blog {if legacy}claims or {/if}approvals to deal with</div>
+      {else}
+      <div>There are no blogs awaiting approval.</div>
       {/if}
+      {for user in approvals}
+      <div class="claimed-blogs">
+        <div><strong>Email:</strong> <a href="mailto:{user.email}">{user.email}</a></div>
+        <div><strong>Twitter:</strong> <a href="https://twitter.com/{user.twitter}">{user.twitter}</a></div>
+        <div><strong>Mastodon:</strong> {user.mastodon}</div>
+        <div><strong>Claiming:</strong></div>
+          <ul class="blog-list">
+            {for blog in user.claims.blogs}
+            <li>
+              <form>
+                <a href="{blog.url}">{blog.url}</a>
+                <input type="hidden" name="user" value="{user._id}">
+                <input type="hidden" name="blog" value="{blog._id}">
+                <input type="submit" class="approve-button" value="Approve">
+                <input type="submit" class="reject-button" value="Reject">
+              </form>
+            </li>
+            {/for}
+          </ul>
+      </div>
+      {/for}
     </div>
-    {/if}
     <div class="failing-feeds">
       <h2>Failing feeds</h2>
-      <p>You have{if failing}{else} no{/if} failing feeds to attend to.</p>
+      {if failing}
+      <div class="flash-warning">You have failing feeds to attend to</div>
+      {else}
+      <div>You have no failing feeds to attend to.</div>
+      {/if}
+      
       {if failing}
       <p>These blog feeds are currently failing. Note that this may be a temporary glitch: always do your homework before deleting a blog from {appName}</p>
-      <form action="/admin/deleteblogs" method="post"  class="blog-list">
-        {for blog in failing}
-        <input type="checkbox" name="{blog.idString}" class="admin-checkbox"><a href="{blog.feed}">{blog.url}</a><br/>
-        {/for}
-        <input type="submit" id="deleteFailing" class="delete-button" value="Delete Selected">
-      </form>
+      {for blog in failing}
+        <form action="/admin/deleteblog" method="post" class="blog-list">
+          <!-- TODO: these need to be deleted one by one so we can update each user before deleting the blog -->
+          <a href="{blog.feed}">{blog.url}</a>
+          <input type="hidden" name="id" value={blog.idString} class="admin-checkbox">
+          <input type="submit" id="deleteFailing" class="delete-button" value="Delete">
+        </form>
+      {/for}
       {/if}
     </div>
     </section>

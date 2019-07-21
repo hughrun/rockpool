@@ -208,12 +208,12 @@ input[type="submit"].email-signup {
 
 .top-tag {
   font-family: "Helsinki";
-	display: inline-block;
-	font-size: 0.85em;
+  display: inline-block;
+  font-size: 0.85em;
   border: 1px solid #ff748c;
-	border-radius: 5px;
+  border-radius: 5px;
   background: #fff;
-	margin: 2px 1px;
+  margin: 2px 1px;
   padding: 0.5em;
 }
 
@@ -239,8 +239,14 @@ input[type="submit"].email-signup {
 	margin-top: 1em;
 }
 
-.blog-list {
+.claimed-blogs {
+	border: 1px solid #3a3a3a;
+	border-radius: 5px;
+	padding: 1em;
+}
 
+.blog-list {
+	list-style: none;
 }
 
 .admin-checkbox {
