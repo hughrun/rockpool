@@ -1,18 +1,17 @@
 {>head}
   {>header}
 
-    {if errors}
-      {for msg in errors}<div class="flash-error">{msg}</div>{/for}
-    {/if}
-    {if warnings}
-      {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
-    {/if}
-    {if success}
-      {for msg in success}<div class="flash-success">{msg}</div>{/for}
-    {/if}
-
+  
     <section class="main">
-    <div>
+      {if errors}
+      {for msg in errors}<div class="flash-error">{msg}</div>{/for}
+      {/if}
+      {if warnings}
+        {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
+      {/if}
+      {if success}
+        {for msg in success}<div class="flash-success">{msg}</div>{/for}
+      {/if}
       <h2>Awaiting Approval</h2>
       {if approvals}
       <div class="flash-warning">You have blog {if legacy}claims or {/if}approvals to deal with</div>
@@ -60,7 +59,6 @@
         </form>
       {/for}
       {/if}
-    </div>
     </section>
   {>footer}
 {>foot}

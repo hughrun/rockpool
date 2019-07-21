@@ -268,10 +268,10 @@ app.get('/user',
   })
   .then(
     doc => {
-      if (!doc.user.blogs || doc.user.blogs.length < 1) {
+      if (!doc.blogs || doc.blogs.length < 1) {
         req.flash('warning', 'You have not registered a blog yet')
-        return doc
       }
+      return doc
     })
     .then(
     doc => res.render('user', {
