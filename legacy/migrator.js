@@ -201,11 +201,6 @@ const prepareArticles = new Promise( function (resolve, reject) {
         delete entry.categories; // rename 'categories' field name to 'tags' for consistency
         entry.blogTitle = entry.blog;
         delete entry.blog; // rename 'blog' to 'blogTitle'
-        // strip any queries in blogLink url
-        // i.e. http://url.com/@user?strip-this-out-including-question-mark)
-        const regex = /([^?]*)+(\?)?(.*)/ig;
-        const url = regex.exec(entry.blogLink);
-        entry.blogLink = url[1]
         return entry // return the amended record
       }).toArray(function(err, docs) {
         assert.equal(null, err)
