@@ -17,6 +17,7 @@ const debug = require('debug'), name = 'Rockpool' // debug for development
 const clipboardy = require('clipboardy') // write to and from clipboard (for development)
 const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
+const {ObjectId} = require('mongodb') // for mongo IDs
 const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // for creating and storing passwordless tokens
 // TODO: do passwordless-mongostore-bcrypt.js properly as a new npm module
 const email   = require('emailjs') // to send email from the server
@@ -64,14 +65,12 @@ passwordless.init(new MongoStore(pathToMongoDb)) // initiate store
 passwordless.addDelivery('email',
 	function(tokenToSend, uidToSend, recipient, callback, req) {
     var message =  {
-			text: 'Hello!\nAccess your account here: ' + settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid='
-			+ encodeURIComponent(uidToSend),
+			text: 'Hello!\nAccess your account here: ' + settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend),
 			from: `${settings.app_name} <${settings[env].email.from}>`,
 			to: recipient,
       subject: 'Log in to ' + settings.app_name,
       attachment: [
-        {data: `<html><p>Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please <a href="${settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid='
-        + encodeURIComponent(uidToSend)}">log in in</a> now.</p><p>If it wasn't you, simply delete this email.</p></html>`, alternative: true}
+        {data: `<html><p>Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please <a href="${settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)}">log in in</a> now.</p><p>If it wasn't you, simply delete this email.</p></html>`, alternative: true}
       ]
     }
     smtpServer.send(message,
@@ -327,7 +326,6 @@ app.post('/update-user',
     ],
     (req, res, next) => {
       debug.log('User details: %O', req.body)
-      debug.log(validationResult(req).array())
       if (!validationResult(req).isEmpty()) {
         // flash errors
         let valArray = validationResult(req).array()
@@ -421,14 +419,6 @@ app.post('/claim-blog',
     - send emails to users when appropriate
 */
 
-// approve blogs
-app.post('/approve-blog', 
-  (req, res, next) => 
-    rpBlogs.approveBlog(req.body)
-      .then(rpUsers.removeBlogFromApprovals)
-      .then() // TODO: finish this
-  )
-
 // restrict all admin paths
 app.all('/admin*',
   passwordless.restricted({ failureRedirect: '/letmein' }),
@@ -439,7 +429,7 @@ app.all('/admin*',
           next()
         } else {
           req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
-          res.status(403) // NOTE: I don't really know what this will effectively do: needs testing
+          res.status(403) // NOTE: I don't really know what this will effectively do: needs TESTING
           res.redirect('/user')
         }
       })
@@ -479,7 +469,7 @@ app.get('/admin', function (req, res) {
           doc.users = updated
           return doc
         })
-    }) // TODO: then get all unapproved blogs!
+    })
       .then( args =>
       res.render('admin', {
         partials: {
@@ -536,7 +526,63 @@ app.post('/admin/deleteblog', function(req, res) {
   }
 })
 
-//admin/confirm?action=action&id=id ?
+// approve blog
+app.post('/admin/approve-blog', function(req, res, next) {
+  rpBlogs.approveBlog(req.body)
+    .then(rpUsers.updateBlog)
+    .then( () => {
+      req.flash('success', 'Blog approved')
+      return next()
+    })
+    .catch( error => {
+      debug.log(error)
+      req.flash('error', 'Something went wrong approving the blog')
+      return next()
+    })
+},
+function (req, res, next) {
+  res.redirect('/admin')
+})
+
+// reject blog
+app.post('/admin/reject-blog', function(req, res, next) {
+  const args = req.body
+  args.action = "reject"
+  rpUsers.updateBlog(args)
+    .then( args => {
+      args.query = {"_id" : ObjectId(args.blog)}
+      return args
+    })
+    .then(db.getBlogs)
+    .then( args => {
+      debug.log(args)
+      if (args.blogs[0] && args.blogs[0].approved) {
+        // if approved is true then the blog is a legacy one and this is a 'claim'
+        // rather than a new registration, so we do NOT want to delete it!
+        return args
+      } else {
+        // rpBlogs.deleteBlog(args)
+        // .then( doc => {
+        //   return args
+        // })
+        debug.log("the blog would be deleted")
+      }
+    })
+    .then( () => {
+      req.flash('success', 'Blog rejected')
+      return next()
+    })
+    .catch( error => {
+      debug.log(error)
+      req.flash('error', 'Something went wrong rejecting the blog')
+      return next()
+    })
+},
+function (req, res, next) {
+  res.redirect('/admin')
+})
+
+// END admin paths
 
 // logout
 app.get('/logout',
@@ -545,7 +591,7 @@ app.get('/logout',
 		res.redirect('/')
 })
 
-// email-updated
+// email-updated to log out users who change their email address
 app.get('/email-updated',
   passwordless.logout(), // force logout
 	function(req, res) {

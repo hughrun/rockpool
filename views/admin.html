@@ -27,12 +27,12 @@
           <ul class="blog-list">
             {for blog in user.claims.blogs}
             <li>
-              <form>
+              <form method="post">
                 <a href="{blog.url}">{blog.url}</a>
                 <input type="hidden" name="user" value="{user._id}">
                 <input type="hidden" name="blog" value="{blog._id}">
-                <input type="submit" class="approve-button" value="Approve">
-                <input type="submit" class="reject-button" value="Reject">
+                <input type="submit" class="approve-button" formaction="/admin/approve-blog" value="Approve">
+                <input type="submit" class="reject-button" formaction="/admin/reject-blog" value="Reject">
               </form>
             </li>
             {/for}
