@@ -8,18 +8,17 @@ const path = require('path') // nodejs native package
 const express = require('express') // express
 const app = express(); // create local instance of express
 const engines = require('consolidate') // use consolidate with whiskers template engine
-const axios = require('axios') // for requesting web resources
 const db = require('./lib/queries.js') // local database queries module
 const rpUsers = require('./lib/users.js') // local database updates module
 const rpBlogs = require('./lib/blogs.js') // local database updates module
+// TODO: change this to the proper package where it needs to be
 const feedFinder = require('./lib/feed-finder.js') // local feed-finder module
 const debug = require('debug'), name = 'Rockpool' // debug for development
 const clipboardy = require('clipboardy') // write to and from clipboard (for development)
 const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
 const {ObjectId} = require('mongodb') // for mongo IDs
-const MongoStore = require('/Users/hugh/coding/javascript/passwordless-mongostore') // for creating and storing passwordless tokens
-// TODO: do passwordless-mongostore-bcrypt.js properly as a new npm module
+const MongoStore = require('passwordless-mongostore-bcryptjs') // for creating and storing passwordless tokens
 const email   = require('emailjs') // to send email from the server
 var cookieParser = require('cookie-parser') // cookies
 var sessionStore = new session.MemoryStore // cookie storage
@@ -85,7 +84,7 @@ passwordless.addDelivery('browser',
   function(tokenToSend, uidToSend, recipient, callback, req) {
     var address = settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)
     clipboardy.writeSync(address)
-    debug.log("link copied to clipboard")
+    debug.log("Login link copied to clipboard")
     callback(null, recipient)
   })
 
@@ -194,18 +193,21 @@ app.get('/subscribe', function (req, res) {
 })
 
 /* GET login screen. */
-// TODO: redirect this to /user if they *are* logged in
 app.get('/letmein', function(req, res) {
-  res.render('login', {
-    partials: {
-      head: __dirname+'/views/partials/head.html',
-      header: __dirname+'/views/partials/header.html',
-      foot: __dirname+'/views/partials/foot.html',
-      footer: __dirname+'/views/partials/footer.html'
-    },
-    user: req.session.passwordless,
-    delivery: settings[env].deliver_tokens_by // allows bypassing email when in development
-  })
+  if (req.session.passwordless) {
+    res.redirect('/user')
+  } else {
+    res.render('login', {
+      partials: {
+        head: __dirname+'/views/partials/head.html',
+        header: __dirname+'/views/partials/header.html',
+        foot: __dirname+'/views/partials/foot.html',
+        footer: __dirname+'/views/partials/footer.html'
+      },
+      user: req.session.passwordless,
+      delivery: settings[env].deliver_tokens_by // allows bypassing email when in development
+    })
+  }
 })
 
 /* POST login email address */
@@ -446,7 +448,6 @@ app.get('/admin', function (req, res) {
       .then( function (user) {
         return db.getBlogs({user: user, query: {failing: true}}) // get failing blogs
       })
-    //.then() // TODO: // get all claimed blogs
     .then( 
       doc => {
         doc.failing = doc.blogs
@@ -560,7 +561,7 @@ app.post('/admin/reject-blog', function(req, res, next) {
         // if approved is true then the blog is a legacy one and this is a 'claim'
         // rather than a new registration, so we do NOT want to delete it!
         return args
-      } else {
+      } else { // TESTING
         // rpBlogs.deleteBlog(args)
         // .then( doc => {
         //   return args
