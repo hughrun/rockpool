@@ -107,6 +107,7 @@ app.use(express.static(__dirname + '/public')) // serve static files from 'publi
 app.use(flash()) // use flash messages
 
 // locals (global values for all routes)
+// TODO: make this an object
 app.locals.pageTitle = settings.app_name
 app.locals.appName = settings.app_name
 app.locals.appTagline = settings.app_tagline
@@ -115,6 +116,7 @@ app.locals.orgName = settings.org_name
 app.locals.orgUrl = settings.org_url
 app.locals.blogClub = settings.blog_club_name
 app.locals.blogClubUrl = settings.blog_club_url
+app.locals.blogCategories = settings.blog_categories
 
 /*  ######################################
     ###              routes            ###
@@ -377,11 +379,40 @@ app.post('/update-user',
 
 // TODO: register blog
 
-app.post('/user/register-blog')
-/* feedfinder.getFeed()
-      .then(rpBlogs.registerBlog)
-      .then(rpUser.registerBlog)
-*/
+app.post('/user/register-blog',
+  function(req, res, next) {
+    feedfinder.getFeed(req.body.url)
+    .then( ff => {
+      const args = req.body
+      args.feed = ff.feed // add the feed to the form data object
+      args.action = "register" // this is used in rpUsers.updateBlog
+      args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
+      args.query = {url: args.url} // for checking whether the blog is already registered
+      return args
+    })
+    .then(db.getBlogs)
+    .then( args => { // check the blog isn't already registered
+      if (args.blogs.length < 1) {
+        return args
+      } else {
+        throw new Error("That blog is already registered!")
+      }
+    }) 
+    .then(rpBlogs.registerBlog) // create new blog document
+    .then(rpUsers.updateBlog) // add blog _id to user's blogsForApproval array
+    .then( () => {
+      // TODO: need to send email to admins at this point
+      req.flash('success', 'Blog registered!')
+      next()
+    }).catch( e => {
+      debug.log(e)
+      req.flash('error', `Something went wrong registering your blog: ${e}`)
+      next()
+    })
+  }, 
+  function(req, res) {
+    res.redirect('/user')
+  })
 
 // TODO: claim blog (see update user)
 

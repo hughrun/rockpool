@@ -2,23 +2,26 @@
 	{>header}
 	<div class="main">
     {if errors}
-      {for msg in errors}<div class="flash-error">{msg}</div>{/for}
+    {for msg in errors}<div class="flash-error">{msg}</div>{/for}
     {/if}
     {if new}
       <p>Welcome to {appName} - please fill in your details and save your profile to get started.</p>
     {else}
       {if warnings}
-        {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
+      {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
       {/if}
       {if success}
-        {for msg in success}<div class="flash-success">{msg}</div>{/for}
+      {for msg in success}<div class="flash-success">{msg}</div>{/for}
       {/if}
       <p>Welcome back to {appName}!</p>
     {/if}
-    {if admin}<a href="/admin">Admin</a><br>{/if} <!--goes to new page - only appears if they are an admin (but other server-side checks prevent non-admins doing anything on this page) -->
-      <h2>Contacts</h2>
+    {if admin}
+    <a href="/admin">Admin</a>
+    <br>
+    {/if}
+    <h2>Contacts</h2>
     {if new}
-      <p>Your email address is required for logging in to your account, and contacting you about any account activity (e.g. your blog being approved). Your Twitter and Mastodon handles will be included in the tweet/toot when posting alerts about new blog posts.</p>
+    <p>Your email address is required for logging in to your account, and contacting you about any account activity (e.g. your blog being approved). Your Twitter and Mastodon handles will be included in the tweet/toot when posting alerts about new blog posts.</p>
     {/if}
     <form action="/update-user" method="post" class="user-form-vals">
       <input name="id" value="{user.idString}" type="hidden">
@@ -38,22 +41,33 @@
     <div>
       <h2>Blogs</h2>
       {if blogs}
-      <ul>
+        <h3>Your Blogs</h3>
+        <ul>
         {for blog in blogsForApproval}
           <li>{blog.url} - awaiting approval</li>
         {/for}
- <!--update will re-fetch the blog info to update the DB, delete will only delete the listing, not any articles-->
         {for blog in ownedBlogs}
-          <li>{blog.url} <button>Update</button><button>Delete</button></li>
+          <li>{blog.url} <button>Delete</button></li>
         {/for}
-      </ul>
+        </ul>
       {else}
-      <div>You currently have no registered{if legacy} or claimed{/if} blogs.</div>
+        <div>You currently have no registered{if legacy} or claimed{/if} blogs.</div>
       {/if}
-      <form action="/register-blog" method="post">
-        <input type="url" name="url" size="60">
+      <h3>Register {if legacy}or claim {/if}a blog</h3>
+      <form action="/user/register-blog" method="post">
+        <label for="url">URL:</label>
+        <input type="url" name="url" size="60"><br/>
         <input type="hidden" name="user" value="{user.idString}">
+        <label for="category">Category:</label>
+        <select name="category">
+          <option value="null" disabled selected>---</option>
+        {for category in blogCategories}
+          <option value={category}>{category}</option>
+        {/for}
+        </select>
+        <br/>
         <input type="submit" name="register" value="Register New Blog">
+        <br/>
         {if legacy}<input type="submit" name="claim" value="Claim Listed Blog" formaction="/claim-blog">{/if}
       </form>
     </div>
