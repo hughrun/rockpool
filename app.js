@@ -11,8 +11,7 @@ const engines = require('consolidate') // use consolidate with whiskers template
 const db = require('./lib/queries.js') // local database queries module
 const rpUsers = require('./lib/users.js') // local database updates module
 const rpBlogs = require('./lib/blogs.js') // local database updates module
-// TODO: change this to the proper package where it needs to be
-const feedFinder = require('./lib/feed-finder.js') // local feed-finder module
+const feedfinder = require('@hughrun/feedfinder') // get feeds from site URLs
 const debug = require('debug'), name = 'Rockpool' // debug for development
 const clipboardy = require('clipboardy') // write to and from clipboard (for development)
 const session = require('express-session') // sessions so people can log in
@@ -244,6 +243,8 @@ app.get('/token-sent', function(req, res) {
   })
 })
 
+// TODO: refactor this so that all /user* routes are restricted to logged in users
+
 // user dashboard
 app.get('/user',
   passwordless.restricted({ failureRedirect: '/letmein' }),
@@ -309,6 +310,8 @@ app.get('/tokens', function(req, res) {
 })
 
 /* POST user update */
+// TODO: this needs to be restricted to logged in users (i.e. put at /user/update-user)
+// with a check that ObjectId(body.user) is the user who is logged in
 app.post('/update-user',
     [
       // normalise email
@@ -374,8 +377,15 @@ app.post('/update-user',
 
 // TODO: register blog
 
+app.post('/user/register-blog')
+/* feedfinder.getFeed()
+      .then(rpBlogs.registerBlog)
+      .then(rpUser.registerBlog)
+*/
+
 // TODO: claim blog (see update user)
 
+// TODO: this also needs to be protected, /user/claim-blog
 app.post('/claim-blog', 
   function(req, res, next) {
     var args = {}
@@ -385,6 +395,7 @@ app.post('/claim-blog',
     db.getBlogs(args)
       .then(rpUsers.updateBlog)
       .then( () => {
+      // TODO: need to send email to admins at this point
       req.flash('success', 'Claimed Blog')
       next()
     }).catch( e => {
