@@ -23,7 +23,7 @@
     {if new}
     <p>Your email address is required for logging in to your account, and contacting you about any account activity (e.g. your blog being approved). Your Twitter and Mastodon handles will be included in the tweet/toot when posting alerts about new blog posts.</p>
     {/if}
-    <form action="/user/update-user" method="POST" class="user-form-vals">
+    <form id="updateUser" action="/user/update-user" method="POST" class="user-form-vals">
       <input name="user" value="{user.idString}" type="hidden">
       <label for="email" class="profile-label">Email:&nbsp;</label>
       <input type="text" name="email" class="profile-value" required value="{user.email}"> <!--if this is changed, need to log out user-->
@@ -54,8 +54,8 @@
         <li class="listed-blog">
           <div class="approved-blog"></div>
           <span>{blog.url}</span>
-          <button form="deleteblog">Delete</button>
-          <form action="/user/delete-blog" id="deleteblog" method="POST">
+          <button type="submit" form="deleteBlog">Delete</button>
+          <form id="deleteBlog" action="/user/delete-blog"  method="POST">
             <input name="blog" value={blog.idString} type="hidden">
             <input name="user" value={user.idString} type="hidden">
           </form>
@@ -66,7 +66,7 @@
         <div>You currently have no registered{if legacy} or claimed{/if} blogs.</div>
       {/if}
       <h3>Register {if legacy}or claim {/if}a blog</h3>
-      <form action="/user/register-blog" method="post">
+      <form id="registerBlog" action="/user/register-blog" method="post">
         <label for="url">URL:</label>
         <input type="url" name="url" size="60"><br/>
         <input type="hidden" name="user" value="{user.idString}">
@@ -86,4 +86,29 @@
     {/if}
   </div>
   {>footer}
+  <script>
+    var loader = document.getElementById('loader')
+    var updateUser = document.getElementById('updateUser')
+    var deleteBlog = document.getElementById('deleteBlog')
+    var registerBlog = document.getElementById('registerBlog')
+
+    function triggerLoading() {
+      // trigger loader
+      loader.className = 'loader'
+    }
+
+    updateUser.addEventListener('submit', function() {
+      triggerLoading()
+    }, false)
+    
+    if (deleteBlog) {
+      deleteBlog.addEventListener('submit', function() {
+        triggerLoading()
+      }, false)
+    }
+
+    registerBlog.addEventListener('submit', function() {
+      triggerLoading()
+    }, false)
+  </script>
 {>foot}

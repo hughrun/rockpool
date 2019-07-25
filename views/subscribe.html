@@ -1,6 +1,9 @@
 {>head}
 	{>header}
     <section class="main">
+      {if errors}
+      {for msg in errors}<div class="flash-error">{msg}</div>{/for}
+      {/if}
       <h3>Subscribe</h3>
       <div class="subscribe">
         <a class="subscription" href="https://twitter.com/ausglamblogs">
@@ -13,22 +16,28 @@
           <br>
           Mastodon
         </a>
-        <a class="subscription" href="">
+        <a id="pocketlink" class="subscription" href="/user/pocket">
             <img class="icon" src="assets/pocket-logo.svg">
             <br>
             Pocket
         </a>
-        <a class="subscription" href="">
-          <img class="icon" src="assets/rss-logo.svg">
-          <br>
-          RSS
-        </a>
-        <a class="subscription" href="">
+        <a class="subscription" href="/opml">
           <img class="icon" src="assets/download_opml_logo.svg">
           <br>
           OPML
         </a>
       </div>
     </section>
+    <script>
+      var pocketlink = document.getElementById('pocketlink')
+      function triggerLoading() {
+        // trigger loader
+        loader.className = 'loader'
+      }
+      var loader = document.getElementById('loader')
+      pocketlink.addEventListener('click', function() {
+        triggerLoading()
+      }, false)
+    </script>
   {>footer}
 {>foot}

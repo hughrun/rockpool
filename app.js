@@ -9,8 +9,9 @@ const express = require('express') // express
 const app = express(); // create local instance of express
 const engines = require('consolidate') // use consolidate with whiskers template engine
 const db = require('./lib/queries.js') // local database queries module
-const { updateUserDetails, updateUserBlogs, } = require('./lib/users.js') // local database updates module
+const { updateUserDetails, updateUserBlogs } = require('./lib/users.js') // local database updates module
 const { approveBlog, deleteBlog, registerBlog } = require('./lib/blogs.js') // local database updates module
+const { authorisePocket, finalisePocketAuthentication } = require('./lib/pocket.js') // local pocket functions
 const feedfinder = require('@hughrun/feedfinder') // get feeds from site URLs
 const debug = require('debug'), name = 'Rockpool' // debug for development
 const clipboardy = require('clipboardy') // write to and from clipboard (for development)
@@ -107,6 +108,7 @@ app.use(express.static(__dirname + '/public')) // serve static files from 'publi
 app.use(flash()) // use flash messages
 
 // Middleware to check that ObjectId(req.body.user) is the user who is logged in
+// TODO: this shouldn't be needed if we just use email instead of id in most instances
 function userIsThisUser (req, res, next) {
   const thisUserEmail = req.session.passwordless
   const claimedUserIdString = req.body.user
@@ -145,6 +147,12 @@ app.locals.blogCategories = settings.blog_categories
 /*  ######################################
     ###              routes            ###
     ######################################
+*/
+
+/*  
+    ###############
+      PUBLIC ROUTES
+    ###############
 */
 
 // home
@@ -213,7 +221,8 @@ app.get('/subscribe', function (req, res) {
       foot: __dirname+'/views/partials/foot.html',
       footer: __dirname+'/views/partials/footer.html'
     },
-    user: req.session.passwordless
+    user: req.session.passwordless,
+    errors: req.flash('error')
   })
 })
 
@@ -341,7 +350,7 @@ app.get('/user',
   })
 ))
 
-/* POST user update */
+// update user details
 app.post('/user/update-user',
     [
       // normalise email
@@ -435,7 +444,7 @@ app.post('/user/register-blog',
     res.redirect('/user')
   })
 
-// claim blog
+// claim blog (legacy DB only)
 app.post('/user/claim-blog',
   [userIsThisUser],
   function(req, res, next) {
@@ -504,6 +513,39 @@ app.post('/user/delete-blog',
   })
 
 // TODO: pocket routes
+
+app.get('/user/pocket', 
+  (req, res, next) => {
+    db.getUserDetails(req.user)
+    .then(authorisePocket)
+    .then( args => {
+      req.session.pocketCode = args.code
+      res.redirect(`https://getpocket.com/auth/authorize?request_token=${args.code}&redirect_uri=${settings[env].app_url}/user/pocket-redirect`)
+    })
+    .catch( err => {
+      debug.log(err)
+      req.flash('error', `Something went wrong trying to authenticate with Pocket: ${err}`)
+      res.redirect('/subscribe')
+    })
+})
+
+app.get('/user/pocket-redirect', 
+  (req, res, next) => {
+    // user has now authorised us to authenticate to pocket and get an access token
+    const args = {}
+    args.code = req.session.pocketCode
+    args.key = settings[env].pocket_consumer_key
+    args.email = req.user
+    finalisePocketAuthentication(args)
+      .then( () => {
+        req.flash('success', 'Pocket account registered')
+        res.redirect('/user')
+      })
+      .catch(e => {
+        req.flash('error', e)
+        res.redirect('/subscribe')
+      })
+  })
 
 /*  
     ###############
