@@ -222,7 +222,12 @@ input[type="submit"].email-signup {
   color: #3a3a3a;
 }
 
-/* user dashboard */
+
+/* ##############
+
+	user dashboard 
+
+ ############## */
 
 .user-form-vals {
 	display: grid;
@@ -239,14 +244,41 @@ input[type="submit"].email-signup {
 	margin-top: 1em;
 }
 
+.blog-list {
+	list-style: none;
+}
+
+.listed-blog {
+	margin-bottom: 0.5em;
+}
+
+.approved-blog {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	background: lightgreen;
+	border-radius: 50%;
+	margin-right: 1em;
+	vertical-align: text-bottom;
+}
+
+.unapproved-blog {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	background: lightsalmon;
+	border-radius: 50%;
+	margin-right: 1em;
+	vertical-align: text-bottom;
+}
+
+.awaiting-approval {
+	font-style: italic;
+}
 .claimed-blogs {
 	border: 1px solid #3a3a3a;
 	border-radius: 5px;
 	padding: 1em;
-}
-
-.blog-list {
-	list-style: none;
 }
 
 .admin-checkbox {

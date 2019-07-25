@@ -9,16 +9,16 @@ const express = require('express') // express
 const app = express(); // create local instance of express
 const engines = require('consolidate') // use consolidate with whiskers template engine
 const db = require('./lib/queries.js') // local database queries module
-const rpUsers = require('./lib/users.js') // local database updates module
-const rpBlogs = require('./lib/blogs.js') // local database updates module
+const { updateUserDetails, updateUserBlogs, } = require('./lib/users.js') // local database updates module
+const { approveBlog, deleteBlog, registerBlog } = require('./lib/blogs.js') // local database updates module
 const feedfinder = require('@hughrun/feedfinder') // get feeds from site URLs
 const debug = require('debug'), name = 'Rockpool' // debug for development
 const clipboardy = require('clipboardy') // write to and from clipboard (for development)
 const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
-const {ObjectId} = require('mongodb') // for mongo IDs
+const { ObjectId } = require('mongodb') // for mongo IDs
 const MongoStore = require('passwordless-mongostore-bcryptjs') // for creating and storing passwordless tokens
-const email   = require('emailjs') // to send email from the server
+const email = require('emailjs') // to send email from the server
 var cookieParser = require('cookie-parser') // cookies
 var sessionStore = new session.MemoryStore // cookie storage
 const bodyParser = require('body-parser') // bodyparser for form data
@@ -106,8 +106,7 @@ app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token a
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
 app.use(flash()) // use flash messages
 
-// locals (global values for all routes)
-// TODO: make this an object
+// locals (variables for all routes)
 app.locals.pageTitle = settings.app_name
 app.locals.appName = settings.app_name
 app.locals.appTagline = settings.app_tagline
@@ -348,7 +347,7 @@ app.post('/update-user',
     function(req, res, next) {
     // here we need to check for other users with the same email
       db.checkEmailIsUnique(req.body)
-        .then(rpUsers.updateUserDetails)
+        .then(updateUserDetails)
         .then(() => {
           debug.log('user updated')
           if (req.body.email != req.session.passwordless) {
@@ -377,29 +376,28 @@ app.post('/update-user',
 
 // TODO: pocket routes
 
-// TODO: register blog
-
+// register blog
 app.post('/user/register-blog',
   function(req, res, next) {
     feedfinder.getFeed(req.body.url)
     .then( ff => {
       const args = req.body
       args.feed = ff.feed // add the feed to the form data object
-      args.action = "register" // this is used in rpUsers.updateBlog
+      args.action = "register" // this is used in updateUserBlogs
       args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
       args.query = {url: args.url} // for checking whether the blog is already registered
       return args
     })
-    .then(db.getBlogs)
-    .then( args => { // check the blog isn't already registered
+    .then(db.getBlogs) // check the blog isn't already registered
+    .then( args => { 
       if (args.blogs.length < 1) {
         return args
       } else {
         throw new Error("That blog is already registered!")
       }
     }) 
-    .then(rpBlogs.registerBlog) // create new blog document
-    .then(rpUsers.updateBlog) // add blog _id to user's blogsForApproval array
+    .then(registerBlog) // create new blog document
+    .then(updateUserBlogs) // add blog _id to user's blogsForApproval array
     .then( () => {
       // TODO: need to send email to admins at this point
       req.flash('success', 'Blog registered!')
@@ -414,20 +412,38 @@ app.post('/user/register-blog',
     res.redirect('/user')
   })
 
-// TODO: claim blog (see update user)
-
 // TODO: this also needs to be protected, /user/claim-blog
+// claim blog
 app.post('/claim-blog', 
   function(req, res, next) {
-    var args = {}
-    args.query = { "url" : req.body.url}
-    args.user = req.body.user
+    const args = req.body
+    args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
+    args.query = { "url" : args.url}
     args.action = "register"
     db.getBlogs(args)
-      .then(rpUsers.updateBlog)
+      // then check users for any claiming this blog
+      .then( args => {
+        debug.log(args)
+        if (args.blogs.length < 1) {
+          throw new Error("Blog does not exist: check the URL or try registering") // if there are no results the blog doesn't exist
+        } else {
+          args.blog = args.blogs[0].idString
+          args.query = {"blogsForApproval" : args.blogs[0]._id}
+          return args
+        }
+      })
+      .then(db.getUsers)
+      .then( args => {
+        if (args.blogs.length < 1) {
+          return args
+        } else {
+          throw new Error("Another user has claimed that blog!") // this didn't get triggered!!
+        } 
+      })
+      .then(updateUserBlogs)
       .then( () => {
       // TODO: need to send email to admins at this point
-      req.flash('success', 'Claimed Blog')
+      req.flash('success', 'Blog claimed!')
       next()
     }).catch( e => {
       debug.log('**ERROR CLAIMING BLOG**')
@@ -441,12 +457,33 @@ app.post('/claim-blog',
   })
 
       // no need to normalise because we're pulling the data from hidden inputs
-      // call rpBlogs.claimBlog
+      // call claimBlog
       // then return to user page
 
-// TODO: delete (own) blog
+// delete (own) blog
+app.post('/user/delete-blog', 
+  function(req, res, next) {
+    const args = req.body
+    args.action = 'delete'
+    // delete using req.body.user and req.body.blog
+    updateUserBlogs(args)
+    .then(deleteBlog)
+    .then( () => {
+      // TODO: need to send email to admins at this point
+      req.flash('success', 'Blog deleted')
+      next()
+    }).catch( e => {
+      debug.log('**ERROR DELETING BLOG**')
+      debug.log(e)
+      req.flash('error', `Something went wrong deleting your blog: ${e}`)
+      next()
+    })
+  }, 
+  function(req, res) {
+    res.redirect('/user')
+  })
 
-// TODO: /rss
+// TODO: /opml
 
 /* TODO: /admin
 
@@ -455,8 +492,8 @@ app.post('/claim-blog',
 
     - approve blog
     - approve claim
-    - delete blog ?
-    - delete post
+    - delete blog
+    - delete post ?
     - add admin
     - remove admin
     - audit trails and notes
@@ -543,7 +580,7 @@ app.post('/admin/deleteblog', function(req, res) {
       .then( vals => {
         if (vals[0]) { // if this is a legacy DB there may be no users with this blog listed
           args.user = vals[0]._id
-          rpUsers.updateBlog(args) // remove the blog _id from the owner's 'blogs' array
+          updateUserBlogs(args) // remove the blog _id from the owner's 'blogs' array
             .then( args => {
               return args
             })
@@ -551,7 +588,7 @@ app.post('/admin/deleteblog', function(req, res) {
           return args // for legacy DB entry with no blog owner simply skip this step
         }
       })
-      .then(rpBlogs.deleteBlog) // delete the document from the blogs collection
+      .then(deleteBlog) // delete the document from the blogs collection
       .then( () => {
         req.flash('success', 'Blog deleted')
         res.redirect('/admin')
@@ -571,8 +608,9 @@ app.post('/admin/deleteblog', function(req, res) {
 
 // approve blog
 app.post('/admin/approve-blog', function(req, res, next) {
-  rpBlogs.approveBlog(req.body)
-    .then(rpUsers.updateBlog)
+  approveBlog(req.body)
+    .then(updateUserBlogs)
+    .then(approveBlog)
     .then( () => {
       req.flash('success', 'Blog approved')
       return next()
@@ -591,7 +629,7 @@ function (req, res, next) {
 app.post('/admin/reject-blog', function(req, res, next) {
   const args = req.body
   args.action = "reject"
-  rpUsers.updateBlog(args)
+  updateUserBlogs(args)
     .then( args => {
       args.query = {"_id" : ObjectId(args.blog)}
       return args
@@ -603,12 +641,11 @@ app.post('/admin/reject-blog', function(req, res, next) {
         // if approved is true then the blog is a legacy one and this is a 'claim'
         // rather than a new registration, so we do NOT want to delete it!
         return args
-      } else { // TESTING
-        // rpBlogs.deleteBlog(args)
-        // .then( doc => {
-        //   return args
-        // })
-        debug.log("the blog would be deleted")
+      } else { 
+        deleteBlog(args)
+        .then( doc => {
+          return args
+        })
       }
     })
     .then( () => {

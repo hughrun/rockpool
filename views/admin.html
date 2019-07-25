@@ -23,7 +23,7 @@
         <div><strong>Email:</strong> <a href="mailto:{user.email}">{user.email}</a></div>
         <div><strong>Twitter:</strong> <a href="https://twitter.com/{user.twitter}">{user.twitter}</a></div>
         <div><strong>Mastodon:</strong> {user.mastodon}</div>
-        <div><strong>Claiming:</strong></div>
+        <div><strong>{if legacy}Claiming or {/if}Awaiting Approval:</strong></div>
           <ul class="blog-list">
             {for blog in user.claims.blogs}
             <li>

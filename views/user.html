@@ -42,12 +42,24 @@
       <h2>Blogs</h2>
       {if blogs}
         <h3>Your Blogs</h3>
-        <ul>
+        <ul class="blog-list">
         {for blog in blogsForApproval}
-          <li>{blog.url} - awaiting approval</li>
+          <li class="listed-blog">
+            <div class="unapproved-blog"></div>
+            <span>{blog.url} - </span>
+            <span class="awaiting-approval">awaiting approval</span>
+          </li>
         {/for}
         {for blog in ownedBlogs}
-          <li>{blog.url} <button>Delete</button></li>
+        <li class="listed-blog">
+          <div class="approved-blog"></div>
+          <span>{blog.url}</span>
+          <button form="deleteblog">Delete</button>
+          <form action="/user/delete-blog" id="deleteblog" method="POST">
+            <input name="blog" value={blog.idString} type="hidden">
+            <input name="user" value={user.idString} type="hidden">
+          </form>
+        </li>
         {/for}
         </ul>
       {else}
