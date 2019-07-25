@@ -106,6 +106,31 @@ app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token a
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
 app.use(flash()) // use flash messages
 
+// Middleware to check that ObjectId(req.body.user) is the user who is logged in
+function userIsThisUser (req, res, next) {
+  const thisUserEmail = req.session.passwordless
+  const claimedUserIdString = req.body.user
+  const args = req.body
+  args.query = {"email" : thisUserEmail}
+  db.getUsers(args)
+    .then( data => {
+      if (data.users.length === 1 && data.users[0]._id.equals(ObjectId(claimedUserIdString))) {
+        // user is logged in and acting on self
+        next()
+      } else {
+        // logged in user and user being updated don't match
+        res.status(403)
+        req.flash('error', 'Not allowed to update other user data')
+        res.redirect('/user')
+      }
+    })
+    .catch( e => {
+      debug.log(e)
+      req.flash('error', e)
+      res.redirect('/user')
+    })
+}
+
 // locals (variables for all routes)
 app.locals.pageTitle = settings.app_name
 app.locals.appName = settings.app_name
@@ -192,6 +217,14 @@ app.get('/subscribe', function (req, res) {
   })
 })
 
+// TODO: /opml
+
+/*  
+    ###############
+      LOGIN ROUTES
+    ###############
+*/
+
 /* GET login screen. */
 app.get('/letmein', function(req, res) {
   if (req.session.passwordless) {
@@ -244,12 +277,23 @@ app.get('/token-sent', function(req, res) {
   })
 })
 
-// TODO: refactor this so that all /user* routes are restricted to logged in users
+/*  
+    ###############
+      USER ROUTES
+    ###############
+*/
+
+// restrict all user paths to logged in users
+app.all('/user*',
+  passwordless.restricted({ failureRedirect: '/letmein' }),
+  (req, res, next) =>
+    next()
+)
 
 // user dashboard
 app.get('/user',
-  passwordless.restricted({ failureRedirect: '/letmein' }),
-  (req, res) => db.getUserDetails(req.session.passwordless) // get user
+  (req, res) => 
+  db.getUserDetails(req.session.passwordless) // get user
   .then( // here we query any blogs in user.blogs or user.blogsForApproval to reduce the number of DB calls
     doc => {
       doc.query = {"_id": {$in: doc.user.blogsForApproval}}
@@ -297,23 +341,8 @@ app.get('/user',
   })
 ))
 
-// show token expired screen if token already used or too old
-app.get('/tokens', function(req, res) {
-  res.render('expired', {
-    partials: {
-      head: __dirname+'/views/partials/head.html',
-      header: __dirname+'/views/partials/header.html',
-      foot: __dirname+'/views/partials/foot.html',
-      footer: __dirname+'/views/partials/footer.html'
-    },
-    user: req.session.passwordless
-  })
-})
-
 /* POST user update */
-// TODO: this needs to be restricted to logged in users (i.e. put at /user/update-user)
-// with a check that ObjectId(body.user) is the user who is logged in
-app.post('/update-user',
+app.post('/user/update-user',
     [
       // normalise email
       body('email').isEmail().normalizeEmail(),
@@ -330,6 +359,7 @@ app.post('/update-user',
         return valid
       }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
     ],
+    [userIsThisUser],
     (req, res, next) => {
       debug.log('User details: %O', req.body)
       if (!validationResult(req).isEmpty()) {
@@ -358,15 +388,9 @@ app.post('/update-user',
           }
         })
         .catch(err => {
-          if (err.type == 'duplicateUser') {
-            debug.log('email is already in use')
-            req.flash("error", "That email address is already in use")
-            next()
-          } else {
             debug.log(err)
-            req.flash("error", "Sorry, something went wrong")
+            req.flash("error", `Something went wrong:\n${err}`)
             next()
-          }
         })
       },
       (req, res) => {
@@ -374,10 +398,9 @@ app.post('/update-user',
       }
   )
 
-// TODO: pocket routes
-
 // register blog
 app.post('/user/register-blog',
+  [userIsThisUser],
   function(req, res, next) {
     feedfinder.getFeed(req.body.url)
     .then( ff => {
@@ -412,9 +435,9 @@ app.post('/user/register-blog',
     res.redirect('/user')
   })
 
-// TODO: this also needs to be protected, /user/claim-blog
 // claim blog
-app.post('/claim-blog', 
+app.post('/user/claim-blog',
+  [userIsThisUser],
   function(req, res, next) {
     const args = req.body
     args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
@@ -456,12 +479,9 @@ app.post('/claim-blog',
     res.redirect('/user')
   })
 
-      // no need to normalise because we're pulling the data from hidden inputs
-      // call claimBlog
-      // then return to user page
-
 // delete (own) blog
-app.post('/user/delete-blog', 
+app.post('/user/delete-blog',
+  [userIsThisUser],
   function(req, res, next) {
     const args = req.body
     args.action = 'delete'
@@ -483,21 +503,12 @@ app.post('/user/delete-blog',
     res.redirect('/user')
   })
 
-// TODO: /opml
+// TODO: pocket routes
 
-/* TODO: /admin
-
-      This route needs to be restricted not only to logged in users but also those who have
-      permission = "admin"
-
-    - approve blog
-    - approve claim
-    - delete blog
-    - delete post ?
-    - add admin
-    - remove admin
-    - audit trails and notes
-    - send emails to users when appropriate
+/*  
+    ###############
+      ADMIN ROUTES
+    ###############
 */
 
 // restrict all admin paths
@@ -510,7 +521,7 @@ app.all('/admin*',
           next()
         } else {
           req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
-          res.status(403) // NOTE: I don't really know what this will effectively do: needs TESTING
+          res.status(403)
           res.redirect('/user')
         }
       })
@@ -662,13 +673,31 @@ function (req, res, next) {
   res.redirect('/admin')
 })
 
-// END admin paths
+/*  
+    #######################
+    LOGOUT AND ERROR ROUTES
+    #######################
+*/
+
 
 // logout
 app.get('/logout',
   passwordless.logout(),
 	function(req, res) {
 		res.redirect('/')
+})
+
+// show token expired screen if token already used or too old
+app.get('/tokens', function(req, res) {
+  res.render('expired', {
+    partials: {
+      head: __dirname+'/views/partials/head.html',
+      header: __dirname+'/views/partials/header.html',
+      foot: __dirname+'/views/partials/foot.html',
+      footer: __dirname+'/views/partials/footer.html'
+    },
+    user: req.session.passwordless
+  })
 })
 
 // email-updated to log out users who change their email address
@@ -684,6 +713,14 @@ app.get('/email-updated',
       }
     })
   })
+
+// TODO: 403 unauthorised
+
+// TESTING
+
+app.get('/test', function (req, res) {
+  res.sendStatus(403)
+})
 
 // 404 errors: this should always be the last route
 app.use(function (req, res, next) {

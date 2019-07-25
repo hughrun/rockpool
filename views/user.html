@@ -23,8 +23,8 @@
     {if new}
     <p>Your email address is required for logging in to your account, and contacting you about any account activity (e.g. your blog being approved). Your Twitter and Mastodon handles will be included in the tweet/toot when posting alerts about new blog posts.</p>
     {/if}
-    <form action="/update-user" method="post" class="user-form-vals">
-      <input name="id" value="{user.idString}" type="hidden">
+    <form action="/user/update-user" method="POST" class="user-form-vals">
+      <input name="user" value="{user.idString}" type="hidden">
       <label for="email" class="profile-label">Email:&nbsp;</label>
       <input type="text" name="email" class="profile-value" required value="{user.email}"> <!--if this is changed, need to log out user-->
       <label for="twitter" class="profile-label">Twitter:&nbsp;</label>
@@ -80,7 +80,7 @@
         <br/>
         <input type="submit" name="register" value="Register New Blog">
         <br/>
-        {if legacy}<input type="submit" name="claim" value="Claim Listed Blog" formaction="/claim-blog">{/if}
+        {if legacy}<input type="submit" name="claim" value="Claim Listed Blog" formaction="/user/claim-blog">{/if}
       </form>
     </div>
     {/if}
