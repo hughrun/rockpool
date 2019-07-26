@@ -17,7 +17,7 @@ Your database **must** use https and **must** have [Access Control](https://docs
 Copy `settings-example.json` to a file called `settings.json`. This is where all your custom values will go, including database login info etc. Keep it secret, keep it safe.
 
 ---
-[Home](/)  
+[Home](/README.md)  
 [Database structure](database.md)  
 [Installation](installation.md)  
 [Search](search.md)  

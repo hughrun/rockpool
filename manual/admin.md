@@ -27,7 +27,7 @@ Caution is advised before deleting these blogs: feeds can 'fail' temporarily for
 You can make another user an administrator by entering their email address in the text field under _Administrators_. Note that the user must already be registered in your Rockpool database. All users with admin rights are listed under _Administrators_, except for the logged-in user. **All admins have the ability to remove all other admins and add any other user as an admin**. Be careful who you give admin rights to. On the other hand, you should ensure that at least two people have admin rights, in case something happens. To remove an admin simply click the **Remove as admin** button next to their email address. Note that an administrator cannot remove their own admin permission.
 
 ---
-[Home](/)  
+[Home](/README.md)  
 [Database structure](database.md)  
 [Installation](installation.md)  
 [Search](search.md)  

@@ -39,7 +39,7 @@ To subscribe via Pocket, go to the `/subscribe` page and click on the Pocket ico
 To unsubscribe, simply click the **Cancel Pocket subscription** button in the user dashboard. You should also remove access to the app from [your Pocket Connected Applications page](https://getpocket.com/connected_applications).
 
 ---
-[Home](/)  
+[Home](/README.md)  
 [Database structure](database.md)  
 [Installation](installation.md)  
 [Search](search.md)  
