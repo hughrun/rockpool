@@ -11,7 +11,7 @@ const engines = require('consolidate') // use consolidate with whiskers template
 const db = require('./lib/queries.js') // local database queries module
 const { updateUserDetails, updateUserBlogs } = require('./lib/users.js') // local database updates module
 const { approveBlog, deleteBlog, registerBlog } = require('./lib/blogs.js') // local database updates module
-const { authorisePocket, finalisePocketAuthentication } = require('./lib/pocket.js') // local pocket functions
+const { authorisePocket, finalisePocketAuthentication, sendEmail } = require('./lib/utilities.js') // local pocket functions
 const feedfinder = require('@hughrun/feedfinder') // get feeds from site URLs
 const debug = require('debug'), name = 'Rockpool' // debug for development
 const clipboardy = require('clipboardy') // write to and from clipboard (for development)
@@ -19,13 +19,12 @@ const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
 const { ObjectId } = require('mongodb') // for mongo IDs
 const MongoStore = require('passwordless-mongostore-bcryptjs') // for creating and storing passwordless tokens
-const email = require('emailjs') // to send email from the server
 var cookieParser = require('cookie-parser') // cookies
 var sessionStore = new session.MemoryStore // cookie storage
 const bodyParser = require('body-parser') // bodyparser for form data
 const flash = require('express-flash') // flash messages
 const { body, validationResult } = require('express-validator/check') // validate
-const { sanitizeBody } = require('express-validator/filter') // sanitise
+const { sanitizeBody } = require('express-validator/filter') // sanitise TODO: this is never called
 
 /*  ######################################
     ### initiate and configure modules ###
@@ -48,14 +47,6 @@ if (env === 'production') { // in production force https
   sess.cookie.secure = true // serve secure cookies
 }
 
-// emailjs setup
-const smtpServer  = email.server.connect({
-  user: settings[env].email.user,
-  password: settings[env].email.password,
-  host: settings[env].email.host,
-  ssl: true
-})
-
 // MongoDB TokenStore for passwordless login tokens
 const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collection for tokens
 passwordless.init(new MongoStore(pathToMongoDb)) // initiate store
@@ -65,22 +56,20 @@ passwordless.addDelivery('email',
 	function(tokenToSend, uidToSend, recipient, callback, req) {
     var message =  {
 			text: 'Hello!\nAccess your account here: ' + settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend),
-			from: `${settings.app_name} <${settings[env].email.from}>`,
 			to: recipient,
       subject: 'Log in to ' + settings.app_name,
       attachment: [
         {data: `<html><p>Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please <a href="${settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)}">log in in</a> now.</p><p>If it wasn't you, simply delete this email.</p></html>`, alternative: true}
       ]
     }
-    smtpServer.send(message,
-      function(err, message) {
-        console.log(err || `Email sent to ${recipient}`)
-        callback(err);
-      })
+    sendEmail(message)
+    .then( err => {
+      callback(err)
+    })
 })
 
-// passwordless for dev (bypass email)
-passwordless.addDelivery('browser',
+// passwordless for dev (bypass email and send the token to the clipboard instead)
+passwordless.addDelivery('clipboard',
   function(tokenToSend, uidToSend, recipient, callback, req) {
     var address = settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)
     clipboardy.writeSync(address)
@@ -430,8 +419,13 @@ app.post('/user/register-blog',
     }) 
     .then(registerBlog) // create new blog document
     .then(updateUserBlogs) // add blog _id to user's blogsForApproval array
-    .then( () => {
-      // TODO: need to send email to admins at this point
+    .then( args => {
+      message = {
+        text: `User ${req.user} has registered ${args.url} with ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to accept or reject the registration.`,
+        to: 'admins',
+        subject: `New blog registered for ${settings.app_name}`,
+      }
+      sendEmail(message) // send email to admins
       req.flash('success', 'Blog registered!')
       next()
     }).catch( e => {
@@ -473,8 +467,13 @@ app.post('/user/claim-blog',
         } 
       })
       .then(updateUserBlogs)
-      .then( () => {
-      // TODO: need to send email to admins at this point
+      .then( args => {
+        message = {
+          text: `User ${req.user} has claimed ${args.url} on ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to accept or reject the registration.`,
+          to: 'admins',
+          subject: `New blog claimed on ${settings.app_name}`,
+        }
+        sendEmail(message) // send email to admins
       req.flash('success', 'Blog claimed!')
       next()
     }).catch( e => {
@@ -494,11 +493,15 @@ app.post('/user/delete-blog',
   function(req, res, next) {
     const args = req.body
     args.action = 'delete'
-    // delete using req.body.user and req.body.blog
-    updateUserBlogs(args)
+    updateUserBlogs(args) // delete using req.body.user and req.body.blog
     .then(deleteBlog)
-    .then( () => {
-      // TODO: need to send email to admins at this point
+    .then( args => {
+      message = {
+        text: `User ${req.user} has deleted ${args.url} from ${settings.app_name}.`,
+        to: 'admins',
+        subject: `New blog registered for ${settings.app_name}`,
+      }
+      sendEmail(message) // send email to admins
       req.flash('success', 'Blog deleted')
       next()
     }).catch( e => {
@@ -643,6 +646,7 @@ app.post('/admin/deleteblog', function(req, res) {
       })
       .then(deleteBlog) // delete the document from the blogs collection
       .then( () => {
+        // TODO: if there was an owner, send email
         req.flash('success', 'Blog deleted')
         res.redirect('/admin')
       }).catch(err => {
@@ -665,6 +669,7 @@ app.post('/admin/approve-blog', function(req, res, next) {
     .then(updateUserBlogs)
     .then(approveBlog)
     .then( () => {
+      // TODO: email user
       req.flash('success', 'Blog approved')
       return next()
     })
@@ -689,7 +694,6 @@ app.post('/admin/reject-blog', function(req, res, next) {
     })
     .then(db.getBlogs)
     .then( args => {
-      debug.log(args)
       if (args.blogs[0] && args.blogs[0].approved) {
         // if approved is true then the blog is a legacy one and this is a 'claim'
         // rather than a new registration, so we do NOT want to delete it!
@@ -702,6 +706,7 @@ app.post('/admin/reject-blog', function(req, res, next) {
       }
     })
     .then( () => {
+      // TODO: email user
       req.flash('success', 'Blog rejected')
       return next()
     })

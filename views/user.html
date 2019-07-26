@@ -38,6 +38,13 @@
       {/if}
     </form>
     {if not new}
+    {if user.pocket}
+    <div>
+      <h2>Pocket</h2>
+      <div>You are subscribed to receive articles straight to your <strong>{user.pocket.username}</strong> Pocket list.</div>
+      <button>Cancel Pocket Subscription</button>
+    </div>
+    {/if}
     <div>
       <h2>Blogs</h2>
       {if blogs}
