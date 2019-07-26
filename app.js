@@ -406,7 +406,9 @@ app.post('/user/register-blog',
       args.feed = ff.feed // add the feed to the form data object
       args.action = "register" // this is used in updateUserBlogs
       args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
-      args.query = {url: args.url} // for checking whether the blog is already registered
+      // we match on the FEED rather than the URL (below)
+      // because if there is a redirect, the URL might not match even though it's the same blog
+      args.query = {feed: args.feed}
       return args
     })
     .then(db.getBlogs) // check the blog isn't already registered
@@ -460,10 +462,10 @@ app.post('/user/claim-blog',
       })
       .then(db.getUsers)
       .then( args => {
-        if (args.blogs.length < 1) {
+        if (args.users.length < 1) {
           return args
         } else {
-          throw new Error("Another user has claimed that blog!") // this didn't get triggered!!
+          throw new Error("Another user has claimed that blog!")
         } 
       })
       .then(updateUserBlogs)
@@ -495,13 +497,7 @@ app.post('/user/delete-blog',
     args.action = 'delete'
     updateUserBlogs(args) // delete using req.body.user and req.body.blog
     .then(deleteBlog)
-    .then( args => {
-      message = {
-        text: `User ${req.user} has deleted ${args.url} from ${settings.app_name}.`,
-        to: 'admins',
-        subject: `New blog registered for ${settings.app_name}`,
-      }
-      sendEmail(message) // send email to admins
+    .then( () => {
       req.flash('success', 'Blog deleted')
       next()
     }).catch( e => {
@@ -664,17 +660,24 @@ app.post('/admin/deleteblog', function(req, res) {
     db.getUsers({"blogs" : req.body.id}) // get the user with this blog in their 'blogs' array
       .then( vals => {
         if (vals[0]) { // if this is a legacy DB there may be no users with this blog listed
-          args.user = vals[0]._id
+          args.user = vals[0]._id // for deleteBlog below
+          args.email = vals[0].email // for sendEmail later
           updateUserBlogs(args) // remove the blog _id from the owner's 'blogs' array
-            .then( args => { // TODO: if there was an owner, send email
+            .then( args => { 
               return args
             })
         } else {
           return args // for legacy DB entry with no blog owner simply skip this step
         }
       })
-      .then(deleteBlog) // delete the document from the blogs collection
-      .then( args => {
+      .then(deleteBlog) // now we actually delete the document from the blogs collection
+      .then( args => { // if there was an owner, send email
+        message = {
+          text: `User ${req.user} has deleted ${args.url} from ${settings.app_name}.`,
+          to: args.email,
+          subject: `Your blog listing has been removed from ${settings.app_name}`,
+        }
+        sendEmail(message) // send email to admins
         req.flash('success', 'Blog deleted')
         res.redirect('/admin')
       }).catch(err => {
@@ -696,9 +699,19 @@ app.post('/admin/deleteblog', function(req, res) {
 app.post('/admin/approve-blog', function(req, res, next) {
   approveBlog(req.body)
     .then(updateUserBlogs)
-    .then(approveBlog)
-    .then( () => {
-      // TODO: email user
+    .then( args => { // now we need to get the user's email address so we can send a confirmation
+      args.query = {'_id' : ObjectId(args.user)} // query for getUsers
+      return args
+    })
+    .then(db.getUsers)
+    .then( args => {
+      const user = args.users[0]
+      message = {
+        text: `Your blog ${args.url} has been approved on ${settings.app_name}.\n\nTime to get publishing!`,
+        to: user.email,
+        subject: `Your blog has been approved on ${settings.app_name}`,
+      }
+      sendEmail(message)
       req.flash('success', 'Blog approved')
       return next()
     })
@@ -723,6 +736,7 @@ app.post('/admin/reject-blog', function(req, res, next) {
     })
     .then(db.getBlogs)
     .then( args => {
+      args.query = {'_id' : ObjectId(args.user)} // for getUsers below to get email address
       if (args.blogs[0] && args.blogs[0].approved) {
         // if approved is true then the blog is a legacy one and this is a 'claim'
         // rather than a new registration, so we do NOT want to delete it!
@@ -734,8 +748,16 @@ app.post('/admin/reject-blog', function(req, res, next) {
         })
       }
     })
-    .then( () => {
-      // TODO: email user
+    .then(db.getUsers)
+    .then( args => {
+      // TODO: email user with reason
+      const user = args.users[0]
+      message = {
+        text: `Your blog registration for ${args.url} has been rejected from ${settings.app_name}.\n\nReason:\n\n${args.reason}`,
+        to: user.email,
+        subject: `Your blog registration has been rejected on ${settings.app_name}`,
+      }
+      sendEmail(message)
       req.flash('success', 'Blog rejected')
       return next()
     })

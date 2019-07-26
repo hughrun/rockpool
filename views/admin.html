@@ -29,10 +29,12 @@
             <li>
               <form method="post">
                 <a href="{blog.url}">{blog.url}</a>
+                <input type="hidden" name="url" value="{blog.url}">
                 <input type="hidden" name="user" value="{user._id}">
                 <input type="hidden" name="blog" value="{blog._id}">
-                <input type="submit" class="approve-button" formaction="/admin/approve-blog" value="Approve">
-                <input type="submit" class="reject-button" formaction="/admin/reject-blog" value="Reject">
+                <button class="approve-button" formaction="/admin/approve-blog" type="submit" >Approve</button>
+                <button class="reject-claim-button" formaction="/admin/reject-blog" type="button">Reject</button>
+                <!-- <button hidden class="reject-button" formaction="/admin/reject-blog" type="submit">Confirm</button> -->
               </form>
             </li>
             {/for}
@@ -85,5 +87,6 @@
         </div>
       </div>
     </section>
+    <script src="/scripts/admin.js"></script>
   {>footer}
 {>foot}
