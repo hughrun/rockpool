@@ -41,8 +41,10 @@
     {if user.pocket}
     <div>
       <h2>Pocket</h2>
-      <div>You are subscribed to receive articles straight to your <strong>{user.pocket.username}</strong> Pocket list.</div>
-      <button>Cancel Pocket Subscription</button>
+      <div>You are subscribed to receive articles straight to your <strong>{user.pocket.username}</strong> Pocket list. Nice one!</div>
+      <form id="pocket-unsubscribe" action="/user/pocket-unsubscribe" method="post">
+        <button form="pocket-unsubscribe" type="submit">Cancel Pocket Subscription</button>
+      </form>
     </div>
     {/if}
     <div>

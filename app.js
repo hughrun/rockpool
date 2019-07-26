@@ -9,7 +9,7 @@ const express = require('express') // express
 const app = express(); // create local instance of express
 const engines = require('consolidate') // use consolidate with whiskers template engine
 const db = require('./lib/queries.js') // local database queries module
-const { updateUserDetails, updateUserBlogs } = require('./lib/users.js') // local database updates module
+const { updateUserDetails, updateUserBlogs, unsubscribeFromPocket } = require('./lib/users.js') // local database updates module
 const { approveBlog, deleteBlog, registerBlog } = require('./lib/blogs.js') // local database updates module
 const { authorisePocket, finalisePocketAuthentication, sendEmail } = require('./lib/utilities.js') // local pocket functions
 const feedfinder = require('@hughrun/feedfinder') // get feeds from site URLs
@@ -515,7 +515,7 @@ app.post('/user/delete-blog',
     res.redirect('/user')
   })
 
-// TODO: pocket routes
+// pocket routes
 
 app.get('/user/pocket', 
   (req, res, next) => {
@@ -547,6 +547,19 @@ app.get('/user/pocket-redirect',
       .catch(e => {
         req.flash('error', e)
         res.redirect('/subscribe')
+      })
+  })
+
+app.post('/user/pocket-unsubscribe', 
+  (req, res, next) => {
+    unsubscribeFromPocket(req.user)
+      .then( () => {
+        req.flash('success', 'Pocket subscription cancelled. You should also "remove access" by this app at https://getpocket.com/connected_applications')
+        res.redirect('/user')
+      })
+      .catch(err => {
+        debug.log(err)
+        req.flash('error', `Something went wrong cancelling your Pocket subscription: ${err}`)
       })
   })
 
