@@ -59,6 +59,31 @@
         </form>
       {/for}
       {/if}
+      <div class="administrators">
+        <h2>Administrators</h2>
+        {if admins}
+        <ul class="blog-list">
+          {for user in admins}
+          <li>
+            <div class="admin-listing"><span>{user.email}</span><button class="delete-button" form="removeAdmin" type="submit">Remove as admin</button></div>
+            <form action="/admin/remove-admin" id="removeAdmin"  method="post">
+              <input name="user" type="hidden" value={user.email}>
+            </form>
+          </li>
+          {/for}
+        </ul>
+        {else}
+          <div>You are currently the only administrator. You should add someone else in case you get hit by a bus.</div>
+        {/if}
+        <div class="make-admin">
+          <p>You should trust any user you make an administrator - they will have the power to remove your own admin rights!</p>
+          <form action="/admin/add-admin" id="makeAdmin"  method="post">
+            <label class="form-label" for="user">User email:</label>
+            <input name="user" type="email">
+            <button class="add-button" form="makeAdmin" type="submit">Make user admin</button>
+          </form>
+        </div>
+      </div>
     </section>
   {>footer}
 {>foot}

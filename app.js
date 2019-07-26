@@ -9,7 +9,7 @@ const express = require('express') // express
 const app = express(); // create local instance of express
 const engines = require('consolidate') // use consolidate with whiskers template engine
 const db = require('./lib/queries.js') // local database queries module
-const { updateUserDetails, updateUserBlogs, unsubscribeFromPocket } = require('./lib/users.js') // local database updates module
+const { updateUserContacts, updateUserBlogs, unsubscribeFromPocket, updateUserPermission } = require('./lib/users.js') // local database updates module
 const { approveBlog, deleteBlog, registerBlog } = require('./lib/blogs.js') // local database updates module
 const { authorisePocket, finalisePocketAuthentication, sendEmail } = require('./lib/utilities.js') // local pocket functions
 const feedfinder = require('@hughrun/feedfinder') // get feeds from site URLs
@@ -375,7 +375,7 @@ app.post('/user/update-user',
     function(req, res, next) {
     // here we need to check for other users with the same email
       db.checkEmailIsUnique(req.body)
-        .then(updateUserDetails)
+        .then(updateUserContacts)
         .then(() => {
           debug.log('user updated')
           if (req.body.email != req.session.passwordless) {
@@ -615,27 +615,43 @@ app.get('/admin', function (req, res) {
           })
         })
         return Promise.all(mapped).then(updated => {
-          doc.users = updated
+          doc.approvals = updated
           return doc
         })
     })
-      .then( args =>
-      res.render('admin', {
-        partials: {
-          head: __dirname+'/views/partials/head.html',
-          header: __dirname+'/views/partials/header.html',
-          foot: __dirname+'/views/partials/foot.html',
-          footer: __dirname+'/views/partials/footer.html'
-        },
-        user: args.user,
-        failing: args.failing,
-        legacy: settings.legacy_db,
-        approvals: args.users,
-        warnings: req.flash('warning'),
-        success: req.flash('success'),
-        errors: req.flash('error')
-      })
-    ).catch(err => {debug.log(err)})
+    .then( args => {
+      // now we need to get all the admins!!
+      args.query = { 'permission' : 'admin'}
+      return args
+    })
+    .then(db.getUsers)
+    .then( args => {
+      // remove this user from admins
+      // this prevents the user from accidentally removing themself as an admin
+      function removeThisUser(user) {
+        return user.email !== req.user
+      }
+      args.users = args.users.filter(removeThisUser)
+      return args
+    })
+    .then( args =>
+    res.render('admin', {
+      partials: {
+        head: __dirname+'/views/partials/head.html',
+        header: __dirname+'/views/partials/header.html',
+        foot: __dirname+'/views/partials/foot.html',
+        footer: __dirname+'/views/partials/footer.html'
+      },
+      admins: args.users,
+      user: args.user,
+      failing: args.failing,
+      legacy: settings.legacy_db,
+      approvals: args.approvals,
+      warnings: req.flash('warning'),
+      success: req.flash('success'),
+      errors: req.flash('error')
+    })
+  ).catch(err => {debug.log(err)})
 })
 
 // post admin/deleteblog
@@ -730,6 +746,54 @@ app.post('/admin/reject-blog', function(req, res, next) {
     })
 },
 function (req, res, next) {
+  res.redirect('/admin')
+})
+
+app.post('/admin/add-admin', 
+  (req, res, next) => {
+    const args = req.body // user (email)
+    args.permission = 'admin'
+    updateUserPermission(args)
+      .then( () => {
+        message = {
+          text: `${req.user} has made you an administrator on ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to use this new power, (but only for good).`,
+          to: args.user,
+          subject: `You are now an admin on ${settings.app_name}`,
+        }
+        sendEmail(message) // send email to user
+        req.flash('success', `${args.user} is now an administrator`)
+        next()
+      })
+      .catch( err => {
+        req.flash('error', err)
+        next()
+      })
+  },
+  (req, res, next) => {
+    res.redirect('/admin')
+  })
+
+app.post('/admin/remove-admin', 
+(req, res, next) => {
+  const args = req.body // user (email)
+  args.permission = 'user'
+  updateUserPermission(args)
+    .then( () => {
+      message = {
+        text: `You have been removed as an administrator on ${settings.app_name} by ${req.user}.`,
+        to: args.user,
+        subject: `You are no longer an admin on ${settings.app_name}`,
+      }
+      sendEmail(message) // send email to user
+      req.flash('success', `${args.user} is no longer an administrator`)
+      next()
+    })
+    .catch( err => {
+      req.flash('error', err)
+      next()
+    })
+},
+(req, res, next) => {
   res.redirect('/admin')
 })
 

@@ -318,3 +318,17 @@ input[type="submit"].email-signup {
 	text-align: center;
 	margin-bottom: 0.5em;
 }
+
+/* ##############
+
+	admin dashboard 
+
+ ############## */
+
+ .form-label {
+	 font-weight: bold;
+ }
+
+ .make-admin {
+	 margin-top: 1em;
+ }
