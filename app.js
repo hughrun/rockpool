@@ -666,7 +666,7 @@ app.post('/admin/deleteblog', function(req, res) {
         if (vals[0]) { // if this is a legacy DB there may be no users with this blog listed
           args.user = vals[0]._id
           updateUserBlogs(args) // remove the blog _id from the owner's 'blogs' array
-            .then( args => {
+            .then( args => { // TODO: if there was an owner, send email
               return args
             })
         } else {
@@ -674,11 +674,11 @@ app.post('/admin/deleteblog', function(req, res) {
         }
       })
       .then(deleteBlog) // delete the document from the blogs collection
-      .then( () => {
-        // TODO: if there was an owner, send email
+      .then( args => {
         req.flash('success', 'Blog deleted')
         res.redirect('/admin')
       }).catch(err => {
+        // TODO: WTF is the line below trying to do?
         const msg = err ? typeof err === String : "Something went wrong whilst deleting 😯"
         debug.log(err)
         req.flash('error', msg)

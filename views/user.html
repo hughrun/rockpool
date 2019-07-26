@@ -63,6 +63,8 @@
         <li class="listed-blog">
           <div class="approved-blog"></div>
           <span>{blog.url}</span>
+          <button type="button" class="edit">Edit</button>
+          <!-- TODO: JS function to inject update form with select for category -->
           <button type="submit" form="deleteBlog">Delete</button>
           <form id="deleteBlog" action="/user/delete-blog"  method="POST">
             <input name="blog" value={blog.idString} type="hidden">
@@ -83,7 +85,7 @@
         <select name="category">
           <option value="null" disabled selected>---</option>
         {for category in blogCategories}
-          <option value={category}>{category}</option>
+          <option value="{category}">{category}</option>
         {/for}
         </select>
         <br/>

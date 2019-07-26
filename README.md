@@ -9,10 +9,13 @@ Rockpool is an Express app interfacing with MongoDB to provide:
 * harvesting of article metadata via RSS and storage in MongoDB
 * web interface to discover articles via search or tag browse
 * announcements of new articles via Twitter and/or Mastodon
-* subscription to all articles via Pocket or RSS
+* passwordless login
 * self-registration of blogs by owners
+* claiming of blogs by owners (for legacy DB)
+* editing of blog category, and deletion of blog listings, by authorised owners
 * admin access to approve and edit blog listings
-* editing of blog listings by verified owners
+* subscription to all articles via Pocket
+* automatic OPML file with all blogs
 
 Work In Progress: **Definitely not production-ready yet!**
 
@@ -22,12 +25,12 @@ Work In Progress: **Definitely not production-ready yet!**
 2. [Database structure](manual/database.md)  
 3. [Searching](manual/search.md)
 4. [User dashboard](manual/dashboard.md)
+5. [Admin dashboard](admin.md)
 
 ## License
 
+**After 10 May 2019:** AGPL 3.0+  
 **Prior to 10 May 2019:** GPL 3.0+
-
-**After 10 May 2019:** AGPL 3.0+
 
 Copyright (C) 2019 Hugh Rundle
 

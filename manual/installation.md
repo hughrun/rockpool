@@ -21,3 +21,5 @@ Copy `settings-example.json` to a file called `settings.json`. This is where all
 [Database structure](database.md)  
 [Installation](installation.md)  
 [Search](search.md)  
+[User dashboard](dashboard.md)  
+[Admin dashboard](admin.md)  

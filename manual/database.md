@@ -64,3 +64,5 @@ A **tag** is a metadata string indicating a topic associated with one or more ar
 [Database structure](database.md)  
 [Installation](installation.md)  
 [Search](search.md)  
+[User dashboard](dashboard.md)  
+[Admin dashboard](admin.md)  
