@@ -25,7 +25,7 @@ Work In Progress: **Definitely not production-ready yet!**
 2. [Database structure](manual/database.md)  
 3. [Searching](manual/search.md)
 4. [User dashboard](manual/dashboard.md)
-5. [Admin dashboard](admin.md)
+5. [Admin dashboard](manual/admin.md)
 
 ## License
 
