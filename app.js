@@ -899,3 +899,6 @@ app.listen(3000, function() {
   console.log(`     🗃  Connected to database at ${settings[process.env.NODE_ENV].mongo_url}`)
   console.log('    *****************************************************************************')
 })
+
+// export app for testing
+module.exports = app;
