@@ -2,29 +2,47 @@
     ###         require modules        ###
     ######################################
 */
+
+// dev
+const debug = require('debug'), name = 'Rockpool' // debug for development
+const clipboardy = require('clipboardy') // write to and from clipboard (for development)
+
+// settings
 const settings = require('./settings.json') // local settings file (leave at top)
 const env = process.env.NODE_ENV // are we in production or development?
+settings.test = settings.development
+if (env === 'test') {
+  settings.test.mongo_db = 'rockpoolTest'
+}
+
+// express
 const path = require('path') // nodejs native package
 const express = require('express') // express
 const app = express(); // create local instance of express
 const engines = require('consolidate') // use consolidate with whiskers template engine
+
+// require locals
 const db = require('./lib/queries.js') // local database queries module
 const { updateUserContacts, updateUserBlogs, unsubscribeFromPocket, updateUserPermission } = require('./lib/users.js') // local database updates module
 const { approveBlog, deleteBlog, registerBlog } = require('./lib/blogs.js') // local database updates module
 const { authorisePocket, finalisePocketAuthentication, sendEmail } = require('./lib/utilities.js') // local pocket functions
-const feedfinder = require('@hughrun/feedfinder') // get feeds from site URLs
-const debug = require('debug'), name = 'Rockpool' // debug for development
-const clipboardy = require('clipboardy') // write to and from clipboard (for development)
+
+// managing users
 const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
 const { ObjectId } = require('mongodb') // for mongo IDs
 const MongoStore = require('passwordless-mongostore-bcryptjs') // for creating and storing passwordless tokens
 var cookieParser = require('cookie-parser') // cookies
 var sessionStore = new session.MemoryStore // cookie storage
+
+// dealing with form data
 const bodyParser = require('body-parser') // bodyparser for form data
-const flash = require('express-flash') // flash messages
 const { body, validationResult } = require('express-validator/check') // validate
 const { sanitizeBody } = require('express-validator/filter') // sanitise TODO: this is never called
+
+// other stuff
+const flash = require('express-flash') // flash messages
+const feedfinder = require('@hughrun/feedfinder') // get feeds from site URLs
 
 /*  ######################################
     ### initiate and configure modules ###
@@ -169,7 +187,7 @@ app.get('/', (req, res) =>
       user: req.session.passwordless
 		})
 	})
-	.catch(err => console.error(err))
+	.catch(err => debug.error(err))
 )
 
 // search
@@ -198,7 +216,7 @@ app.get('/search/', (req, res) => db.getArticles(req.query.tag, req.query.page, 
       user: req.session.passwordless
 		})
 	)
-  .catch(err => console.error(err))
+  .catch(err => debug.error(err))
 )
 
 // subscribe
