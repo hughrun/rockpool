@@ -29,8 +29,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
 
   // TODO: SETUP.JS (previously INDEXES.JS )
   describe('npm setup - to prepare DB before running Rockpool', function() {
-    it('Should create database using name in settings[env].mongo_db')
-    it('Should not create new database if DB already exists')
+    it('Should create database using name in settings[env].mongo_db') // TODO: should it? isn't this automatic in MongoDB?
+    it('Should not overwrite database if DB already exists')
     it('Should build text indexes if they do not already exist')
   })
 
@@ -40,9 +40,24 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         // clear db here
         // something like db.dropDatabase
       })
+      before('run setup script', function(done) {
+        this.timeout(0)
+        const { exec } = require('child_process')
+        // NOTE: executes as if we are in the main directory - note the file path
+        exec("NODE_ENV=test node ./scripts/setup.js", function(error, stdout, stderr) {
+          if (error) {
+            console.error(error)
+          }
+          if (stderr) {
+            console.error(stderr)
+          }
+          done()
+        })
+      })
       after('Close connection to app when tests completed', function() {
         // if I ever work out how to tear it down in a way that actually works...
       })
+
       describe('When the database is empty', function() {
         it('should load homepage', function(done) { 
           request(app)
@@ -76,5 +91,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         it('should not queue announcements for new articles that are older than 48 hours')
       })
     })
+  })
+  after('All tests completed', function() {
+    // drop test database
   })
 })
