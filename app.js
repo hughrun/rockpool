@@ -10,10 +10,6 @@ const clipboardy = require('clipboardy') // write to and from clipboard (for dev
 // settings
 const settings = require('./settings.json') // local settings file (leave at top)
 const env = process.env.NODE_ENV // are we in production or development?
-settings.test = settings.development
-if (env === 'test') {
-  settings.test.mongo_db = 'rockpoolTest'
-}
 
 // express
 const path = require('path') // nodejs native package

@@ -1,6 +1,6 @@
 // settings
 const settings = require('../settings.json')
-const env = process.env.NODE_ENV // are we in production or development?
+const env = process.env.NODE_ENV // are we in production, development, or test?
 
 // Mongo
 const MongoClient = require('mongodb').MongoClient;
