@@ -160,9 +160,28 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           .expect(200, done)
         })
       })
-    
-    describe('Harvester functions', function() {
-      describe('The checkfeeds() function checks each feed in the DB for new articles', function() {
+    describe('with test data', function() {
+      before('insert users', function() {
+        // insert test users including some pocket users
+      })
+      before('insert blogs', function() {
+        // insert test blogs
+      })
+      before('insert articles', function() {
+        // insert test articles
+      })
+      before('insert tags', function() {
+        // insert test tags
+      })
+      describe('addBlog()', function() {
+        it('should add the blog to the DB with URL, feed, approved: false and announced:false')
+      })
+      describe('approveBlog()', function() {
+        it('should set approved to true')
+        it('should move the blog id from blogsForApproval to blogs in the user record')
+        it('should queue an announcement')
+      })
+      describe('checkfeeds()', function() {
         it('should eventually resolve')
         it('should not add articles that are already in the database')
         it('should add new articles if there are new articles')
@@ -170,8 +189,36 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         it('should queue announcements for new articles')
         it('should not queue announcements for new articles that are older than 48 hours')
       })
+      describe('queueAnnouncement()', function() {
+        it('should queue tweets if settings[env].useTwitter is true')
+        it('should not queue tweets if settings[env].useTwitter is false')
+        it('should queue toots if settings[env].useMastodon is true')
+        it('should not queue toots if settings[env].useMastodon is false')   
+      })
+      describe('checkAnnouncementsQueue()', function() {
+        it('should send tweets if settings[env].useTwitter is true')
+        // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Twitter API
+        it('should not send tweets if settings[env].useTwitter is false')
+        it('should send toots if settings[env].useMastodon is true')
+        // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Mastodon API
+        it('should not send toots if settings[env].useMastodon is false')
+      })
+      describe('sendTweet()', function() {
+        // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Twitter API
+        it('should restrict tweet length to 280 chars max')
+        it('should include title, author and link')
+        it('should use owner twitter @name if listed')
+        it('should use blog twitter @name if listed, when owner not available and using legacy DB')
+      })
+      describe('sendToot()', function() {
+        // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Mastodon API
+        it('should restrict toot length to 500 chars max')
+        it('should include title, author and link')
+        it('should use owner mastodon @name if listed')
+      })
     })
-  })
+    })
+    
   
   after('All tests completed', function() {
     // drop test database
