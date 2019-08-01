@@ -23,4 +23,4 @@ All code with new features must include relevant new tests against those feature
 
 This project is tested using [mocha](https://github.com/mochajs/mocha).
 
-If you're not sure how to write tests in mocha, have a chat with @hughrun about it amd he'll give you a hand.
+If you're not sure how to write tests in mocha, have a chat with [Hugh](https://github.com/hughrun) about it amd he'll give you a hand.
