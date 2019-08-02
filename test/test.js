@@ -1,6 +1,6 @@
 // require modules
 const request = require('supertest') // test routes
-const app = require('../app.js') // this causes mocha to hang
+const app = require('../app.js') // require Rockpool app
 // NOTE: app will hang mocha because there doesn't seem to be any way to close the connection
 // workaround for now is to run with the --exit flag but this is obviously not ideal
 const assert = require('assert')
@@ -17,11 +17,11 @@ const dbName = settings.test.mongo_db
 describe('Test suite for Rockpool: a web app for communities of practice', function() {
 
   before('create demo legacy DB to test migration', function() {
-
+    // insert a bunch of stuff into 'legacy'
   })
 
   before('run migrate script', function() {
-
+    // run the script against 'legacy' DB
   })
 
   // MIGRATE.JS
@@ -173,8 +173,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       before('insert tags', function() {
         // insert test tags
       })
-      describe('addBlog()', function() {
+      describe('registerBlog()', function() {
         it('should add the blog to the DB with URL, feed, approved: false and announced:false')
+        it('should add the blog to the user blogsForApproval array')
       })
       describe('approveBlog()', function() {
         it('should set approved to true')
@@ -182,10 +183,11 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         it('should queue an announcement')
       })
       describe('checkfeeds()', function() {
+        it('should run every X minutes in line with settings[env].minutes_between_checking_feeds')
         it('should eventually resolve')
-        it('should not add articles that are already in the database')
-        it('should add new articles if there are new articles')
-        it('should skip articles with an exclude tag')
+        it('should not duplicate blogs with the same URL or GUID')
+        it('should add new articles if there are new (i.e. not in the DB) articles')
+        it('should skip articles with exclude tags')
         it('should queue announcements for new articles')
         it('should not queue announcements for new articles that are older than 48 hours')
       })
@@ -196,12 +198,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         it('should not queue toots if settings[env].useMastodon is false')   
       })
       describe('checkAnnouncementsQueue()', function() {
-        it('should send tweets if settings[env].useTwitter is true')
-        // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Twitter API
-        it('should not send tweets if settings[env].useTwitter is false')
-        it('should send toots if settings[env].useMastodon is true')
-        // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Mastodon API
-        it('should not send toots if settings[env].useMastodon is false')
+        it('should run every X minutes in line with settings[env].minutes_between_announcements')
+        it('should send the next announcement if there are any in the queue')
       })
       describe('sendTweet()', function() {
         // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Twitter API
@@ -223,7 +221,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
   after('All tests completed', function() {
     // drop test database
     // close all mongo connections if I ever work out how to tear it down in a way that actually works...
-    // TODO: is this because there is an open Mongo connection in the app somewhere?
+    // TODO: is there an open Mongo connection in the app somewhere?
     // TODO: check whether MongoStore can/needs to be closed.
   })
 })
