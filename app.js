@@ -938,17 +938,37 @@ app.get('/email-updated',
 
 // TESTING vuejs
 
+/*  
+    #######################
+          API ROUTES
+    #######################
+*/
+
 app.all('/api/v1/user*', 
 passwordless.restricted(),
 (req, res, next) => {
   next()
 })
 
-app.get('/vuetest-data', function(req, res) {
-  db.getUsers({})
-    .then( users => {
-      res.json(users)
-    })
+/*  ########
+      GET
+    ########
+*/
+
+app.get('/api/v1/user/info', function(req, res) {
+  db.getUsers({query: {"email" : req.user}})
+  .then(
+    doc => {
+      var data = {}
+      data.user = doc.users[0]._id
+      data.email = doc.users[0].email
+      data.twitter = doc.users[0].twitter || null
+      data.mastodon = doc.users[0].mastodon || null
+      res.json(data)
+  })
+  .catch( err => {
+    debug.log(err)
+  })
 })
 
 app.get('/api/v1/user/blogs', function(req, res) {
@@ -960,7 +980,7 @@ app.get('/api/v1/user/blogs', function(req, res) {
     })
   .then(db.getBlogs)
   .then( data => {
-    res.json(data.blogs)
+    res.json({user: data.idString, blogs: data.blogs})
   })
   .catch( err => {
     debug.log(err)
@@ -985,22 +1005,6 @@ app.get('/api/v1/user/unapproved-blogs', function(req, res) {
   })
 })
 
-app.get('/api/v1/user/info', function(req, res) {
-  db.getUsers({query: {"email" : req.user}})
-  .then(
-    doc => {
-      var data = {}
-      data.user = doc.users[0]._id
-      data.email = doc.users[0].email
-      data.twitter = doc.users[0].twitter || null
-      data.mastodon = doc.users[0].mastodon || null
-      res.json(data)
-  })
-  .catch( err => {
-    debug.log(err)
-  })
-})
-
 app.get('/api/v1/user/pocket-info', function(req, res) {
   db.getUsers({query: {"email" : req.user}})
   .then(
@@ -1014,6 +1018,11 @@ app.get('/api/v1/user/pocket-info', function(req, res) {
   })
 })
 
+/*  ########
+      POST
+    ########
+*/
+
 app.all('/api/v1/update*', function(req, res, next) {
   debug.log(req.body)
   if (req.body.email === req.user) {
@@ -1023,7 +1032,7 @@ app.all('/api/v1/update*', function(req, res, next) {
   }
 })
 
-// API update routes
+// update user contact info
 app.post('/api/v1/update/user-info', function(req,res) {
   db.getUsers({query: {"email" : req.user}})
   .then( doc => {
@@ -1042,6 +1051,24 @@ app.post('/api/v1/update/user-info', function(req,res) {
     })
   })
 })
+
+// delete blog
+app.post('api/v1/user/delete-blog',
+  function(req, res, next) {
+    const args = req.body
+    args.user = req.user
+    // TODO: get user ID
+    updateUserBlogs(args) // delete using req.userId (id) and req.body.blog (id string)
+    .then(deleteBlog)
+    .then( () => { // TODO: we need the updated blogs list here
+      res.return({msg: 'Blog deleted', error: null})
+    })
+    .catch( e => {
+      debug.log('**ERROR DELETING BLOG**')
+      debug.log(e)
+      res.return({msg: null, error: e.message}) // TODO: probably not great to just send the error message
+    })
+  })
 
 app.get('/vuetest', function(req, res) {
   res.render('vuetest', {

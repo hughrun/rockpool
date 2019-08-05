@@ -290,6 +290,15 @@ input[type="submit"].email-signup {
 	margin-top: 2em
 }
 
+.deleting {
+	text-decoration: line-through;
+	color: slategray;
+}
+
+.deleting .approved-blog {
+	background-color: slategray;
+}
+
 /* flash messages */
 
 .flash-success {

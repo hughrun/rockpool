@@ -1,0 +1,58 @@
+{>head}
+  {>header}
+    <!-- vuejs prototyping -->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <!-- axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <section class="main">
+      <div v-if="messages" id="user-messages">
+        <ul v-for="msg in messages">
+          <li v-bind:class="msg.class">{{ msg.text }}</li>
+        </ul>
+      </div>
+      <div id="user-info">
+        <form v-if="editing" name="user-info" method="POST">
+          <div>
+            <!-- <input name="user" hidden v-bind:value="user.user"> -->
+            <label for="email">Email:</label>
+            <input id="email" name="email" v-model="user.email">
+          </div>
+          <div>
+            <label for="twitter">Twitter:</label>
+            <input id="twitter" name="twitter" v-model="user.twitter">
+          </div>
+          <div>
+            <label for="mastodon">Mastodon:</label>
+            <input id="mastodon" name="mastodon" v-model="user.mastodon">
+          </div>
+          <button v-on:click.prevent="updateUser" id="update-button">Update</button>
+        </form>
+        <div v-else>
+          <div id="email"><span class="form-label">Email: </span>{{ user.email }}</div>
+          <div id="twitter"><span class="form-label">Twitter: </span>{{ user.twitter }}</div>
+          <div id="mastodon"><span class="form-label">Mastodon: </span>{{ user.mastodon }}</div>
+          <button v-on:click="editing = true">Edit</button>
+        </div>
+      </div>
+      <div>
+        <div class="form-label">Blogs: </div>
+      </div>
+      <ul id="user-approved-blogs" class="blog-list">
+        <li v-for='blog in blogs' class="listed-blog" v-bind:class="{deleting: blog.editing}" v-bind:key="blog.id">
+          <div class="approved-blog"></div>
+          <span>{{ blog.url }}</span>
+          <button v-if="blog.editing" v-on:click.self="deleteBlog" v-bind:id="blog.idString">Confirm deletion</button>
+          <button v-else v-on:click="checking(blog)" v-bind:id="blog.idString">Delete</button>
+        </li>
+      </ul>
+      <ul id="user-unapproved-blogs" class="blog-list">
+          <li v-for='blog in uBlogs' class="listed-blog">
+            <div class="approved-blog"></div>
+            <span>{{ blog.url }}</span>
+          </li>
+        </ul>
+    </section>
+    <!-- vuejs components -->
+    <script src="/scripts/vue-components.js"></script>
+  {>footer}
+{>foot}
