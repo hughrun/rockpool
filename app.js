@@ -87,7 +87,9 @@ passwordless.addDelivery('clipboard',
   function(tokenToSend, uidToSend, recipient, callback, req) {
     var address = settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)
     clipboardy.writeSync(address)
-    debug.log("Login link copied to clipboard")
+    if (env === 'development') {
+      debug.log("Login link copied to clipboard")
+    }
     callback(null, recipient)
   })
 
@@ -102,7 +104,8 @@ app.engine('html', engines.whiskers)
 app.set('view engine', 'html')
 
 // routing middleware
-app.use(bodyParser.urlencoded({ extended: false })) // use bodyParser
+app.use(bodyParser.urlencoded({ extended: false })) // use bodyParser with form data
+app.use(bodyParser.json()) // use bodyParser with JSON
 app.use(cookieParser(settings[env].cookie_parser_secret))
 app.use(session(sess)) // use sessions
 app.use(passwordless.sessionSupport()) // makes session persistent
@@ -114,7 +117,7 @@ app.use(flash()) // use flash messages
 // TODO: this shouldn't be needed if we just use email instead of id in most instances
 function userIsThisUser (req, res, next) {
   const thisUserEmail = req.session.passwordless
-  const claimedUserIdString = req.body.user
+  const claimedUserIdString = req.body.user || req.user
   const args = req.body
   args.query = {"email" : thisUserEmail}
   db.getUsers(args)
@@ -354,6 +357,63 @@ app.get('/user',
 ))
 
 // update user details
+// app.post('/user/update-user',
+//     [
+//       // normalise email
+//       body('email').isEmail().normalizeEmail(),
+//       // validate twitter with custom check
+//       body('twitter').custom( val => {
+//         let valid = val.match(/^@+[A-Za-z0-9_]*$/) || val == ""
+//         return valid
+//       }).withMessage("Twitter handles must start with '@' and contain only alphanumerics or underscores"),
+//       // validate twitter length
+//       body('twitter').isLength({max: 16}).withMessage("Twitter handles must contain fewer than 16 characters"),
+//       // validate mastodon with custom check
+//       body('mastodon').custom( val => {
+//         let valid = val.match(/^@+\S*@+\S*/) || val == ""
+//         return valid
+//       }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
+//     ],
+//     [userIsThisUser], // TODO:L if you use req.user this won't be necessary
+//     (req, res, next) => {
+//       debug.log('User details: %O', req.body)
+//       if (!validationResult(req).isEmpty()) {
+//         // flash errors
+//         let valArray = validationResult(req).array()
+//         for (var i=0; i < valArray.length; ++i) {
+//           req.flash('error', valArray[i].msg)
+//         }
+//         // reload page with flashes instead of updating
+//         res.redirect('/user')
+//       } else {
+//         next()
+//       }
+//     },
+//     function(req, res, next) {
+//     // here we need to check for other users with the same email
+//       db.checkEmailIsUnique(req.body)
+//         .then(updateUserContacts)
+//         .then(() => {
+//           debug.log('user updated')
+//           if (req.body.email != req.session.passwordless) {
+//             res.redirect('/email-updated') // force logout if email has changed
+//           } else {
+//             req.flash("success", "Your details have been updated")
+//             next() // if email unchanged, reload the page with update info
+//           }
+//         })
+//         .catch(err => {
+//             debug.log(err)
+//             req.flash("error", `Something went wrong:\n${err}`)
+//             next()
+//         })
+//       },
+//       (req, res) => {
+//         res.redirect('/user')
+//       }
+//   )
+
+// update user details
 app.post('/user/update-user',
     [
       // normalise email
@@ -371,7 +431,6 @@ app.post('/user/update-user',
         return valid
       }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
     ],
-    [userIsThisUser],
     (req, res, next) => {
       debug.log('User details: %O', req.body)
       if (!validationResult(req).isEmpty()) {
@@ -388,6 +447,9 @@ app.post('/user/update-user',
     },
     function(req, res, next) {
     // here we need to check for other users with the same email
+      if (req.user != req.body.email) {
+        throw new Error('Cannot update another user')
+      }
       db.checkEmailIsUnique(req.body)
         .then(updateUserContacts)
         .then(() => {
@@ -874,11 +936,125 @@ app.get('/email-updated',
     })
   })
 
-// TODO: 403 unauthorised
+// TESTING vuejs
 
-// TESTING
+app.all('/api/v1/user*', 
+passwordless.restricted(),
+(req, res, next) => {
+  next()
+})
 
-app.get('/test', function (req, res) {
+app.get('/vuetest-data', function(req, res) {
+  db.getUsers({})
+    .then( users => {
+      res.json(users)
+    })
+})
+
+app.get('/api/v1/user/blogs', function(req, res) {
+  db.getUserDetails(req.user) // TODO: we can probably refactor to only use getUsers()
+  .then( // now get the approved blogs
+    doc => {
+      doc.query = {"_id": {$in: doc.user.blogs}}
+      return doc
+    })
+  .then(db.getBlogs)
+  .then( data => {
+    res.json(data.blogs)
+  })
+  .catch( err => {
+    debug.log(err)
+  })
+})
+
+app.get('/api/v1/user/unapproved-blogs', function(req, res) {
+  db.getUsers({query: {"email" : req.user}})
+  .then( // now get the approved blogs
+    doc => {
+      doc.query = {
+        "_id": {$in: doc.users[0].blogsForApproval},
+      }
+      return doc
+    })
+  .then(db.getBlogs)
+  .then( data => {
+    res.json(data.blogs)
+  })
+  .catch( err => {
+    debug.log(err)
+  })
+})
+
+app.get('/api/v1/user/info', function(req, res) {
+  db.getUsers({query: {"email" : req.user}})
+  .then(
+    doc => {
+      var data = {}
+      data.user = doc.users[0]._id
+      data.email = doc.users[0].email
+      data.twitter = doc.users[0].twitter || null
+      data.mastodon = doc.users[0].mastodon || null
+      res.json(data)
+  })
+  .catch( err => {
+    debug.log(err)
+  })
+})
+
+app.get('/api/v1/user/pocket-info', function(req, res) {
+  db.getUsers({query: {"email" : req.user}})
+  .then(
+    doc => {
+      var data = {}
+      data.pocket_username = doc.users[0].pocket ? doc.users[0].pocket.username : null
+      res.json(data)
+  })
+  .catch( err => {
+    debug.log(err)
+  })
+})
+
+app.all('/api/v1/update*', function(req, res, next) {
+  debug.log(req.body)
+  if (req.body.email === req.user) {
+    next()
+  } else {
+    throw new Error('Cannot update another user')
+  }
+})
+
+// API update routes
+app.post('/api/v1/update/user-info', function(req,res) {
+  db.getUsers({query: {"email" : req.user}})
+  .then( doc => {
+    let user = doc[0]
+    updateUserContacts(req.body)
+    .then( data => {
+      if (!data.error) {
+        res.send({user: data.user, error: null})
+      } else {
+        res.send({data: null, error: data.error})
+      }
+    })
+    .catch(err => {
+      debug.error(err)
+      res.send({data: null, error: err})
+    })
+  })
+})
+
+app.get('/vuetest', function(req, res) {
+  res.render('vuetest', {
+    partials: {
+      head: __dirname+'/views/partials/head.html',
+      header: __dirname+'/views/partials/header.html',
+      foot: __dirname+'/views/partials/foot.html',
+      footer: __dirname+'/views/partials/footer.html'
+    }
+  })
+})
+
+app.get('/403', function (req, res) {
   res.sendStatus(403)
 })
 
@@ -889,11 +1065,13 @@ app.use(function (req, res, next) {
 
 // listen on server
 app.listen(3000, function() {
-  console.log('    *****************************************************************************')
-  console.log('     👂  Rockpool is listening on port 3000')
-  console.log(`     👟  You are running in ${process.env.NODE_ENV.toUpperCase()} mode`)
-  console.log(`     🗃  Connected to database at ${settings[process.env.NODE_ENV].mongo_url}`)
-  console.log('    *****************************************************************************')
+  if (env !== 'test') {
+    console.log('    *****************************************************************************')
+    console.log('     👂  Rockpool is listening on port 3000')
+    console.log(`     👟  You are running in ${process.env.NODE_ENV.toUpperCase()} mode`)
+    console.log(`     🗃  Connected to database at ${settings[process.env.NODE_ENV].mongo_url}`)
+    console.log('    *****************************************************************************')
+  }
 })
 
 // export app for testing

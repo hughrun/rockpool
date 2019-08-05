@@ -1,9 +1,12 @@
 // require modules
-const request = require('supertest') // test routes
+var request = require('supertest') // test routes
 const app = require('../app.js') // require Rockpool app
 // NOTE: app will hang mocha because there doesn't seem to be any way to close the connection
 // workaround for now is to run with the --exit flag but this is obviously not ideal
+const agent = request.agent(app)
+var request = request(app)
 const assert = require('assert')
+const clipboardy = require('clipboardy')
 
 // settings
 const settings = require('../settings.json')
@@ -60,11 +63,13 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               let reduction = (a, v) => a.concat(v)
               let array = values.reduceRight(reduction).reduceRight(reduction)
               assert.ok(array.includes('tags'))
-              done()
+              callback()
             })
           }
           findCollection(db, function() {
-            client.close()
+            client.close().then( () => {
+              done()
+            })
           })
       })
     })
@@ -80,11 +85,17 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               // reduce two levels of arrays
               let array = values.reduceRight(reduction).reduceRight(reduction)
               assert.ok(array.includes('text'))
-              done()
+              callback()
             })
           }
           findCollection(db, function() {
             client.close()
+            .then( () => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
           })
       })
     })
@@ -93,17 +104,24 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         assert.strictEqual(null, err);
         const db = client.db(dbName);
           const findCollection = function(db, callback) {
-            db.listCollections().toArray().then( array => {
+            db.listCollections().toArray()
+            .then( array => {
               const names = array.map( x => {
                 return x.name
               })
               let exists = names.includes('rp_articles')
               assert.ok(exists)
-              done()
+              callback()
             })
           }
           findCollection(db, function() {
             client.close()
+            .then( () => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
           })
       })
     })
@@ -116,11 +134,18 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           assert.strictEqual(null, err);
           const db = client.db(dbName);
             const dropDb = function(db, callback) {
-              db.dropDatabase()
+              if (db) { // the db should not actually exist at this point, in which case it would throw an error
+                db.dropDatabase() // if it does exist, wipe it out
+              }
             }
             dropDb(db, function() {
               client.close()
-              done()
+              .then( () => {
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
             })
         })
       })
@@ -129,10 +154,10 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         // NOTE: executes as if we are in the main directory - note the file path
         exec("NODE_ENV=test node ./scripts/setup.js", function(error, stdout, stderr) {
           if (error) {
-            console.error(error)
+            done(error)
           }
           if (stderr) {
-            console.error(stderr)
+            done(stderr)
           }
           done()
         })
@@ -140,38 +165,372 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
 
       describe('When the database is empty', function() {
         it('should load homepage', function(done) { 
-          request(app)
+          request
             .get('/')
             .expect(200, done)
         })
         it('should load subscribe page', function(done) {
-          request(app)
+          request
           .get('/subscribe')
           .expect(200, done)
         })
         it('should load login page', function(done) {
-          request(app)
+          request
           .get('/letmein')
           .expect(200, done)
         })
         it('should load search results page', function(done) {
-          request(app)
+          request
           .get('/search?q=test')
           .expect(200, done)
         })
       })
     describe('with test data', function() {
-      before('insert users', function() {
+      // TODO: insert test data
+      before('insert users', function(done) {
         // insert test users including some pocket users
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err)
+          const db = client.db(dbName)
+          const insertUsers = function(db, callback) {
+            db.collection('rp_users').insertMany(
+              [
+                {
+                  _id: ObjectId("9798925b467e1bf17618d095"),
+                  email: 'alice@example.com',
+                  twitter: 'alice@twitter.com',
+                  blogs: [
+                    ObjectId("761924060db4a4b2c3b7fcc5")
+                  ],
+                  blogsForApproval: [
+                    ObjectId("e2280a977d8ccd54ce133c7f")
+                  ],
+                  permission: 'admin'
+                },
+                {
+                  _id: ObjectId("5963dd524b6bdc605127986d"),
+                  email: 'bob@example.com',
+                  twitter: 'bob@twitter.com',
+                  mastodon: '@bob@rockpool.town',
+                  blogs: [],
+                  blogsForApproval: [
+                    ObjectId("2a182f1d81c32da8adb56777")
+                  ]
+                }
+              ]
+            )
+            .then( doc => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          }
+          insertUsers(db, function() {
+            client.close()
+          })
+        })
       })
-      before('insert blogs', function() {
+      before('insert blogs', function(done) {
         // insert test blogs
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err)
+          const db = client.db(dbName)
+          const insertUsers = function(db, callback) {
+            db.collection('rp_blogs').insertMany(
+              [
+                {
+                  _id: ObjectId("761924060db4a4b2c3b7fcc5"),
+                  url: 'https://alice.blog',
+                  feed: 'https://alice.blog/rss',
+                  category: 'dogs',
+                  approved: true,
+                  announced: true
+                },
+                {
+                  _id: ObjectId("e2280a977d8ccd54ce133c7f"),
+                  url: 'https://rockpool-blogs/alice',
+                  feed: 'https://rockpool-blogs/alice/feed',
+                  category: 'budgies',
+                  approved: false,
+                  announced: false
+                },
+                {
+                  _id: ObjectId("2a182f1d81c32da8adb56777"),
+                  url: 'https://bobs-blog.com',
+                  feed: 'https://bobs-blog.com/atom',
+                  category: 'cats',
+                  approved: false,
+                  announced: false
+                }
+              ]
+            )
+            .then( doc => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          }
+          insertUsers(db, function() {
+            client.close()
+          })
+        })
       })
       before('insert articles', function() {
         // insert test articles
       })
       before('insert tags', function() {
         // insert test tags
+      })
+      before('log in', function(done) {
+        agent
+        .post('/sendtoken')
+        .type('application/x-www-form-urlencoded')
+        .send({"user" : "alice@example.com", "delivery" : "clipboard"})
+        .then( (err,res) => {
+          done()
+        })
+        .catch( err => {
+          done(err)
+        })
+      })
+      before('complete log in', function(done) {
+        var loginLink = clipboardy.readSync()
+        var link = loginLink.slice(19)
+        agent
+        .get(link)
+        .then( () => {
+          done()
+        })
+        .catch( err => {
+          done(err)
+        })
+      })
+      describe('user routes', function() {
+        describe('/user', function() {
+          it('should return 302 redirect when not logged in', function(done) {
+            request
+            .get('/user')
+            .expect(302, done)
+          })
+          it('should render user page when logged in', function(done) {
+            agent
+            .get('/user')
+            .expect(200, done)
+          })
+        })
+      })
+      describe('admin routes', function() {
+        describe('/admin', function() {
+          it('should return 302 redirect when not logged in', function(done) {
+            request
+            .get('/admin')
+            .expect(302, done)
+          })
+          it('should render user page when logged in and admin', function(done) {
+            agent
+            .get('/admin')
+            .expect(200, done)
+          })
+          it('should return 401 if user logged in but not admin') // TODO: need to log in with different user
+        })
+      })
+      describe('API routes', function() {
+        describe('/api/v1/user/info', function() {
+          it('should return a 401 if user not logged in', function(done) {
+            request
+            .get('/api/v1/user/info')
+            .expect(401, done)
+          })
+          it('should return a 200 if user is logged in', function(done) {
+            agent
+            .get('/api/v1/user/info')
+            .expect(200, done)
+          })
+          it('should return an object', function(done) {
+            agent
+            .get('/api/v1/user/info')
+            .then( data => {
+              assert(typeof data.body === 'object')
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+          it('should contain email, twitter, and mastodon as keys for each array entry', function(done) {
+            agent
+            .get('/api/v1/user/info')
+            .then( data => {
+              keys = Object.keys(data.body)
+              assert(keys.includes('email'))
+              assert(keys.includes('twitter'))
+              assert(keys.includes('mastodon'))
+            })
+            .then( x => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+        })
+        describe('/api/v1/user/blogs', function() {
+          it('should return a 401 if user not logged in', function(done) {
+            request
+            .get('/api/v1/user/blogs')
+            .expect(401, done)
+          })
+          it('should return a 200 if user is logged in', function(done) {
+            agent
+            .get('/api/v1/user/blogs')
+            .expect(200, done)
+          })
+          it('should return an array', function(done) {
+            agent
+            .get('/api/v1/user/blogs')
+            .then( data => {
+              assert(Array.isArray(data.body))
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+          it('should contain at least url, feed, and category as keys for each array entry', function(done) {
+            agent
+            .get('/api/v1/user/blogs')
+            .then( data => {
+              data.body.forEach( x => {
+                keys = Object.keys(x)
+                assert(keys.includes('url'))
+                assert(keys.includes('feed'))
+                assert(keys.includes('category'))
+              })
+            })
+            .then( x => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+          it('should return data from the test approved blog', function(done) {
+            agent
+            .get('/api/v1/user/blogs')
+            .then( data => {
+              assert(data.body[0].url === 'https://alice.blog')
+            })
+            .then( x => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+        })
+        describe('/api/v1/user/unapproved-blogs', function() {
+          it('should return a 401 if user not logged in', function(done) {
+            request
+            .get('/api/v1/user/unapproved-blogs')
+            .expect(401, done)
+          })
+          it('should return a 200 if user is logged in', function(done) {
+            agent
+            .get('/api/v1/user/unapproved-blogs')
+            .expect(200, done)
+          })
+          it('should return an array', function(done) {
+            agent
+            .get('/api/v1/user/unapproved-blogs')
+            .then( data => {
+              assert(Array.isArray(data.body))
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+          it('should contain at least url, feed, and category as keys for each array entry', function(done) {
+            agent
+            .get('/api/v1/user/unapproved-blogs')
+            .then( data => {
+              data.body.forEach( x => {
+                keys = Object.keys(x)
+                assert(keys.includes('url'))
+                assert(keys.includes('feed'))
+                assert(keys.includes('category'))
+              })
+            })
+            .then( x => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+          it('should return data from the test unapproved blog', function(done) {
+            agent
+            .get('/api/v1/user/unapproved-blogs')
+            .then( data => {
+              assert(data.body[0].url === 'https://rockpool-blogs/alice')
+            })
+            .then( x => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+        })
+        describe('/api/v1/user/pocket-info', function() {
+          it('should return a 401 if user not logged in', function(done) {
+            request
+            .get('/api/v1/user/pocket-info')
+            .expect(401, done)
+          })
+          it('should return a 200 if user is logged in', function(done) {
+            agent
+            .get('/api/v1/user/pocket-info')
+            .expect(200, done)
+          })
+          it('should return an object', function(done) {
+            agent
+            .get('/api/v1/user/pocket-info')
+            .then( data => {
+              assert(typeof data.body === 'object')
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+          it('should contain pocket_username as key', function(done) {
+            agent
+            .get('/api/v1/user/pocket-info')
+            .then( data => {
+              keys = Object.keys(data.body)
+              assert(keys.includes('pocket_username'))
+            })
+            .then( x => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+        })
+        describe('post routes', function() {
+          describe('/api/v1/update/user-info', function() {
+            it('should return 200 when logged in', function(done) {
+              agent
+              .post('/api/v1/update/user-info')
+              .send({email: 'alice@example.com', twitter: 'alice@tweeter.com', mastodon: '@new@masto.com'})
+              .expect(200, done)
+            })
+          })
+        })
       })
       describe('registerBlog()', function() {
         it('should add the blog to the DB with URL, feed, approved: false and announced:false')
@@ -215,13 +574,51 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         it('should use owner mastodon @name if listed')
       })
     })
+    after('All tests completed', function(done) {
+      function wipeDb() {
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const dropDb = function(db, callback) {
+              db.dropDatabase()
+            }
+            dropDb(db, function() {
+              client.close()
+              return
+            })
+        })
+      }
+
+      agent.get('/logout') // logout to clear the cookie
+      .then(wipeDb) // drop DB
+      .then( () => {
+        done()
+      })
+      
+
+      // close all mongo connections if I ever work out how to tear it down in a way that actually works...
+      // TODO: is there an open Mongo connection in the app somewhere?
+      // TODO: check whether MongoStore can/needs to be closed.
     })
-    
-  
-  after('All tests completed', function() {
-    // drop test database
-    // close all mongo connections if I ever work out how to tear it down in a way that actually works...
-    // TODO: is there an open Mongo connection in the app somewhere?
-    // TODO: check whether MongoStore can/needs to be closed.
   })
 })
+
+// MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+//   assert.strictEqual(null, err)
+//   const db = client.db(dbName)
+//   const insertUsers = function(db, callback) {
+//     db.collection('rp_users').insertMany(
+//       // insert all these docs
+//     )
+//     .then( doc => {
+//       // check for errors?
+//       // done()
+//     })
+//     .catch( err => {
+//       reject(err)
+//     })
+//   }
+//   insertUsers(db, function() {
+//     client.close()
+//   })
+// })
