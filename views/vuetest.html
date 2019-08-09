@@ -41,7 +41,7 @@
         <li v-for='blog in blogs' class="listed-blog" v-bind:class="{deleting: blog.editing}" v-bind:key="blog.id">
           <div class="approved-blog"></div>
           <span>{{ blog.url }}</span>
-          <button v-if="blog.editing" v-on:click.self="deleteBlog" v-bind:id="blog.idString">Confirm deletion</button>
+          <button v-if="blog.editing" v-on:click="deleteBlog(blog)" v-bind:id="blog.idString">Confirm deletion</button>
           <button v-else v-on:click="checking(blog)" v-bind:id="blog.idString">Delete</button>
         </li>
       </ul>

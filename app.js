@@ -186,7 +186,7 @@ app.get('/', (req, res) =>
       user: req.session.passwordless
 		})
 	})
-	.catch(err => debug.error(err))
+	.catch(err => debug.log(err))
 )
 
 // search
@@ -215,7 +215,7 @@ app.get('/search/', (req, res) => db.getArticles(req.query.tag, req.query.page, 
       user: req.session.passwordless
 		})
 	)
-  .catch(err => debug.error(err))
+  .catch(err => debug.log(err))
 )
 
 // subscribe
@@ -307,8 +307,10 @@ app.all('/user*',
 
 // user dashboard
 app.get('/user',
-  (req, res) => 
-  db.getUserDetails(req.session.passwordless) // get user
+  function (req, res) { 
+  var args = {}
+  args.user = req.user 
+  db.getUserDetails(args)
   .then( // here we query any blogs in user.blogs or user.blogsForApproval to reduce the number of DB calls
     doc => {
       doc.query = {"_id": {$in: doc.user.blogsForApproval}}
@@ -353,8 +355,9 @@ app.get('/user',
     warnings: req.flash('warning'),
     success: req.flash('success'),
     errors: req.flash('error')
-  })
-))
+    })
+  )
+})
 
 // update user details
 // app.post('/user/update-user',
@@ -432,7 +435,6 @@ app.post('/user/update-user',
       }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
     ],
     (req, res, next) => {
-      debug.log('User details: %O', req.body)
       if (!validationResult(req).isEmpty()) {
         // flash errors
         let valArray = validationResult(req).array()
@@ -453,7 +455,6 @@ app.post('/user/update-user',
       db.checkEmailIsUnique(req.body)
         .then(updateUserContacts)
         .then(() => {
-          debug.log('user updated')
           if (req.body.email != req.session.passwordless) {
             res.redirect('/email-updated') // force logout if email has changed
           } else {
@@ -479,6 +480,7 @@ app.post('/user/register-blog',
     feedfinder.getFeed(req.body.url)
     .then( ff => {
       const args = req.body
+      args.user = req.user
       args.feed = ff.feed // add the feed to the form data object
       args.action = "register" // this is used in updateUserBlogs
       args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
@@ -490,6 +492,7 @@ app.post('/user/register-blog',
     .then(db.getBlogs) // check the blog isn't already registered
     .then( args => { 
       if (args.blogs.length < 1) {
+        debug.log(args)
         return args
       } else {
         throw new Error("That blog is already registered!")
@@ -527,7 +530,6 @@ app.post('/user/claim-blog',
     db.getBlogs(args)
       // then check users for any claiming this blog
       .then( args => {
-        debug.log(args)
         if (args.blogs.length < 1) {
           throw new Error("Blog does not exist: check the URL or try registering") // if there are no results the blog doesn't exist
         } else {
@@ -570,8 +572,9 @@ app.post('/user/delete-blog',
   [userIsThisUser],
   function(req, res, next) {
     const args = req.body
+    args.user = req.user
     args.action = 'delete'
-    updateUserBlogs(args) // delete using req.body.user and req.body.blog
+    updateUserBlogs(args)
     .then(deleteBlog)
     .then( () => {
       req.flash('success', 'Blog deleted')
@@ -591,7 +594,9 @@ app.post('/user/delete-blog',
 
 app.get('/user/pocket', 
   (req, res, next) => {
-    db.getUserDetails(req.user)
+    var args = {}
+    args.user = req.user 
+    db.getUserDetails(args)
     .then(authorisePocket)
     .then( args => {
       req.session.pocketCode = args.code
@@ -610,7 +615,7 @@ app.get('/user/pocket-redirect',
     const args = {}
     args.code = req.session.pocketCode
     args.key = settings[env].pocket_consumer_key
-    args.email = req.user
+    args.user = req.user
     finalisePocketAuthentication(args)
       .then( () => {
         req.flash('success', 'Pocket account registered')
@@ -644,27 +649,31 @@ app.post('/user/pocket-unsubscribe',
 // restrict all admin paths
 app.all('/admin*',
   passwordless.restricted({ failureRedirect: '/letmein' }),
-  (req, res, next) =>
-    db.getUserDetails(req.session.passwordless)
+  function (req, res, next) {
+    var args = {}
+    args.user = req.user 
+    db.getUserDetails(args)
     .then( doc => {
-        if (doc.user.permission && doc.user.permission === "admin") {
-          next()
-        } else {
-          req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
-          res.status(403)
-          res.redirect('/user')
-        }
-      })
-      .catch(err => {
-        debug.log(`Error accessing admin page: ${err}`)
-        req.flash('error', 'Something went wrong')
+      if (doc.user.permission && doc.user.permission === "admin") {
+        next()
+      } else {
+        req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
+        res.status(403)
         res.redirect('/user')
-      })
-)
+      }
+    })
+    .catch(err => {
+      debug.log(`Error accessing admin page: ${err}`)
+      req.flash('error', 'Something went wrong')
+      res.redirect('/user')
+    })
+  })
 
 // admin home page
 app.get('/admin', function (req, res) {
-  db.getUserDetails(req.session.passwordless)
+  var args = {}
+  args.user = req.user 
+  db.getUserDetails(args)
       .then( function (user) {
         return db.getBlogs({user: user, query: {failing: true}}) // get failing blogs
       })
@@ -773,29 +782,33 @@ app.post('/admin/deleteblog', function(req, res) {
 
 // approve blog
 app.post('/admin/approve-blog', function(req, res, next) {
-  approveBlog(req.body)
-    .then(updateUserBlogs)
-    .then( args => { // now we need to get the user's email address so we can send a confirmation
-      args.query = {'_id' : ObjectId(args.user)} // query for getUsers
-      return args
-    })
-    .then(db.getUsers)
-    .then( args => {
-      const user = args.users[0]
-      message = {
-        text: `Your blog ${args.url} has been approved on ${settings.app_name}.\n\nTime to get publishing!`,
-        to: user.email,
-        subject: `Your blog has been approved on ${settings.app_name}`,
-      }
-      sendEmail(message)
-      req.flash('success', 'Blog approved')
-      return next()
-    })
-    .catch( error => {
-      debug.log(error)
-      req.flash('error', 'Something went wrong approving the blog')
-      return next()
-    })
+  var args = req.body
+  args.user = req.user
+  args.query = {"email": args.user}
+  db.getUsers(args)
+  .then(approveBlog)
+  .then(updateUserBlogs)
+  .then( args => { // now we need to get the user's email address so we can send a confirmation
+    args.query = {'email' : args.user} // query for getUsers
+    return args
+  })
+  .then(db.getUsers)
+  .then( args => {
+    const user = args.users[0]
+    message = {
+      text: `Your blog ${args.url} has been approved on ${settings.app_name}.\n\nTime to get publishing!`,
+      to: user.email,
+      subject: `Your blog has been approved on ${settings.app_name}`,
+    }
+    sendEmail(message)
+    req.flash('success', 'Blog approved')
+    return next()
+  })
+  .catch( error => {
+    debug.log(error)
+    req.flash('error', 'Something went wrong approving the blog')
+    return next()
+  })
 },
 function (req, res, next) {
   res.redirect('/admin')
@@ -812,7 +825,6 @@ app.post('/admin/reject-blog', function(req, res, next) {
     })
     .then(db.getBlogs)
     .then( args => {
-      args.query = {'_id' : ObjectId(args.user)} // for getUsers below to get email address
       if (args.blogs[0] && args.blogs[0].approved) {
         // if approved is true then the blog is a legacy one and this is a 'claim'
         // rather than a new registration, so we do NOT want to delete it!
@@ -824,13 +836,12 @@ app.post('/admin/reject-blog', function(req, res, next) {
         })
       }
     })
-    .then(db.getUsers)
     .then( args => {
       // TODO: email user with reason
       const user = args.users[0]
       message = {
         text: `Your blog registration for ${args.url} has been rejected from ${settings.app_name}.\n\nReason:\n\n${args.reason}`,
-        to: user.email,
+        to: args.user,
         subject: `Your blog registration has been rejected on ${settings.app_name}`,
       }
       sendEmail(message)
@@ -972,15 +983,15 @@ app.get('/api/v1/user/info', function(req, res) {
 })
 
 app.get('/api/v1/user/blogs', function(req, res) {
-  db.getUserDetails(req.user) // TODO: we can probably refactor to only use getUsers()
+  db.getUsers({query: {"email" : req.user}})
   .then( // now get the approved blogs
     doc => {
-      doc.query = {"_id": {$in: doc.user.blogs}}
+      doc.query = {"_id": {$in: doc.users[0].blogs}}
       return doc
     })
   .then(db.getBlogs)
   .then( data => {
-    res.json({user: data.idString, blogs: data.blogs})
+    res.json({user: data.users[0].idString, blogs: data.blogs})
   })
   .catch( err => {
     debug.log(err)
@@ -1023,52 +1034,94 @@ app.get('/api/v1/user/pocket-info', function(req, res) {
     ########
 */
 
-app.all('/api/v1/update*', function(req, res, next) {
-  debug.log(req.body)
-  if (req.body.email === req.user) {
-    next()
-  } else {
-    throw new Error('Cannot update another user')
-  }
+// UPDATE/user routes
+
+// NOTE: all routes **MUST** use req.user to identify user to update
+// do not make routes taking user id or current email from req.body
+
+app.all('/api/v1/update*', 
+passwordless.restricted(),
+(req, res, next) => {
+  next()
 })
 
 // update user contact info
-app.post('/api/v1/update/user-info', function(req,res) {
-  db.getUsers({query: {"email" : req.user}})
-  .then( doc => {
-    let user = doc[0]
-    updateUserContacts(req.body)
-    .then( data => {
-      if (!data.error) {
-        res.send({user: data.user, error: null})
-      } else {
-        res.send({data: null, error: data.error})
+app.post('/api/v1/update/user/info', function(req,res) {
+  var args = req.body
+  args.user = req.user
+  db.checkEmailIsUnique(args)
+  .then(updateUserContacts)
+  .then(args => {
+    if (args.user.email != req.user) {
+      res.redirect('/email-updated') // force logout if email has changed
+    } else {
+      args.msg = {}
+      args.msg.type = 'success'
+      args.msg.class = 'flash-success'
+      args.msg.text = 'Your details have been updated'
+      res.send(
+        {
+          user: args.user, // NOTE: this is *only* the data that was sent! i.e. it's "args"
+          error: null
+        }
+      )
+    }
+  })
+  .catch(err => {
+    debug.log('ERROR', err)
+    res.send(
+      {
+        user: null, 
+        error: {
+          type: 'error', 
+          class: 'flash-error',
+          message: err.message
+        }
       }
-    })
-    .catch(err => {
-      debug.error(err)
-      res.send({data: null, error: err})
-    })
+    )
   })
 })
 
 // delete blog
-app.post('api/v1/user/delete-blog',
-  function(req, res, next) {
-    const args = req.body
-    args.user = req.user
-    // TODO: get user ID
-    updateUserBlogs(args) // delete using req.userId (id) and req.body.blog (id string)
-    .then(deleteBlog)
-    .then( () => { // TODO: we need the updated blogs list here
-      res.return({msg: 'Blog deleted', error: null})
-    })
-    .catch( e => {
-      debug.log('**ERROR DELETING BLOG**')
-      debug.log(e)
-      res.return({msg: null, error: e.message}) // TODO: probably not great to just send the error message
+app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
+  const args = req.body 
+  args.user = req.user // for updateUserBlogs & getUserDetails
+  debug.log(args)
+  updateUserBlogs(args)
+  .then(deleteBlog)
+  .then(db.getUserDetails)
+  .then( args => {
+    res.send(
+      {
+        blogs: args.user.blogs, 
+        msg: {
+          type: 'success',
+          class:'flash-success',
+          text: 'Blog deleted'
+        }, 
+        error: null
+      }
+    )
+  })
+  .catch( e => {
+    debug.log('**ERROR DELETING BLOG**')
+    debug.log(e)
+    db.getUserDetails(args)
+    .then( args => {
+      res.send(
+        {
+          blogs: args.user.blogs, // BUG: TODO: this needs to return the actual blogs info not just _id
+          msg: {
+            type: 'error',
+            class:'flash-error',
+            text: e.message // TODO: probably not great to just send the error message
+          }, 
+          error: e.message // should the message actually go here or is it not needed?
+        }
+      )
     })
   })
+})
 
 app.get('/vuetest', function(req, res) {
   res.render('vuetest', {

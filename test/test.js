@@ -387,46 +387,79 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             .get('/api/v1/user/blogs')
             .expect(200, done)
           })
-          it('should return an array', function(done) {
+          it('should return a 200 if user is logged in', function(done) {
+            agent
+            .get('/api/v1/user/blogs')
+            .expect(200, done)
+          })
+          it('should return an object containing keys "user" and "blogs"', function(done) {
             agent
             .get('/api/v1/user/blogs')
             .then( data => {
-              assert(Array.isArray(data.body))
-              done()
+                keys = Object.keys(data.body)
+                assert(keys.includes('user'))
+                assert(keys.includes('blogs'))
+                done()
             })
             .catch( err => {
               done(err)
             })
           })
-          it('should contain at least url, feed, and category as keys for each array entry', function(done) {
-            agent
-            .get('/api/v1/user/blogs')
-            .then( data => {
-              data.body.forEach( x => {
-                keys = Object.keys(x)
-                assert(keys.includes('url'))
-                assert(keys.includes('feed'))
-                assert(keys.includes('category'))
+          describe('value of "user" in returned object', function() {
+            it('should be a string', function(done) {
+              agent
+              .get('/api/v1/user/blogs')
+              .then( data => {
+                assert( typeof data.body.user === 'string')
+                done()
+              })
+              .catch( err => {
+                done(err)
               })
             })
-            .then( x => {
-              done()
-            })
-            .catch( err => {
-              done(err)
-            })
           })
-          it('should return data from the test approved blog', function(done) {
-            agent
-            .get('/api/v1/user/blogs')
-            .then( data => {
-              assert(data.body[0].url === 'https://alice.blog')
+          describe('value of "blogs" in returned object', function() {
+            it('should be an array', function(done) {
+              agent
+              .get('/api/v1/user/blogs')
+              .then( data => {
+                assert(Array.isArray(data.body.blogs))
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
             })
-            .then( x => {
-              done()
+            it('should contain at least url, feed, and category as keys for each array entry', function(done) {
+              agent
+              .get('/api/v1/user/blogs')
+              .then( data => {
+                data.body.blogs.forEach( x => {
+                  keys = Object.keys(x)
+                  assert(keys.includes('url'))
+                  assert(keys.includes('feed'))
+                  assert(keys.includes('category'))
+                })
+              })
+              .then( x => {
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
             })
-            .catch( err => {
-              done(err)
+            it('should return data from the test approved blog', function(done) {
+              agent
+              .get('/api/v1/user/blogs')
+              .then( data => {
+                assert(data.body.blogs[0].url === 'https://alice.blog')
+              })
+              .then( x => {
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
             })
           })
         })
@@ -522,12 +555,189 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           })
         })
         describe('post routes', function() {
-          describe('/api/v1/update/user-info', function() {
+          describe('/api/v1/update/user/info', function() {
             it('should return 200 when logged in', function(done) {
               agent
-              .post('/api/v1/update/user-info')
-              .send({email: 'alice@example.com', twitter: 'alice@tweeter.com', mastodon: '@new@masto.com'})
+              .post('/api/v1/update/user/info')
+              .send({email: 'alice@example.com', twitter: 'alice@twitter.com', mastodon: '@new@masto.com'})
               .expect(200, done)
+            })
+            it('should return an object containing "user" and "error" keys', function(done) {
+              agent
+              .post('/api/v1/update/user/info') 
+              .send({email: 'alice@example.com', twitter: 'alice@tweeter.com', mastodon: '@new@masto.com'})
+              .then( data => {
+                let keys = Object.keys(data.body)
+                assert(keys.includes('user'))
+                assert(keys.includes('error'))
+              })
+              .then( x => {
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+            it('should return user as an object and error as null', function(done) {
+              agent
+              .post('/api/v1/update/user/info')
+              .send({email: 'alice@example.com', twitter: 'alice@tweeter.com', mastodon: '@new@masto.com'})
+              .then( data => {
+                assert(data.body.error === null)
+                assert(typeof data.body.user === 'object')
+              })
+              .then( x => {
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+            it('should log out and redirect when email is updated', function(done) {
+              agent
+              .post('/api/v1/update/user/info')
+              .send({email: 'alice@new.email', twitter: 'alice@tweeter.com', mastodon: '@new@masto.com'})
+              .expect(302)
+              .then ( res => {
+                assert.equal( '/email-updated' , res.headers.location)
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+          })
+          describe('/api/v1/update/user/delete-blog', function() {
+            before('log in again', function(done) {
+              agent
+              .post('/sendtoken')
+              .type('application/x-www-form-urlencoded')
+              .send({"user" : 'alice@new.email', "delivery" : "clipboard"})
+              .then( (err,res) => {
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+            before('complete log in', function(done) {
+              var loginLink = clipboardy.readSync()
+              var link = loginLink.slice(19)
+              agent
+              .get(link)
+              .then( () => {
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+            beforeEach('update user blogs', function(done) {
+              // insert test users including some pocket users
+              MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+                assert.strictEqual(null, err)
+                const db = client.db(dbName)
+                const insertUsers = function(db, callback) {
+                  db.collection('rp_users').updateOne(
+                    {
+                      _id: ObjectId("9798925b467e1bf17618d095")
+                    },
+                    {
+                      $set: {
+                        blogs: [
+                        ObjectId("124e07a27998d130d1d3ab0d")
+                        ],
+                      blogsForApproval: [
+                        ObjectId("e2280a977d8ccd54ce133c7f")
+                        ],
+                      }
+                    }
+                  )
+                  .then( doc => {
+                    done()
+                  })
+                  .catch( err => {
+                    done(err)
+                  })
+                }
+                insertUsers(db, function() {
+                  client.close()
+                })
+              })
+            })
+            beforeEach('insert blogs', function(done) {
+              // insert test blogs
+              MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+                assert.strictEqual(null, err)
+                const db = client.db(dbName)
+                const insertUsers = function(db, callback) {
+                  db.collection('rp_blogs').insertOne(
+                    {
+                      _id: ObjectId("124e07a27998d130d1d3ab0d"),
+                      url: 'https://new.alice.blog',
+                      feed: 'https://new.alice.blog/rss',
+                      category: 'rabbits',
+                      approved: true,
+                      announced: true
+                    }
+                  )
+                  .then( doc => {
+                    done()
+                  })
+                  .catch( err => {
+                    done(err)
+                  })
+                }
+                insertUsers(db, function() {
+                  client.close()
+                })
+              })
+            })
+            it('should return 200 when logged in', function(done) {
+              agent
+              .post('/api/v1/update/user/delete-blog')
+              .send({blog: '124e07a27998d130d1d3ab0d', action: 'delete'})
+              .expect(200, done)
+            })
+            it('should return blogs, msg and error', function(done) {
+              agent
+              .post('/api/v1/update/user/delete-blog')
+              .send({blog: '124e07a27998d130d1d3ab0d', action: 'delete'})
+              .then( data => {
+                let keys = Object.keys(data.body)
+                assert(keys.includes('blogs'))
+                assert(keys.includes('msg'))
+                assert(keys.includes('error'))
+                done()
+              })
+              .catch(err => {
+                done(err)
+              })
+            })
+            it('should not return an error', function(done) {
+              agent
+              .post('/api/v1/update/user/delete-blog')
+              .send({blog: '124e07a27998d130d1d3ab0d', action: 'delete'})
+              .then( data => {
+                assert(data.body.error === null)
+                assert(data.body.msg.type === 'success')
+                done()
+              })
+              .catch(err => {
+                done(err)
+              })
+            })
+            it('should remove the blog from the user blogs array', function(done) {
+              agent
+              .post('/api/v1/update/user/delete-blog')
+              .send({blog: '124e07a27998d130d1d3ab0d', action: 'delete'})
+              .then( data => {
+                assert(data.body.blogs.length === 0)
+                done()
+              })
+              .catch(err => {
+                done(err)
+              })
             })
           })
         })

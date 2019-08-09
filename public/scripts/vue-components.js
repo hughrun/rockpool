@@ -3,7 +3,7 @@ var userMessages =  new Vue({
   data() {
     return {
       messages: [
-        {type: 'news', class: 'error', text: 'hello this is a message'}
+        {type: 'news', class: 'flash-warning', text: 'hello this is a message'}
       ]
     }
   },
@@ -33,17 +33,20 @@ var userInfo =  new Vue({
   },
   methods: {
     updateUser(event) {
-      // TODO: at this point we trigger a data param to show a loader image
       var params = {
         email : event.target.parentNode.email.value,
         twitter : event.target.parentNode.twitter.value,
         mastodon : event.target.parentNode.mastodon.value
       }
-      axios.post("/api/v1/update/user-info", params)
+      axios.post('/api/v1/update/user/info', params)
       .then( response => {
-        this.user = response.data.user ? response.data.user : response.error // TODO: how do we deal with errors?
-        // TODO: here we change the data param back to stop the loader image
         this.editing = false
+
+        if (response.data.user) {
+          this.user = response.data.user
+        } else if (response.data.error) {
+          this.messages.push(response.data.error)
+        }
       })
       .catch( err => {
         // TODO: do something sensible with the error - can we load a message?
@@ -80,25 +83,25 @@ var userBlogs =  new Vue({
       .catch( err => this.blogs = 'error')
   },
   methods: {
-    deleteBlog(event) {
+    deleteBlog(blog) {
       var payload = {
         blog: event.target.id,
         action: 'delete'
       }
-      // axios.post('api/v1/user/delete-blog', payload)
-      // .then( response => {
-      //   var msg = response.data.message || response.data.error
-      //   this.editing = false
-      //   this.blogs = response.data.blogs // TODO: change api call so it returns the update blog list
-      //   alert(msg)
-      // })
-      alert(this.userIdString)
-      // this.checking = false
+      axios.post('api/v1/update/user/delete-blog', payload)
+      .then( response => {
+        var msg = response.data.msg || response.data.error
+        this.editing = false
+        this.blogs = response.data.blogs
+        // userMessages.messages.push(msg)
+        console.log(response.data)
+      })
+      blog.editing = false
+      Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
     },
     checking(blog) {
-      var checking = blog
-      checking.editing = true
-      Vue.set(this.blogs, this.blogs.indexOf(blog), checking)
+      blog.editing = true
+      Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
       console.log(blog)
     }
   }
