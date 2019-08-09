@@ -1,10 +1,12 @@
+const messages = [
+  {type: 'news', class: 'flash-warning', text: 'hello this is a message'}
+]
+
 var userMessages =  new Vue({
   el: '#user-messages',
   data() {
     return {
-      messages: [
-        {type: 'news', class: 'flash-warning', text: 'hello this is a message'}
-      ]
+      messages: messages
     }
   },
   methods: {
@@ -92,11 +94,13 @@ var userBlogs =  new Vue({
       .then( response => {
         var msg = response.data.msg || response.data.error
         this.editing = false
-        this.blogs = response.data.blogs
-        // userMessages.messages.push(msg)
+        messages.push(msg)
+        blog.editing = false
+        if (response.data.blogs) {
+          this.blogs = response.data.blogs
+          Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
+        }
       })
-      blog.editing = false
-      Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
     },
     checking(blog) {
       blog.editing = true

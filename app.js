@@ -492,7 +492,6 @@ app.post('/user/register-blog',
     .then(db.getBlogs) // check the blog isn't already registered
     .then( args => { 
       if (args.blogs.length < 1) {
-        debug.log(args)
         return args
       } else {
         throw new Error("That blog is already registered!")
@@ -735,7 +734,8 @@ app.get('/admin', function (req, res) {
   ).catch(err => {debug.log(err)})
 })
 
-// post admin/deleteblog
+// post admin/deleteblog  
+// NOTE: this should be replaced with an admin API call
 app.post('/admin/deleteblog', function(req, res) {
   body().exists({checkNull: true}) // make sure there's a value
   if (validationResult(req).isEmpty()) {
@@ -766,15 +766,14 @@ app.post('/admin/deleteblog', function(req, res) {
         req.flash('success', 'Blog deleted')
         res.redirect('/admin')
       }).catch(err => {
-        // TODO: WTF is the line below trying to do?
-        const msg = err ? typeof err === String : "Something went wrong whilst deleting 😯"
-        debug.log(err)
+        const msg = err.message
+        debug.log('error deleting blog', err)
         req.flash('error', msg)
         res.redirect('/admin')
       })
   } else {
     let valArray = validationResult(req).array()
-    debug.log(valArray)
+    debug.log('error deleting blog', valArray)
     req.flash('error', 'There was a problem deleting blogs.')
     res.redirect('/admin')
   }
@@ -1114,12 +1113,9 @@ app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
   .catch( e => {
     debug.log('**ERROR DELETING BLOG**')
     debug.log(e)
-    db.getUserDetails(args)
-    .then( args)
-    .then( args => {
       res.send(
         {
-          blogs: args.user.blogs, // BUG: TODO: this needs to return the actual blogs info not just _id
+          blogs: null,
           msg: {
             type: 'error',
             class:'flash-error',
@@ -1128,7 +1124,6 @@ app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
           error: e.message // should the message actually go here or is it not needed?
         }
       )
-    })
   })
 })
 
