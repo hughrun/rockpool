@@ -1086,14 +1086,22 @@ app.post('/api/v1/update/user/info', function(req,res) {
 app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
   const args = req.body 
   args.user = req.user // for updateUserBlogs & getUserDetails
-  debug.log(args)
   updateUserBlogs(args)
   .then(deleteBlog)
-  .then(db.getUserDetails)
+  .then( args => {
+    args.query = {"email" : args.user }
+    return args
+  })
+  .then(db.getUsers)
+  .then( args => {
+    args.query = {"_id": {$in: args.users[0].blogs}}
+    return args
+  })
+  .then(db.getBlogs)
   .then( args => {
     res.send(
       {
-        blogs: args.user.blogs, 
+        blogs: args.blogs, 
         msg: {
           type: 'success',
           class:'flash-success',
@@ -1107,6 +1115,7 @@ app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
     debug.log('**ERROR DELETING BLOG**')
     debug.log(e)
     db.getUserDetails(args)
+    .then( args)
     .then( args => {
       res.send(
         {

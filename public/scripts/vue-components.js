@@ -94,7 +94,6 @@ var userBlogs =  new Vue({
         this.editing = false
         this.blogs = response.data.blogs
         // userMessages.messages.push(msg)
-        console.log(response.data)
       })
       blog.editing = false
       Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
@@ -102,7 +101,6 @@ var userBlogs =  new Vue({
     checking(blog) {
       blog.editing = true
       Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
-      console.log(blog)
     }
   }
 })
