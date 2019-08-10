@@ -337,80 +337,39 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         })
       })
       describe('API routes', function() {
-        describe('/api/v1/user/info', function() {
-          it('should return a 401 if user not logged in', function(done) {
-            request
-            .get('/api/v1/user/info')
-            .expect(401, done)
-          })
-          it('should return a 200 if user is logged in', function(done) {
-            agent
-            .get('/api/v1/user/info')
-            .expect(200, done)
-          })
-          it('should return an object', function(done) {
-            agent
-            .get('/api/v1/user/info')
-            .then( data => {
-              assert(typeof data.body === 'object')
-              done()
+        describe('GET', function() {
+          describe('/api/v1/user/info', function() {
+            it('should return a 401 if user not logged in', function(done) {
+              request
+              .get('/api/v1/user/info')
+              .expect(401, done)
             })
-            .catch( err => {
-              done(err)
-            })
-          })
-          it('should contain email, twitter, and mastodon as keys for each array entry', function(done) {
-            agent
-            .get('/api/v1/user/info')
-            .then( data => {
-              keys = Object.keys(data.body)
-              assert(keys.includes('email'))
-              assert(keys.includes('twitter'))
-              assert(keys.includes('mastodon'))
-            })
-            .then( x => {
-              done()
-            })
-            .catch( err => {
-              done(err)
-            })
-          })
-        })
-        describe('/api/v1/user/blogs', function() {
-          it('should return a 401 if user not logged in', function(done) {
-            request
-            .get('/api/v1/user/blogs')
-            .expect(401, done)
-          })
-          it('should return a 200 if user is logged in', function(done) {
-            agent
-            .get('/api/v1/user/blogs')
-            .expect(200, done)
-          })
-          it('should return a 200 if user is logged in', function(done) {
-            agent
-            .get('/api/v1/user/blogs')
-            .expect(200, done)
-          })
-          it('should return an object containing keys "user" and "blogs"', function(done) {
-            agent
-            .get('/api/v1/user/blogs')
-            .then( data => {
-                keys = Object.keys(data.body)
-                assert(keys.includes('user'))
-                assert(keys.includes('blogs'))
-                done()
-            })
-            .catch( err => {
-              done(err)
-            })
-          })
-          describe('value of "user" in returned object', function() {
-            it('should be a string', function(done) {
+            it('should return a 200 if user is logged in', function(done) {
               agent
-              .get('/api/v1/user/blogs')
+              .get('/api/v1/user/info')
+              .expect(200, done)
+            })
+            it('should return an object', function(done) {
+              agent
+              .get('/api/v1/user/info')
               .then( data => {
-                assert( typeof data.body.user === 'string')
+                assert(typeof data.body === 'object')
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+            it('should contain email, twitter, and mastodon as keys for each array entry', function(done) {
+              agent
+              .get('/api/v1/user/info')
+              .then( data => {
+                keys = Object.keys(data.body)
+                assert(keys.includes('email'))
+                assert(keys.includes('twitter'))
+                assert(keys.includes('mastodon'))
+              })
+              .then( x => {
                 done()
               })
               .catch( err => {
@@ -418,12 +377,109 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
           })
-          describe('value of "blogs" in returned object', function() {
-            it('should be an array', function(done) {
+          describe('/api/v1/user/blogs', function() {
+            it('should return a 401 if user not logged in', function(done) {
+              request
+              .get('/api/v1/user/blogs')
+              .expect(401, done)
+            })
+            it('should return a 200 if user is logged in', function(done) {
+              agent
+              .get('/api/v1/user/blogs')
+              .expect(200, done)
+            })
+            it('should return a 200 if user is logged in', function(done) {
+              agent
+              .get('/api/v1/user/blogs')
+              .expect(200, done)
+            })
+            it('should return an object containing keys "user" and "blogs"', function(done) {
               agent
               .get('/api/v1/user/blogs')
               .then( data => {
-                assert(Array.isArray(data.body.blogs))
+                  keys = Object.keys(data.body)
+                  assert(keys.includes('user'))
+                  assert(keys.includes('blogs'))
+                  done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+            describe('value of "user" in returned object', function() {
+              it('should be a string', function(done) {
+                agent
+                .get('/api/v1/user/blogs')
+                .then( data => {
+                  assert( typeof data.body.user === 'string')
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+            })
+            describe('value of "blogs" in returned object', function() {
+              it('should be an array', function(done) {
+                agent
+                .get('/api/v1/user/blogs')
+                .then( data => {
+                  assert(Array.isArray(data.body.blogs))
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+              it('should contain at least url, feed, and category as keys for each array entry', function(done) {
+                agent
+                .get('/api/v1/user/blogs')
+                .then( data => {
+                  data.body.blogs.forEach( x => {
+                    keys = Object.keys(x)
+                    assert(keys.includes('url'))
+                    assert(keys.includes('feed'))
+                    assert(keys.includes('category'))
+                  })
+                })
+                .then( x => {
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+              it('should return data from the test approved blog', function(done) {
+                agent
+                .get('/api/v1/user/blogs')
+                .then( data => {
+                  assert(data.body.blogs[0].url === 'https://alice.blog')
+                })
+                .then( x => {
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+            })
+          })
+          describe('/api/v1/user/unapproved-blogs', function() {
+            it('should return a 401 if user not logged in', function(done) {
+              request
+              .get('/api/v1/user/unapproved-blogs')
+              .expect(401, done)
+            })
+            it('should return a 200 if user is logged in', function(done) {
+              agent
+              .get('/api/v1/user/unapproved-blogs')
+              .expect(200, done)
+            })
+            it('should return an array', function(done) {
+              agent
+              .get('/api/v1/user/unapproved-blogs')
+              .then( data => {
+                assert(Array.isArray(data.body))
                 done()
               })
               .catch( err => {
@@ -432,9 +488,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
             it('should contain at least url, feed, and category as keys for each array entry', function(done) {
               agent
-              .get('/api/v1/user/blogs')
+              .get('/api/v1/user/unapproved-blogs')
               .then( data => {
-                data.body.blogs.forEach( x => {
+                data.body.forEach( x => {
                   keys = Object.keys(x)
                   assert(keys.includes('url'))
                   assert(keys.includes('feed'))
@@ -448,11 +504,48 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 done(err)
               })
             })
-            it('should return data from the test approved blog', function(done) {
+            it('should return data from the test unapproved blog', function(done) {
               agent
-              .get('/api/v1/user/blogs')
+              .get('/api/v1/user/unapproved-blogs')
               .then( data => {
-                assert(data.body.blogs[0].url === 'https://alice.blog')
+                assert(data.body[0].url === 'https://rockpool-blogs/alice')
+              })
+              .then( x => {
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+          })
+          describe('/api/v1/user/pocket-info', function() {
+            it('should return a 401 if user not logged in', function(done) {
+              request
+              .get('/api/v1/user/pocket-info')
+              .expect(401, done)
+            })
+            it('should return a 200 if user is logged in', function(done) {
+              agent
+              .get('/api/v1/user/pocket-info')
+              .expect(200, done)
+            })
+            it('should return an object', function(done) {
+              agent
+              .get('/api/v1/user/pocket-info')
+              .then( data => {
+                assert(typeof data.body === 'object')
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+            it('should contain pocket_username as key', function(done) {
+              agent
+              .get('/api/v1/user/pocket-info')
+              .then( data => {
+                keys = Object.keys(data.body)
+                assert(keys.includes('pocket_username'))
               })
               .then( x => {
                 done()
@@ -463,98 +556,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
           })
         })
-        describe('/api/v1/user/unapproved-blogs', function() {
-          it('should return a 401 if user not logged in', function(done) {
-            request
-            .get('/api/v1/user/unapproved-blogs')
-            .expect(401, done)
-          })
-          it('should return a 200 if user is logged in', function(done) {
-            agent
-            .get('/api/v1/user/unapproved-blogs')
-            .expect(200, done)
-          })
-          it('should return an array', function(done) {
-            agent
-            .get('/api/v1/user/unapproved-blogs')
-            .then( data => {
-              assert(Array.isArray(data.body))
-              done()
-            })
-            .catch( err => {
-              done(err)
-            })
-          })
-          it('should contain at least url, feed, and category as keys for each array entry', function(done) {
-            agent
-            .get('/api/v1/user/unapproved-blogs')
-            .then( data => {
-              data.body.forEach( x => {
-                keys = Object.keys(x)
-                assert(keys.includes('url'))
-                assert(keys.includes('feed'))
-                assert(keys.includes('category'))
-              })
-            })
-            .then( x => {
-              done()
-            })
-            .catch( err => {
-              done(err)
-            })
-          })
-          it('should return data from the test unapproved blog', function(done) {
-            agent
-            .get('/api/v1/user/unapproved-blogs')
-            .then( data => {
-              assert(data.body[0].url === 'https://rockpool-blogs/alice')
-            })
-            .then( x => {
-              done()
-            })
-            .catch( err => {
-              done(err)
-            })
-          })
-        })
-        describe('/api/v1/user/pocket-info', function() {
-          it('should return a 401 if user not logged in', function(done) {
-            request
-            .get('/api/v1/user/pocket-info')
-            .expect(401, done)
-          })
-          it('should return a 200 if user is logged in', function(done) {
-            agent
-            .get('/api/v1/user/pocket-info')
-            .expect(200, done)
-          })
-          it('should return an object', function(done) {
-            agent
-            .get('/api/v1/user/pocket-info')
-            .then( data => {
-              assert(typeof data.body === 'object')
-              done()
-            })
-            .catch( err => {
-              done(err)
-            })
-          })
-          it('should contain pocket_username as key', function(done) {
-            agent
-            .get('/api/v1/user/pocket-info')
-            .then( data => {
-              keys = Object.keys(data.body)
-              assert(keys.includes('pocket_username'))
-            })
-            .then( x => {
-              done()
-            })
-            .catch( err => {
-              done(err)
-            })
-          })
-        })
-        describe('post routes', function() {
+        describe('POST', function() {
           describe('/api/v1/update/user/info', function() {
             it('should return 200 when logged in', function(done) {
               agent
@@ -606,6 +608,10 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 done(err)
               })
             })
+          })
+          describe('/api/v1/update/user/register-blog', function() {
+            it('should add the blog to the DB with URL, feed, approved: false and announced:false')
+            it('should add the blog to the user blogsForApproval array')
           })
           describe('/api/v1/update/user/delete-blog', function() {
             before('log in again', function(done) {
@@ -740,16 +746,18 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
           })
+          describe('/api/v1/update/user/register-pocket', function() {
+            it('should redirect to pocket')
+          })
+          describe('/api/v1/update/user/remove-pocket', function() {
+            it('should remove pocket key:value from user record')
+          })
+          describe('/api/v1/update/admin/approve-blog', function() {
+            it('should set approved to true in blog listing')
+            it('should move the blog id from "blogsForApproval" to "blogs" in the user record')
+            it('should queue an announcement')
+          })
         })
-      })
-      describe('registerBlog()', function() {
-        it('should add the blog to the DB with URL, feed, approved: false and announced:false')
-        it('should add the blog to the user blogsForApproval array')
-      })
-      describe('approveBlog()', function() {
-        it('should set approved to true')
-        it('should move the blog id from blogsForApproval to blogs in the user record')
-        it('should queue an announcement')
       })
       describe('checkfeeds()', function() {
         it('should run every X minutes in line with settings[env].minutes_between_checking_feeds')
