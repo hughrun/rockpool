@@ -149,6 +149,7 @@ app.locals.orgUrl = settings.org_url
 app.locals.blogClub = settings.blog_club_name
 app.locals.blogClubUrl = settings.blog_club_url
 app.locals.blogCategories = settings.blog_categories
+app.locals.legacy = settings.legacy_db
 
 /*  ######################################
     ###              routes            ###
@@ -946,15 +947,14 @@ app.get('/email-updated',
     })
   })
 
-// TESTING vuejs
-
 /*  
     #######################
           API ROUTES
     #######################
 */
 
-app.all('/api/v1/user*', 
+// must have logged in user for all api routes 
+app.all('/api/v1/*', 
 passwordless.restricted(),
 (req, res, next) => {
   next()
@@ -974,6 +974,8 @@ app.get('/api/v1/user/info', function(req, res) {
       data.email = doc.users[0].email
       data.twitter = doc.users[0].twitter || null
       data.mastodon = doc.users[0].mastodon || null
+      data.pocket = doc.users[0].pocket || false
+      data.admin = doc.users[0].permission === 'admin'
       res.json(data)
   })
   .catch( err => {
@@ -1015,18 +1017,18 @@ app.get('/api/v1/user/unapproved-blogs', function(req, res) {
   })
 })
 
-app.get('/api/v1/user/pocket-info', function(req, res) {
-  db.getUsers({query: {"email" : req.user}})
-  .then(
-    doc => {
-      var data = {}
-      data.pocket_username = doc.users[0].pocket ? doc.users[0].pocket.username : null
-      res.json(data)
-  })
-  .catch( err => {
-    debug.log(err)
-  })
-})
+// app.get('/api/v1/user/pocket-info', function(req, res) {
+//   db.getUsers({query: {"email" : req.user}})
+//   .then(
+//     doc => {
+//       var data = {}
+//       data.pocket_username = doc.users[0].pocket ? doc.users[0].pocket.username : null
+//       res.json(data)
+//   })
+//   .catch( err => {
+//     debug.log(err)
+//   })
+// })
 
 /*  ########
       POST
@@ -1036,13 +1038,7 @@ app.get('/api/v1/user/pocket-info', function(req, res) {
 // UPDATE/user routes
 
 // NOTE: all routes **MUST** use req.user to identify user to update
-// do not make routes taking user id or current email from req.body
-
-app.all('/api/v1/update*', 
-passwordless.restricted(),
-(req, res, next) => {
-  next()
-})
+// DO NOT make routes taking user id or current email from req.body
 
 // update user contact info
 app.post('/api/v1/update/user/info', function(req,res) {
@@ -1055,11 +1051,11 @@ app.post('/api/v1/update/user/info', function(req,res) {
       res.redirect('/email-updated') // force logout if email has changed
     } else {
       args.msg = {}
-      args.msg.type = 'success'
       args.msg.class = 'flash-success'
       args.msg.text = 'Your details have been updated'
       res.send(
         {
+          msg: args.msg,
           user: args.user, // NOTE: this is *only* the data that was sent! i.e. it's "args"
           error: null
         }
@@ -1071,8 +1067,7 @@ app.post('/api/v1/update/user/info', function(req,res) {
     res.send(
       {
         user: null, 
-        error: {
-          type: 'error', 
+        msg: {
           class: 'flash-error',
           message: err.message
         }
@@ -1081,9 +1076,48 @@ app.post('/api/v1/update/user/info', function(req,res) {
   })
 })
 
+// register blog
+app.post( '/api/v1/update/user/register-blog', 
+function(req, res, next) {
+  feedfinder.getFeed(req.body.url)
+  .then( ff => {
+    const args = req.body
+    args.user = req.user
+    args.feed = ff.feed // add the feed to the form data object
+    args.action = "register" // this is used in updateUserBlogs
+    args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
+    // we match on the FEED rather than the URL (below)
+    // because if there is a redirect, the URL might not match even though it's the same blog
+    args.query = {feed: args.feed}
+    return args
+  })
+  .then(db.getBlogs) // check the blog isn't already registered
+  .then( args => { 
+    if (args.blogs.length < 1) {
+      registerBlog(args) // create new blog document
+      .then(updateUserBlogs) // add blog _id to user's blogsForApproval array
+      .then( args => {
+        message = {
+          text: `User ${req.user} has registered ${args.url} with ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to accept or reject the registration.`,
+          to: 'admins',
+          subject: `New blog registered for ${settings.app_name}`,
+        }
+        sendEmail(message) // send email to admins
+        res.send({status: 'ok', msg: {class: 'flash-success', text: 'blog registered!'}})
+      })
+      .catch( e => {
+        res.send({status: 'error', msg: {class: 'flash-error', text: `Something went wrong registering your blog: ${e}`} })
+      })
+    } else {
+      res.send({status: 'error', msg: {class: 'flash-error', text: `That blog is already registered`} })
+    }
+  }) 
+
+})
+
 // delete blog
 app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
-  const args = req.body 
+  const args = req.body
   args.user = req.user // for updateUserBlogs & getUserDetails
   updateUserBlogs(args)
   .then(deleteBlog)
@@ -1113,18 +1147,62 @@ app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
   .catch( e => {
     debug.log('**ERROR DELETING BLOG**')
     debug.log(e)
-      res.send(
-        {
-          blogs: null,
-          msg: {
-            type: 'error',
-            class:'flash-error',
-            text: e.message // TODO: probably not great to just send the error message
-          }, 
-          error: e.message // should the message actually go here or is it not needed?
-        }
-      )
+      res.send({
+        blogs: null,
+        msg: {
+          class:'flash-error',
+          text: e.message // TODO: probably not great to just send the error message
+        }, 
+        error: e.message // should the message actually go here or is it not needed?
+      })
   })
+})
+
+// unsubscribe from Pocket
+app.post('/api/v1/update/user/remove-pocket', 
+  (req, res, next) => {
+    unsubscribeFromPocket(req.user)
+    .catch(err => {
+      debug.log('error removing pocket account', err)
+      res.send({
+        msg: {
+          class: 'flash-error',
+          text: err.message
+        }
+      })
+    })
+    .then( () => {
+      res.send({
+        msg: {
+          class: 'flash-success',
+          text: 'Pocket account unsubscribed. You should also "remove access" by this app at https://getpocket.com/connected_applications'
+        }
+      })
+    })
+  })
+
+TODO:
+app.post('/api/v1/update/admin/accept-blog', function(req, res) {
+  // accept as admin
+  const args = req.body // req.body.user should be owner's email
+})
+
+TODO:
+app.post('/api/v1/update/admin/reject-blog', function(req, res) {
+  // reject as admin
+  const args = req.body // req.body.user should be owner's email
+})
+
+TODO:
+app.post('/api/v1/update/admin/suspend-blog', function(req, res) {
+  // suspend
+  const args = req.body // req.body.user should be owner's email
+})
+
+TODO:
+app.post('/api/v1/update/admin/delete-blog', function(req, res) {
+  // delete as admin
+  const args = req.body // req.body.user should be owner's email
 })
 
 app.get('/vuetest', function(req, res) {
