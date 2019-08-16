@@ -87,7 +87,9 @@ passwordless.addDelivery('clipboard',
   function(tokenToSend, uidToSend, recipient, callback, req) {
     var address = settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)
     clipboardy.writeSync(address)
-    debug.log("Login link copied to clipboard")
+    if (env === 'development') {
+      debug.log("Login link copied to clipboard")
+    }
     callback(null, recipient)
   })
 
@@ -102,7 +104,8 @@ app.engine('html', engines.whiskers)
 app.set('view engine', 'html')
 
 // routing middleware
-app.use(bodyParser.urlencoded({ extended: false })) // use bodyParser
+app.use(bodyParser.urlencoded({ extended: false })) // use bodyParser with form data
+app.use(bodyParser.json()) // use bodyParser with JSON
 app.use(cookieParser(settings[env].cookie_parser_secret))
 app.use(session(sess)) // use sessions
 app.use(passwordless.sessionSupport()) // makes session persistent
@@ -114,7 +117,7 @@ app.use(flash()) // use flash messages
 // TODO: this shouldn't be needed if we just use email instead of id in most instances
 function userIsThisUser (req, res, next) {
   const thisUserEmail = req.session.passwordless
-  const claimedUserIdString = req.body.user
+  const claimedUserIdString = req.body.user || req.user
   const args = req.body
   args.query = {"email" : thisUserEmail}
   db.getUsers(args)
@@ -146,6 +149,7 @@ app.locals.orgUrl = settings.org_url
 app.locals.blogClub = settings.blog_club_name
 app.locals.blogClubUrl = settings.blog_club_url
 app.locals.blogCategories = settings.blog_categories
+app.locals.legacy = settings.legacy_db
 
 /*  ######################################
     ###              routes            ###
@@ -183,7 +187,7 @@ app.get('/', (req, res) =>
       user: req.session.passwordless
 		})
 	})
-	.catch(err => debug.error(err))
+	.catch(err => debug.log(err))
 )
 
 // search
@@ -212,7 +216,7 @@ app.get('/search/', (req, res) => db.getArticles(req.query.tag, req.query.page, 
       user: req.session.passwordless
 		})
 	)
-  .catch(err => debug.error(err))
+  .catch(err => debug.log(err))
 )
 
 // subscribe
@@ -304,8 +308,10 @@ app.all('/user*',
 
 // user dashboard
 app.get('/user',
-  (req, res) => 
-  db.getUserDetails(req.session.passwordless) // get user
+  function (req, res) { 
+  var args = {}
+  args.user = req.user 
+  db.getUserDetails(args)
   .then( // here we query any blogs in user.blogs or user.blogsForApproval to reduce the number of DB calls
     doc => {
       doc.query = {"_id": {$in: doc.user.blogsForApproval}}
@@ -350,8 +356,66 @@ app.get('/user',
     warnings: req.flash('warning'),
     success: req.flash('success'),
     errors: req.flash('error')
-  })
-))
+    })
+  )
+})
+
+// update user details
+// app.post('/user/update-user',
+//     [
+//       // normalise email
+//       body('email').isEmail().normalizeEmail(),
+//       // validate twitter with custom check
+//       body('twitter').custom( val => {
+//         let valid = val.match(/^@+[A-Za-z0-9_]*$/) || val == ""
+//         return valid
+//       }).withMessage("Twitter handles must start with '@' and contain only alphanumerics or underscores"),
+//       // validate twitter length
+//       body('twitter').isLength({max: 16}).withMessage("Twitter handles must contain fewer than 16 characters"),
+//       // validate mastodon with custom check
+//       body('mastodon').custom( val => {
+//         let valid = val.match(/^@+\S*@+\S*/) || val == ""
+//         return valid
+//       }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
+//     ],
+//     [userIsThisUser], // TODO:L if you use req.user this won't be necessary
+//     (req, res, next) => {
+//       debug.log('User details: %O', req.body)
+//       if (!validationResult(req).isEmpty()) {
+//         // flash errors
+//         let valArray = validationResult(req).array()
+//         for (var i=0; i < valArray.length; ++i) {
+//           req.flash('error', valArray[i].msg)
+//         }
+//         // reload page with flashes instead of updating
+//         res.redirect('/user')
+//       } else {
+//         next()
+//       }
+//     },
+//     function(req, res, next) {
+//     // here we need to check for other users with the same email
+//       db.checkEmailIsUnique(req.body)
+//         .then(updateUserContacts)
+//         .then(() => {
+//           debug.log('user updated')
+//           if (req.body.email != req.session.passwordless) {
+//             res.redirect('/email-updated') // force logout if email has changed
+//           } else {
+//             req.flash("success", "Your details have been updated")
+//             next() // if email unchanged, reload the page with update info
+//           }
+//         })
+//         .catch(err => {
+//             debug.log(err)
+//             req.flash("error", `Something went wrong:\n${err}`)
+//             next()
+//         })
+//       },
+//       (req, res) => {
+//         res.redirect('/user')
+//       }
+//   )
 
 // update user details
 app.post('/user/update-user',
@@ -371,9 +435,7 @@ app.post('/user/update-user',
         return valid
       }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
     ],
-    [userIsThisUser],
     (req, res, next) => {
-      debug.log('User details: %O', req.body)
       if (!validationResult(req).isEmpty()) {
         // flash errors
         let valArray = validationResult(req).array()
@@ -388,10 +450,12 @@ app.post('/user/update-user',
     },
     function(req, res, next) {
     // here we need to check for other users with the same email
+      if (req.user != req.body.email) {
+        throw new Error('Cannot update another user')
+      }
       db.checkEmailIsUnique(req.body)
         .then(updateUserContacts)
         .then(() => {
-          debug.log('user updated')
           if (req.body.email != req.session.passwordless) {
             res.redirect('/email-updated') // force logout if email has changed
           } else {
@@ -417,6 +481,7 @@ app.post('/user/register-blog',
     feedfinder.getFeed(req.body.url)
     .then( ff => {
       const args = req.body
+      args.user = req.user
       args.feed = ff.feed // add the feed to the form data object
       args.action = "register" // this is used in updateUserBlogs
       args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
@@ -465,7 +530,6 @@ app.post('/user/claim-blog',
     db.getBlogs(args)
       // then check users for any claiming this blog
       .then( args => {
-        debug.log(args)
         if (args.blogs.length < 1) {
           throw new Error("Blog does not exist: check the URL or try registering") // if there are no results the blog doesn't exist
         } else {
@@ -508,8 +572,9 @@ app.post('/user/delete-blog',
   [userIsThisUser],
   function(req, res, next) {
     const args = req.body
+    args.user = req.user
     args.action = 'delete'
-    updateUserBlogs(args) // delete using req.body.user and req.body.blog
+    updateUserBlogs(args)
     .then(deleteBlog)
     .then( () => {
       req.flash('success', 'Blog deleted')
@@ -529,7 +594,9 @@ app.post('/user/delete-blog',
 
 app.get('/user/pocket', 
   (req, res, next) => {
-    db.getUserDetails(req.user)
+    var args = {}
+    args.user = req.user 
+    db.getUserDetails(args)
     .then(authorisePocket)
     .then( args => {
       req.session.pocketCode = args.code
@@ -548,7 +615,7 @@ app.get('/user/pocket-redirect',
     const args = {}
     args.code = req.session.pocketCode
     args.key = settings[env].pocket_consumer_key
-    args.email = req.user
+    args.user = req.user
     finalisePocketAuthentication(args)
       .then( () => {
         req.flash('success', 'Pocket account registered')
@@ -582,27 +649,31 @@ app.post('/user/pocket-unsubscribe',
 // restrict all admin paths
 app.all('/admin*',
   passwordless.restricted({ failureRedirect: '/letmein' }),
-  (req, res, next) =>
-    db.getUserDetails(req.session.passwordless)
+  function (req, res, next) {
+    var args = {}
+    args.user = req.user 
+    db.getUserDetails(args)
     .then( doc => {
-        if (doc.user.permission && doc.user.permission === "admin") {
-          next()
-        } else {
-          req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
-          res.status(403)
-          res.redirect('/user')
-        }
-      })
-      .catch(err => {
-        debug.log(`Error accessing admin page: ${err}`)
-        req.flash('error', 'Something went wrong')
+      if (doc.user.permission && doc.user.permission === "admin") {
+        next()
+      } else {
+        req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
+        res.status(403)
         res.redirect('/user')
-      })
-)
+      }
+    })
+    .catch(err => {
+      debug.log(`Error accessing admin page: ${err}`)
+      req.flash('error', 'Something went wrong')
+      res.redirect('/user')
+    })
+  })
 
 // admin home page
 app.get('/admin', function (req, res) {
-  db.getUserDetails(req.session.passwordless)
+  var args = {}
+  args.user = req.user 
+  db.getUserDetails(args)
       .then( function (user) {
         return db.getBlogs({user: user, query: {failing: true}}) // get failing blogs
       })
@@ -664,7 +735,8 @@ app.get('/admin', function (req, res) {
   ).catch(err => {debug.log(err)})
 })
 
-// post admin/deleteblog
+// post admin/deleteblog  
+// NOTE: this should be replaced with an admin API call
 app.post('/admin/deleteblog', function(req, res) {
   body().exists({checkNull: true}) // make sure there's a value
   if (validationResult(req).isEmpty()) {
@@ -695,15 +767,14 @@ app.post('/admin/deleteblog', function(req, res) {
         req.flash('success', 'Blog deleted')
         res.redirect('/admin')
       }).catch(err => {
-        // TODO: WTF is the line below trying to do?
-        const msg = err ? typeof err === String : "Something went wrong whilst deleting 😯"
-        debug.log(err)
+        const msg = err.message
+        debug.log('error deleting blog', err)
         req.flash('error', msg)
         res.redirect('/admin')
       })
   } else {
     let valArray = validationResult(req).array()
-    debug.log(valArray)
+    debug.log('error deleting blog', valArray)
     req.flash('error', 'There was a problem deleting blogs.')
     res.redirect('/admin')
   }
@@ -711,29 +782,33 @@ app.post('/admin/deleteblog', function(req, res) {
 
 // approve blog
 app.post('/admin/approve-blog', function(req, res, next) {
-  approveBlog(req.body)
-    .then(updateUserBlogs)
-    .then( args => { // now we need to get the user's email address so we can send a confirmation
-      args.query = {'_id' : ObjectId(args.user)} // query for getUsers
-      return args
-    })
-    .then(db.getUsers)
-    .then( args => {
-      const user = args.users[0]
-      message = {
-        text: `Your blog ${args.url} has been approved on ${settings.app_name}.\n\nTime to get publishing!`,
-        to: user.email,
-        subject: `Your blog has been approved on ${settings.app_name}`,
-      }
-      sendEmail(message)
-      req.flash('success', 'Blog approved')
-      return next()
-    })
-    .catch( error => {
-      debug.log(error)
-      req.flash('error', 'Something went wrong approving the blog')
-      return next()
-    })
+  var args = req.body
+  args.user = req.user
+  args.query = {"email": args.user}
+  db.getUsers(args)
+  .then(approveBlog)
+  .then(updateUserBlogs)
+  .then( args => { // now we need to get the user's email address so we can send a confirmation
+    args.query = {'email' : args.user} // query for getUsers
+    return args
+  })
+  .then(db.getUsers)
+  .then( args => {
+    const user = args.users[0]
+    message = {
+      text: `Your blog ${args.url} has been approved on ${settings.app_name}.\n\nTime to get publishing!`,
+      to: user.email,
+      subject: `Your blog has been approved on ${settings.app_name}`,
+    }
+    sendEmail(message)
+    req.flash('success', 'Blog approved')
+    return next()
+  })
+  .catch( error => {
+    debug.log(error)
+    req.flash('error', 'Something went wrong approving the blog')
+    return next()
+  })
 },
 function (req, res, next) {
   res.redirect('/admin')
@@ -750,7 +825,6 @@ app.post('/admin/reject-blog', function(req, res, next) {
     })
     .then(db.getBlogs)
     .then( args => {
-      args.query = {'_id' : ObjectId(args.user)} // for getUsers below to get email address
       if (args.blogs[0] && args.blogs[0].approved) {
         // if approved is true then the blog is a legacy one and this is a 'claim'
         // rather than a new registration, so we do NOT want to delete it!
@@ -762,13 +836,12 @@ app.post('/admin/reject-blog', function(req, res, next) {
         })
       }
     })
-    .then(db.getUsers)
     .then( args => {
       // TODO: email user with reason
       const user = args.users[0]
       message = {
         text: `Your blog registration for ${args.url} has been rejected from ${settings.app_name}.\n\nReason:\n\n${args.reason}`,
-        to: user.email,
+        to: args.user,
         subject: `Your blog registration has been rejected on ${settings.app_name}`,
       }
       sendEmail(message)
@@ -874,11 +947,276 @@ app.get('/email-updated',
     })
   })
 
-// TODO: 403 unauthorised
+/*  
+    #######################
+          API ROUTES
+    #######################
+*/
 
-// TESTING
+// must have logged in user for all api routes 
+app.all('/api/v1/*', 
+passwordless.restricted(),
+(req, res, next) => {
+  next()
+})
 
-app.get('/test', function (req, res) {
+/*  ########
+      GET
+    ########
+*/
+
+app.get('/api/v1/user/info', function(req, res) {
+  db.getUsers({query: {"email" : req.user}})
+  .then(
+    doc => {
+      var data = {}
+      data.user = doc.users[0]._id
+      data.email = doc.users[0].email
+      data.twitter = doc.users[0].twitter || null
+      data.mastodon = doc.users[0].mastodon || null
+      data.pocket = doc.users[0].pocket || false
+      data.admin = doc.users[0].permission === 'admin'
+      res.json(data)
+  })
+  .catch( err => {
+    debug.log(err)
+  })
+})
+
+app.get('/api/v1/user/blogs', function(req, res) {
+  db.getUsers({query: {"email" : req.user}})
+  .then( // now get the approved blogs
+    doc => {
+      doc.query = {"_id": {$in: doc.users[0].blogs}}
+      return doc
+    })
+  .then(db.getBlogs)
+  .then( data => {
+    res.json({user: data.users[0].idString, blogs: data.blogs})
+  })
+  .catch( err => {
+    debug.log(err)
+  })
+})
+
+app.get('/api/v1/user/unapproved-blogs', function(req, res) {
+  db.getUsers({query: {"email" : req.user}})
+  .then( // now get the approved blogs
+    doc => {
+      doc.query = {
+        "_id": {$in: doc.users[0].blogsForApproval},
+      }
+      return doc
+    })
+  .then(db.getBlogs)
+  .then( data => {
+    res.json(data.blogs)
+  })
+  .catch( err => {
+    debug.log(err)
+  })
+})
+
+// app.get('/api/v1/user/pocket-info', function(req, res) {
+//   db.getUsers({query: {"email" : req.user}})
+//   .then(
+//     doc => {
+//       var data = {}
+//       data.pocket_username = doc.users[0].pocket ? doc.users[0].pocket.username : null
+//       res.json(data)
+//   })
+//   .catch( err => {
+//     debug.log(err)
+//   })
+// })
+
+/*  ########
+      POST
+    ########
+*/
+
+// UPDATE/user routes
+
+// NOTE: all routes **MUST** use req.user to identify user to update
+// DO NOT make routes taking user id or current email from req.body
+
+// update user contact info
+app.post('/api/v1/update/user/info', function(req,res) {
+  var args = req.body
+  args.user = req.user
+  db.checkEmailIsUnique(args)
+  .then(updateUserContacts)
+  .then(args => {
+    if (args.user.email != req.user) {
+      res.redirect('/email-updated') // force logout if email has changed
+    } else {
+      args.msg = {}
+      args.msg.class = 'flash-success'
+      args.msg.text = 'Your details have been updated'
+      res.send(
+        {
+          msg: args.msg,
+          user: args.user, // NOTE: this is *only* the data that was sent! i.e. it's "args"
+          error: null
+        }
+      )
+    }
+  })
+  .catch(err => {
+    debug.log('ERROR', err)
+    res.send(
+      {
+        user: null, 
+        msg: {
+          class: 'flash-error',
+          message: err.message
+        }
+      }
+    )
+  })
+})
+
+// register blog
+app.post( '/api/v1/update/user/register-blog', 
+function(req, res, next) {
+  feedfinder.getFeed(req.body.url)
+  .then( ff => {
+    const args = req.body
+    args.user = req.user
+    args.feed = ff.feed // add the feed to the form data object
+    args.action = "register" // this is used in updateUserBlogs
+    args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
+    // we match on the FEED rather than the URL (below)
+    // because if there is a redirect, the URL might not match even though it's the same blog
+    args.query = {feed: args.feed}
+    return args
+  })
+  .then(db.getBlogs) // check the blog isn't already registered
+  .then( args => { 
+    if (args.blogs.length < 1) {
+      registerBlog(args) // create new blog document
+      .then(updateUserBlogs) // add blog _id to user's blogsForApproval array
+      .then( args => {
+        message = {
+          text: `User ${req.user} has registered ${args.url} with ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to accept or reject the registration.`,
+          to: 'admins',
+          subject: `New blog registered for ${settings.app_name}`,
+        }
+        sendEmail(message) // send email to admins
+        res.send({status: 'ok', msg: {class: 'flash-success', text: 'blog registered!'}})
+      })
+      .catch( e => {
+        res.send({status: 'error', msg: {class: 'flash-error', text: `Something went wrong registering your blog: ${e}`} })
+      })
+    } else {
+      res.send({status: 'error', msg: {class: 'flash-error', text: `That blog is already registered`} })
+    }
+  }) 
+
+})
+
+// delete blog
+app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
+  const args = req.body
+  args.user = req.user // for updateUserBlogs & getUserDetails
+  updateUserBlogs(args)
+  .then(deleteBlog)
+  .then( args => {
+    args.query = {"email" : args.user }
+    return args
+  })
+  .then(db.getUsers)
+  .then( args => {
+    args.query = {"_id": {$in: args.users[0].blogs}}
+    return args
+  })
+  .then(db.getBlogs)
+  .then( args => {
+    res.send(
+      {
+        blogs: args.blogs, 
+        msg: {
+          type: 'success',
+          class:'flash-success',
+          text: 'Blog deleted'
+        }, 
+        error: null
+      }
+    )
+  })
+  .catch( e => {
+    debug.log('**ERROR DELETING BLOG**')
+    debug.log(e)
+      res.send({
+        blogs: null,
+        msg: {
+          class:'flash-error',
+          text: e.message // TODO: probably not great to just send the error message
+        }, 
+        error: e.message // should the message actually go here or is it not needed?
+      })
+  })
+})
+
+// unsubscribe from Pocket
+app.post('/api/v1/update/user/remove-pocket', 
+  (req, res, next) => {
+    unsubscribeFromPocket(req.user)
+    .catch(err => {
+      debug.log('error removing pocket account', err)
+      res.send({
+        msg: {
+          class: 'flash-error',
+          text: err.message
+        }
+      })
+    })
+    .then( () => {
+      res.send({
+        msg: {
+          class: 'flash-success',
+          text: 'Pocket account unsubscribed. You should also "remove access" by this app at https://getpocket.com/connected_applications'
+        }
+      })
+    })
+  })
+
+TODO:
+app.post('/api/v1/update/admin/accept-blog', function(req, res) {
+  // accept as admin
+  const args = req.body // req.body.user should be owner's email
+})
+
+TODO:
+app.post('/api/v1/update/admin/reject-blog', function(req, res) {
+  // reject as admin
+  const args = req.body // req.body.user should be owner's email
+})
+
+TODO:
+app.post('/api/v1/update/admin/suspend-blog', function(req, res) {
+  // suspend
+  const args = req.body // req.body.user should be owner's email
+})
+
+TODO:
+app.post('/api/v1/update/admin/delete-blog', function(req, res) {
+  // delete as admin
+  const args = req.body // req.body.user should be owner's email
+})
+
+app.get('/vuetest', function(req, res) {
+  res.render('vuetest', {
+    partials: {
+      head: __dirname+'/views/partials/head.html',
+      header: __dirname+'/views/partials/header.html',
+      foot: __dirname+'/views/partials/foot.html',
+      footer: __dirname+'/views/partials/footer.html'
+    }
+  })
+})
+
+app.get('/403', function (req, res) {
   res.sendStatus(403)
 })
 
@@ -889,11 +1227,13 @@ app.use(function (req, res, next) {
 
 // listen on server
 app.listen(3000, function() {
-  console.log('    *****************************************************************************')
-  console.log('     👂  Rockpool is listening on port 3000')
-  console.log(`     👟  You are running in ${process.env.NODE_ENV.toUpperCase()} mode`)
-  console.log(`     🗃  Connected to database at ${settings[process.env.NODE_ENV].mongo_url}`)
-  console.log('    *****************************************************************************')
+  if (env !== 'test') {
+    console.log('    *****************************************************************************')
+    console.log('     👂  Rockpool is listening on port 3000')
+    console.log(`     👟  You are running in ${process.env.NODE_ENV.toUpperCase()} mode`)
+    console.log(`     🗃  Connected to database at ${settings[process.env.NODE_ENV].mongo_url}`)
+    console.log('    *****************************************************************************')
+  }
 })
 
 // export app for testing

@@ -1,125 +1,84 @@
 {>head}
-	{>header}
-	<div class="main">
-    {if errors}
-    {for msg in errors}<div class="flash-error">{msg}</div>{/for}
-    {/if}
-    {if new}
-      <p>Welcome to {appName} - please fill in your details and save your profile to get started.</p>
-    {else}
-      {if warnings}
-      {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
-      {/if}
-      {if success}
-      {for msg in success}<div class="flash-success">{msg}</div>{/for}
-      {/if}
-      <p>Welcome back to {appName}!</p>
-    {/if}
-    {if admin}
-    <a href="/admin">Admin</a>
-    <br>
-    {/if}
-    <h2>Contacts</h2>
-    {if new}
-    <p>Your email address is required for logging in to your account, and contacting you about any account activity (e.g. your blog being approved). Your Twitter and Mastodon handles will be included in the tweet/toot when posting alerts about new blog posts.</p>
-    {/if}
-    <form id="updateUser" action="/user/update-user" method="POST" class="user-form-vals">
-      <input name="user" value="{user.idString}" type="hidden">
-      <label for="email" class="profile-label">Email:&nbsp;</label>
-      <input type="text" name="email" class="profile-value" required value="{user.email}"> <!--if this is changed, need to log out user-->
-      <label for="twitter" class="profile-label">Twitter:&nbsp;</label>
-      <input type="text" name="twitter" class="profile-value" value="{user.twitter}">
-      <label for="mastodon" class="profile-label">Mastodon:&nbsp;</label>
-      <input type="text" name="mastodon" class="profile-value" value="{user.mastodon}">
-      {if new}
-        <input type="submit" class="submit-button" value="Save">
-      {else}
-        <input type="submit" class="submit-button" value="Update">
-      {/if}
-    </form>
-    {if not new}
-    {if user.pocket}
-    <div>
-      <h2>Pocket</h2>
-      <div>You are subscribed to receive articles straight to your <strong>{user.pocket.username}</strong> Pocket list. Nice one!</div>
-      <form id="pocket-unsubscribe" action="/user/pocket-unsubscribe" method="post">
-        <button form="pocket-unsubscribe" type="submit">Cancel Pocket Subscription</button>
-      </form>
-    </div>
-    {/if}
-    <div>
-      <h2>Blogs</h2>
-      {if blogs}
-        <h3>Your Blogs</h3>
-        <ul class="blog-list">
-        {for blog in blogsForApproval}
-          <li class="listed-blog">
-            <div class="unapproved-blog"></div>
-            <span>{blog.url} - </span>
-            <span class="awaiting-approval">awaiting approval</span>
-          </li>
-        {/for}
-        {for blog in ownedBlogs}
-        <li class="listed-blog">
-          <div class="approved-blog"></div>
-          <span>{blog.url}</span>
-          <button type="button" class="edit">Edit</button>
-          <!-- TODO: JS function to inject update form with select for category -->
-          <button type="submit" form="deleteBlog">Delete</button>
-          <form id="deleteBlog" action="/user/delete-blog"  method="POST">
-            <input name="blog" value={blog.idString} type="hidden">
-            <input name="user" value={user.idString} type="hidden">
-          </form>
-        </li>
-        {/for}
+  {>header}
+    <!-- vuejs prototyping -->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <!-- axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <section class="main">
+      <div v-if="messages" id="user-messages">
+        <ul v-for="msg in messages" class="blog-list">
+          <li v-bind:class="msg.class">{{ msg.text }}</li>
         </ul>
-      {else}
-        <div>You currently have no registered{if legacy} or claimed{/if} blogs.</div>
-      {/if}
-      <h3>Register {if legacy}or claim {/if}a blog</h3>
-      <form id="registerBlog" action="/user/register-blog" method="post">
+      </div>
+      <div id="user-info">
+        <div v-if="user.admin">
+          <button type="button" onclick="location.href='/admin'">Admin</button>
+        </div>
+        <h3 class="form-label">Your Info</h3>
+        <form v-if="editing" name="user-info" method="POST">
+          <div>
+            <!-- <input name="user" hidden v-bind:value="user.user"> -->
+            <label for="email">Email:</label>
+            <input id="email" name="email" v-model="user.email">
+          </div>
+          <div>
+            <label for="twitter">Twitter:</label>
+            <input id="twitter" name="twitter" v-model="user.twitter">
+          </div>
+          <div>
+            <label for="mastodon">Mastodon:</label>
+            <input id="mastodon" name="mastodon" v-model="user.mastodon">
+          </div>
+          <button v-on:click.prevent="updateUser" id="update-button">Update</button>
+        </form>
+        <div v-else>
+          <div id="email"><span class="form-label">Email: </span>{{ user.email }}</div>
+          <div id="twitter"><span class="form-label">Twitter: </span>{{ user.twitter }}</div>
+          <div id="mastodon"><span class="form-label">Mastodon: </span>{{ user.mastodon }}</div>
+          <button v-on:click="editing = true">Edit</button>
+        </div>
+        <div>
+            <h3 class="form-label">Pocket</h3>
+              <form id="pocket">
+                <template v-if="user.pocket">
+                    <p>You are subscribed to receive articles straight to your <strong>{{ user.pocket.username }}</strong> Pocket list. Nice one!</p>
+                    <button v-on:click="cancelPocket" type="button">Cancel Pocket Subscription</button>
+                </template>
+                <button v-else type="button" onclick="location.href='/user/pocket'">Subscribe via Pocket</button>
+              </form>
+          </div>
+      </div>
+      <h3 class="form-label">Your blogs</h3>
+      <ul id="user-approved-blogs" class="blog-list">
+        <li v-for='blog in blogs' class="listed-blog" v-bind:class="{deleting: blog.editing}" v-bind:key="blog.id">
+          <div class="approved-blog"></div>
+          <span>{{ blog.url }}</span>
+          <button v-if="blog.editing" v-on:click="deleteBlog(blog)" v-bind:id="blog.idString">Confirm deletion</button>
+          <button v-else v-on:click="checking(blog)" v-bind:id="blog.idString">Delete</button>
+        </li>
+      </ul>
+      <ul id="user-unapproved-blogs" class="blog-list">
+        <li v-for='blog in uBlogs' class="listed-blog">
+          <div class="unapproved-blog"></div>
+          <span>{{ blog.url }}</span><span class="awaiting-approval"> - awaiting approval</span>
+        </li>
+      </ul>
+      <h4>Register {if legacy}or claim {/if}a blog</h4>
+      <form id="registerBlog">
         <label for="url">URL:</label>
-        <input type="url" name="url" size="60"><br/>
-        <input type="hidden" name="user" value="{user.idString}">
+        <input v-model="url" type="url" name="url" size="60"><br/>
         <label for="category">Category:</label>
-        <select name="category">
-          <option value="null" disabled selected>---</option>
+        <select v-model="category" name="category">
+        <option value="null" disabled selected>---</option>
         {for category in blogCategories}
-          <option value="{category}">{category}</option>
+        <option value={category}>{category}</option>
         {/for}
         </select>
-        <br/>
-        <input type="submit" name="register" value="Register New Blog">
-        <br/>
-        {if legacy}<input type="submit" name="claim" value="Claim Listed Blog" formaction="/user/claim-blog">{/if}
+        <button name="register" v-on:click.prevent="validate('register')">Register blog</button>
+        {if legacy}<button name="claim" v-on:click.prevent="validate('claim')">Claim blog</button>{/if}
       </form>
-    </div>
-    {/if}
-  </div>
+    </section>
+    <!-- vuejs components -->
+    <script src="/scripts/vue-components.js"></script>
   {>footer}
-  <script>
-    var loader = document.getElementById('loader')
-    var updateUser = document.getElementById('updateUser')
-    var deleteBlog = document.getElementById('deleteBlog')
-    var registerBlog = document.getElementById('registerBlog')
-
-    function triggerLoading() {
-      // trigger loader
-      loader.className = 'loader'
-    }
-
-    updateUser.addEventListener('submit', function() {
-      triggerLoading()
-    }, false)
-    
-    if (deleteBlog) {
-      deleteBlog.addEventListener('submit', function() {
-        triggerLoading()
-      }, false)
-    }
-
-    registerBlog.addEventListener('submit', function() {
-      triggerLoading()
-    }, false)
-  </script>
 {>foot}

@@ -274,6 +274,7 @@ input[type="submit"].email-signup {
 
 .awaiting-approval {
 	font-style: italic;
+	color: #8f8f8f;
 }
 .claimed-blogs {
 	border: 1px solid #3a3a3a;
@@ -288,6 +289,15 @@ input[type="submit"].email-signup {
 
 .delete-button {
 	margin-top: 2em
+}
+
+.deleting {
+	text-decoration: line-through;
+	color: slategray;
+}
+
+.deleting .approved-blog {
+	background-color: slategray;
 }
 
 /* flash messages */
