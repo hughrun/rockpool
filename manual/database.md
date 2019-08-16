@@ -15,6 +15,7 @@ A **user** is a person who interacts with the application in a way that requires
 | permission | `String` - One of _user_ or _admin_ |
 | blogs | `Array` - an array of blog _\_ids_ owned by this user |
 | blogsForApproval | `Array` - an array of blog _\_ids_ registered or claimed (for legacy DB) by this user, awaiting approval by an administrator |
+| pocket | `Object` - if a pocket account is registered, contains values `token` and `username` |
 
 ## rp_blogs
 
