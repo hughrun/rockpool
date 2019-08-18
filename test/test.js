@@ -215,7 +215,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   mastodon: '@bob@rockpool.town',
                   blogs: [],
                   blogsForApproval: [
-                    ObjectId("2a182f1d81c32da8adb56777")
+                    ObjectId("2a182f1d81c32da8adb56777"),
+                    ObjectId("5d592f2ed6e95e2d3bd1a69b"),
+                    ObjectId('5d5932f5d6e95e2d3bd1a69c')
                   ]
                 }
               ]
@@ -263,6 +265,22 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   category: 'cats',
                   approved: false,
                   announced: false
+                },
+                {
+                  _id: ObjectId('5d592f2ed6e95e2d3bd1a69b'),
+                  url: 'https://roberto.blog',
+                  feed: 'https://roberto.blog/feed',
+                  category: 'sushi',
+                  approved: false,
+                  announced: false
+                },
+                {
+                  _id: ObjectId('5d5932f5d6e95e2d3bd1a69c'),
+                  url: 'https://legacy.blog',
+                  feed: 'https://legacy.blog/feed',
+                  category: 'podcasting',
+                  approved: true,
+                  announced: true
                 }
               ]
             )
@@ -732,6 +750,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 })
               })
             })
+            describe('/api/v1/update/user/edit-blog', function(done) {
+              it('should update the blog category')
+            })
             describe('/api/v1/update/user/register-pocket', function() {
               it('should redirect to pocket')
             })
@@ -744,7 +765,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               it('should return success message', function(done) {
                 agent
                 .post('/api/v1/update/admin/approve-blog')
-                .send({blog: '2a182f1d81c32da8adb56777', user: 'bob@example.com', action: 'approve'})
+                .send({blog: '2a182f1d81c32da8adb56777', user: 'bob@example.com'})
                 .then( x => {
                   assert.strictEqual(x.body.class, 'flash-success')
                   done()
@@ -777,14 +798,14 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   done(err)
                 })
               })
-              it('should remmove the blog id from "blogsForApproval" in the user record', function(done) {
+              it('should remove the blog id from "blogsForApproval" in the user record', function(done) {
                 queries.getUsers({query: {'email' : 'bob@example.com'}})
                 .then( args => {
                   blogs = args.users[0].blogsForApproval
                   let forApproval = blogs.some(function(id) {
                     return id.toString() === '2a182f1d81c32da8adb56777'
                   })
-                  assert.notStrictEqual(forApproval, true)
+                  assert.strictEqual(forApproval, false)
                   done()
                 })
                 .catch( err => {
@@ -796,10 +817,71 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             describe('/api/v1/update/admin/reject-blog', function() {
                // need to test client side also
               // need to require a 'reason' for rejection
-              it('should remove the blog id from "blogsForApproval"')
-              it('should delete the blog if blog.approved = false')
-              it('should NOT delete the blog if blog.approved = true') // for legacy mode
-              it('should return updated data for admin screen')
+              it('should return success message', function(done) {
+                agent
+                .post('/api/v1/update/admin/reject-blog')
+                .send({
+                  blog: '5d592f2ed6e95e2d3bd1a69b', 
+                  user: 'bob@example.com',
+                  url: 'https://roberto.blog',
+                  reason: 'I just do not like it'
+                })
+                .then( x => {
+                  assert.strictEqual(x.body.class, 'flash-success')
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+              it('should remove the blog id from "blogsForApproval"', function(done) {
+                queries.getUsers({query: {'email' : 'bob@example.com'}})
+                .then( args => {
+                  blogs = args.users[0].blogsForApproval
+                  let forApproval = blogs.some(function(id) {
+                    return id.toString() === '5d592f2ed6e95e2d3bd1a69b'
+                  })
+                  assert.strictEqual(forApproval, false)
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+              it('should delete the blog if blog.approved = false', function(done) {
+                queries.getBlogs({
+                  query: {'_id' : ObjectId('5d592f2ed6e95e2d3bd1a69b')}
+                })
+                .then( args => {
+                  assert.equal(args.blogs.length, 0)
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+              it('should NOT delete the blog if blog.approved = true', function(done) {
+                agent
+                .post('/api/v1/update/admin/reject-blog')
+                .send({
+                  blog: '5d5932f5d6e95e2d3bd1a69c', 
+                  user: 'bob@example.com',
+                  url: 'https://legacy.blog',
+                  reason: 'Does not belong to Bob'
+                })
+                .then( x => {
+                  return queries.getBlogs({
+                    query: {'_id' : ObjectId('5d5932f5d6e95e2d3bd1a69c')}
+                  })
+                  .then( args => {
+                    assert.ok(args.blogs[0])
+                    done()
+                  })
+                })
+                .catch( err => {
+                  done(err)
+                })
+              }) // for legacy mode
             })
             describe('/api/v1/update/admin/suspend-blog', function() {
                // need to test client side also

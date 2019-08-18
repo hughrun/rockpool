@@ -735,8 +735,9 @@ app.get('/admin', function (req, res) {
   ).catch(err => {debug.log(err)})
 })
 
+// TODO: all these post routes should be replaced with /update/admin API calls
+
 // post admin/deleteblog  
-// NOTE: this should be replaced with an admin API call
 app.post('/admin/deleteblog', function(req, res) {
   body().exists({checkNull: true}) // make sure there's a value
   if (validationResult(req).isEmpty()) {
@@ -1017,19 +1018,6 @@ app.get('/api/v1/user/unapproved-blogs', function(req, res) {
   })
 })
 
-// app.get('/api/v1/user/pocket-info', function(req, res) {
-//   db.getUsers({query: {"email" : req.user}})
-//   .then(
-//     doc => {
-//       var data = {}
-//       data.pocket_username = doc.users[0].pocket ? doc.users[0].pocket.username : null
-//       res.json(data)
-//   })
-//   .catch( err => {
-//     debug.log(err)
-//   })
-// })
-
 /*  ########
       POST
     ########
@@ -1038,7 +1026,7 @@ app.get('/api/v1/user/unapproved-blogs', function(req, res) {
 // UPDATE/user routes
 
 // NOTE: all routes **MUST** use req.user to identify user to update
-// DO NOT make routes taking user id or current email from req.body
+// DO NOT make routes taking logged in user id or current email from req.body
 
 // update user contact info
 app.post('/api/v1/update/user/info', function(req,res) {
@@ -1191,7 +1179,7 @@ app.all('/api/v1/admin*',
       if (doc.user.permission && doc.user.permission === "admin") {
         next()
       } else {
-        // TODO: use session storage for temporarily persistent messages?
+        // FIXME: use session storage for temporarily persistent messages?
         req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
         res.status(403)
         res.redirect('/user')
@@ -1220,20 +1208,22 @@ app.all('/api/v1/admin*',
       }
     })
     .catch(err => {
-      debug.log(`Error accessing admin page: ${err}`)
-      req.flash('error', 'Something went wrong')
-      res.status(403)
-      res.redirect('/user')
+      debug.log(`Error for ${req.user} when attempting to access admin page: ${err}`)
+      res.sendStatus(403)
     })
   })
 
-//TODO: 
-
-app.post('/api/v1/update/admin/approve-blog', function(req, res, next) {
   // req.user for admin routes should be the owner, not the admin user
   // in this case we trust the user input because we have already checked 
   // server side that they are a logged-in admin (see above: app.all('/api/v1/update/admin*')
-  const args = req.body // req.body.user will be the owner email
+
+app.post('/api/v1/update/admin/approve-blog', function(req, res, next) {
+  const args = req.body 
+  // user will be the owner email
+  // email is owner's email
+  // url is blog url
+  // blog is blog _id as a string
+  args.action= 'approve'
   args.query = {'email' : args.email} // query for getUsers later
   db.getUsers(args) 
   .then(approveBlog) // set to approved: true
@@ -1242,7 +1232,7 @@ app.post('/api/v1/update/admin/approve-blog', function(req, res, next) {
     message = {
       text: `Your blog has been approved on ${settings.app_name}.\n\nTime to get publishing!`,
       to: args.user,
-      subject: `Your blog has been approved on ${settings.app_name}`,
+      subject: `Your blog ${args.url} has been approved on ${settings.app_name}`,
     }
     sendEmail(message)
   })
@@ -1250,16 +1240,48 @@ app.post('/api/v1/update/admin/approve-blog', function(req, res, next) {
     res.send({class: 'flash-success', text: `blog approved`})
   })
   .catch( e => {
-    debug.log(`error approving ${args.blog}`, e)
-    res.send({class: 'flash-error', text: `error approving ${args.blog}`})
+    debug.log(`error approving ${req.body.blog}`, e)
+    res.send({class: 'flash-error', text: `error approving blog ${req.body.blog}`})
   })
 })
 
 // TODO:
 app.post('/api/v1/update/admin/reject-blog', function(req, res) {
   // reject as admin
-  const args = req.body // req.body.user should be owner's email
+  const args = req.body 
+  // user is owner's email
+  // blog is blog _id as string
+  // reason is the reason provided as a string
+  // url is blog url
   args.action = 'reject'
+  updateUserBlogs(args)
+    .then( args => {
+      args.query = {"_id" : ObjectId(args.blog)}
+      return args
+    })
+    .then(db.getBlogs)
+    .then( args => {
+      if (args.blogs[0] && args.blogs[0].approved) {
+        // if approved is true then the blog is a legacy one and this is a 'claim'
+        // rather than a new registration, so we do NOT want to delete it!
+        return args
+      } else { 
+        return deleteBlog(args) // delete blog and *then* return args
+      }
+    })
+    .then( args => {
+      message = {
+        text: `Your blog registration for ${args.url} has been rejected from ${settings.app_name}.\n\nReason:\n\n${args.reason}`,
+        to: args.user,
+        subject: `Your blog has been rejected on ${settings.app_name}`,
+      }
+      sendEmail(message)
+      res.send({class: 'flash-success', text: `${args.url} rejected`})
+    })
+    .catch( error => {
+      debug.log('error rejecting blog', error)
+      res.send({class: 'flash-error', text: `Something went wrong rejecting ${req.body.url}`})
+    })
 })
 
 // TODO:
@@ -1272,21 +1294,6 @@ app.post('/api/v1/update/admin/suspend-blog', function(req, res) {
 app.post('/api/v1/update/admin/delete-blog', function(req, res) {
   // delete as admin
   const args = req.body // req.body.user should be owner's email
-})
-
-// app.get('/vuetest', function(req, res) {
-//   res.render('vuetest', {
-//     partials: {
-//       head: __dirname+'/views/partials/head.html',
-//       header: __dirname+'/views/partials/header.html',
-//       foot: __dirname+'/views/partials/foot.html',
-//       footer: __dirname+'/views/partials/footer.html'
-//     }
-//   })
-// })
-
-app.get('/403', function (req, res) {
-  res.sendStatus(403)
 })
 
 // 404 errors: this should always be the last route
