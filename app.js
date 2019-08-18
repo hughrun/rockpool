@@ -1181,40 +1181,95 @@ app.post('/api/v1/update/user/remove-pocket',
     })
   })
 
-TODO:
-app.post('/api/v1/update/admin/accept-blog', function(req, res) {
-  // accept as admin
-  const args = req.body // req.body.user should be owner's email
+// protect admin routes
+app.all('/api/v1/admin*',
+  function (req, res, next) {
+    var args = {}
+    args.user = req.user 
+    db.getUserDetails(args)
+    .then( doc => {
+      if (doc.user.permission && doc.user.permission === "admin") {
+        next()
+      } else {
+        // TODO: use session storage for temporarily persistent messages?
+        req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
+        res.status(403)
+        res.redirect('/user')
+      }
+    })
+    .catch(err => {
+      debug.log(`Error accessing admin page: ${err}`)
+      req.flash('error', 'Something went wrong')
+      res.redirect('/user')
+    })
+  })
+
+  app.all('/api/v1/update/admin*',
+  function (req, res, next) {
+    var args = {}
+    args.user = req.user
+    db.getUserDetails(args)
+    .then( doc => {
+      if (doc.user.permission && doc.user.permission === "admin") {
+        next()
+      } else {
+        // TODO: use session storage for temporarily persistent messages?
+        req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
+        res.status(403)
+        res.redirect('/user')
+      }
+    })
+    .catch(err => {
+      debug.log(`Error accessing admin page: ${err}`)
+      req.flash('error', 'Something went wrong')
+      res.status(403)
+      res.redirect('/user')
+    })
+  })
+
+//TODO: 
+
+app.post('/api/v1/update/admin/approve-blog', function(req, res) {
+  // req.user for admin routes should be the owner, not the admin user
+  updateUserBlogs(req.body)
+  .then( args => {
+    res.send({class: 'flash-success', text: `${req.body.blog} accepted`})
+  })
+  .catch( e => {
+    debug.log(`error accepting ${req.body.blog}`, e)
+    res.send({class: 'flash-error', text: `error accepting ${req.body.blog}`})
+  })
 })
 
-TODO:
+// TODO:
 app.post('/api/v1/update/admin/reject-blog', function(req, res) {
   // reject as admin
   const args = req.body // req.body.user should be owner's email
+  args.action = 'reject'
 })
 
-TODO:
+// TODO:
 app.post('/api/v1/update/admin/suspend-blog', function(req, res) {
   // suspend
   const args = req.body // req.body.user should be owner's email
 })
 
-TODO:
+// TODO:
 app.post('/api/v1/update/admin/delete-blog', function(req, res) {
   // delete as admin
   const args = req.body // req.body.user should be owner's email
 })
 
-app.get('/vuetest', function(req, res) {
-  res.render('vuetest', {
-    partials: {
-      head: __dirname+'/views/partials/head.html',
-      header: __dirname+'/views/partials/header.html',
-      foot: __dirname+'/views/partials/foot.html',
-      footer: __dirname+'/views/partials/footer.html'
-    }
-  })
-})
+// app.get('/vuetest', function(req, res) {
+//   res.render('vuetest', {
+//     partials: {
+//       head: __dirname+'/views/partials/head.html',
+//       header: __dirname+'/views/partials/header.html',
+//       foot: __dirname+'/views/partials/foot.html',
+//       footer: __dirname+'/views/partials/footer.html'
+//     }
+//   })
+// })
 
 app.get('/403', function (req, res) {
   res.sendStatus(403)

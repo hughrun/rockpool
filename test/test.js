@@ -333,7 +333,6 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             .get('/admin')
             .expect(200, done)
           })
-          it('should return 401 if user logged in but not admin') // TODO: need to log in with different user
         })
       })
       describe('API routes', function() {
@@ -521,7 +520,6 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
           })
           describe('/api/v1/admin/*', function() {
-            it('should return 403 when user is not an admin')
             describe('/api/v1/admin/info', function() {
               it('should return user & blog info for blogs to be approved')
               it('should return blog info for failing blogs')
@@ -530,7 +528,12 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         })
         describe('POST', function() {
           describe('/api/v1/update/user/*', function() {
-            it('should return 403 when user not logged in')
+            it('should return 401 when user not logged in', function(done) {
+              request
+              .post('/api/v1/update/user/info')
+              .send({email: 'alice@example.com', twitter: 'alice@twitter.com', mastodon: '@new@masto.com'})
+              .expect(401, done)
+            })
             describe('/api/v1/update/user/info', function() {
               it('should return 200 when logged in', function(done) {
                 agent
@@ -585,7 +588,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
             describe('/api/v1/update/user/register-blog', function(done) {
               // TODO: this will run fake blogs through feedfinder and therefore fail
-              // set up mocks first
+              // so set up mocks with nock first?
               it('should return an error message if the blog is already registered')
               it('should add the blog to the DB with URL, feed, approved: false and announced:false')
               it("should add the blog to the user's blogsForApproval")
@@ -736,22 +739,92 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
           })
           describe('/api/v1/update/admin/*', function() {
-            it('should return 403 if user not logged in')
-            it('should return 403 if user logged in but not admin')
-            it('should return 200 if user logged in and is admin')
             describe('/api/v1/update/admin/approve-blog', function() {
+              it('should not return an error', function(done) {
+                agent
+                .post('/api/v1/update/admin/approve-blog')
+                .send({blog: '2a182f1d81c32da8adb56777', user: 'bob@example.com', action: 'approve'})
+                .then( x => {
+                  assert.strictEqual(x.body.class, 'flash-success')
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
               it('should set approved to true in blog listing')
               it('should move the blog id from "blogsForApproval" to "blogs" in the user record')
               it('should queue an announcement')
               it('should return updated data for admin screen')
             })
             describe('/api/v1/update/admin/reject-blog', function() {
+               // need to test client side also
+              // need to require a 'reason' for rejection
               it('should remove the blog id from "blogsForApproval"')
               it('should delete the blog if blog.approved = false')
               it('should NOT delete the blog if blog.approved = true') // for legacy mode
               it('should return updated data for admin screen')
             })
+            describe('/api/v1/update/admin/suspend-blog', function() {
+               // need to test client side also
+              // need to require a 'reason' for suspension
+              // and also check if there is an owner
+              it('should set suspended.start to datetime in blog listing')
+              it('should return updated data for admin screen')
+            })
+            describe('/api/v1/update/admin/unsuspend-blog', function() {
+              it('should set suspended.end to datetime in blog listing') 
+              // TODO: what about multiple suspensions?
+              // maybe it should be an array of objects with start and end times?
+              it('should return updated data for admin screen')
+            })
+            describe('/api/v1/update/admin/delete-blog', function() {
+              // need to test client side also
+              // need to require a 'reason' for deletion
+              it('should remove the blog from the owner blogs array if there is an owner')
+              it('should remove the blog from the blogs collection')
+            })
+            describe('/api/v1/update/admin/make-admin', function() {
+              it('should change the user permission value to "admin"')
+            })
+            describe('/api/v1/update/admin/remove-admin', function() {
+              // need to test client side also
+              // need to require a 'reason' for removal and who did it
+              // also really should do some proper logging
+              it('should change the user permission value to "user"')
+            })
           })
+        })
+      })
+      describe('admin routes that should error out', function() {
+        // use Bob as agent (var userAgent?)
+        describe('/admin/*', function() {
+          it('should return 302, then redirect to /letmein if user not logged in', function(done) {
+            request
+            .post('/admin')
+            .expect(302)
+            .then ( res => {
+              assert.equal( '/letmein' , res.headers.location)
+              done()
+            })
+          })
+          it('should return 403 if user logged in but not admin')
+        })
+        describe('/api/v1/admin/*', function() {
+          it('should return 401 if user not logged in', function(done) {
+            request
+            .post('/api/v1/admin/info')
+            .expect(401, done)
+          })
+          it('should return 403 if user logged in but not admin')
+        })
+        describe('/api/v1/update/admin/*', function() {
+          it('should return 401 if user not logged in', function(done) {
+            request
+            .post('/api/v1/update/admin/approve-blog')
+            .expect(401, done)
+          })
+          it('should return 403 if user logged in but not admin')
         })
       })
       describe('checkfeeds()', function() {
@@ -760,8 +833,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         it('should not duplicate blogs with the same URL or GUID')
         it('should add new articles if there are new (i.e. not in the DB) articles')
         it('should skip articles with exclude tags')
-        it('should queue announcements for new articles')
-        it('should not queue announcements for new articles that are older than 48 hours')
+        it('should skip articles published between suspend.start and suspend.end')
+        it('should queue announcements for added articles')
+        it('should not queue announcements for added articles that are older than 48 hours')
       })
       describe('queueAnnouncement()', function() {
         it('should queue tweets if settings[env].useTwitter is true')
@@ -772,6 +846,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       describe('checkAnnouncementsQueue()', function() {
         it('should run every X minutes in line with settings[env].minutes_between_announcements')
         it('should send the next announcement if there are any in the queue')
+        it('should not send more than one announcement per cycle')
       })
       describe('sendTweet()', function() {
         // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Twitter API
@@ -808,30 +883,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         done()
       })
       
-
       // close all mongo connections if I ever work out how to tear it down in a way that actually works...
       // TODO: is there an open Mongo connection in the app somewhere?
       // TODO: check whether MongoStore can/needs to be closed.
     })
   })
 })
-
-// MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
-//   assert.strictEqual(null, err)
-//   const db = client.db(dbName)
-//   const insertUsers = function(db, callback) {
-//     db.collection('rp_users').insertMany(
-//       // insert all these docs
-//     )
-//     .then( doc => {
-//       // check for errors?
-//       // done()
-//     })
-//     .catch( err => {
-//       reject(err)
-//     })
-//   }
-//   insertUsers(db, function() {
-//     client.close()
-//   })
-// })
