@@ -1213,7 +1213,7 @@ app.all('/api/v1/admin*',
       if (doc.user.permission && doc.user.permission === "admin") {
         next()
       } else {
-        // TODO: use session storage for temporarily persistent messages?
+        // FIXME: use session storage for temporarily persistent messages?
         req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
         res.status(403)
         res.redirect('/user')
@@ -1229,15 +1229,29 @@ app.all('/api/v1/admin*',
 
 //TODO: 
 
-app.post('/api/v1/update/admin/approve-blog', function(req, res) {
+app.post('/api/v1/update/admin/approve-blog', function(req, res, next) {
   // req.user for admin routes should be the owner, not the admin user
-  updateUserBlogs(req.body)
+  // in this case we trust the user input because we have already checked 
+  // server side that they are a logged-in admin (see above: app.all('/api/v1/update/admin*')
+  const args = req.body // req.body.user will be the owner email
+  args.query = {'email' : args.email} // query for getUsers later
+  db.getUsers(args) 
+  .then(approveBlog) // set to approved: true
+  .then(updateUserBlogs) // move from blogsForApproval to blogs
   .then( args => {
-    res.send({class: 'flash-success', text: `${req.body.blog} accepted`})
+    message = {
+      text: `Your blog has been approved on ${settings.app_name}.\n\nTime to get publishing!`,
+      to: args.user,
+      subject: `Your blog has been approved on ${settings.app_name}`,
+    }
+    sendEmail(message)
+  })
+  .then( args => {
+    res.send({class: 'flash-success', text: `blog approved`})
   })
   .catch( e => {
-    debug.log(`error accepting ${req.body.blog}`, e)
-    res.send({class: 'flash-error', text: `error accepting ${req.body.blog}`})
+    debug.log(`error approving ${args.blog}`, e)
+    res.send({class: 'flash-error', text: `error approving ${args.blog}`})
   })
 })
 

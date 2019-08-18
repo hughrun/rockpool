@@ -1,6 +1,7 @@
 // require modules
 var request = require('supertest') // test routes
 const app = require('../app.js') // require Rockpool app
+const queries = require('../lib/queries.js')
 // NOTE: app will hang mocha because there doesn't seem to be any way to close the connection
 // workaround for now is to run with the --exit flag but this is obviously not ideal
 const agent = request.agent(app)
@@ -740,7 +741,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           })
           describe('/api/v1/update/admin/*', function() {
             describe('/api/v1/update/admin/approve-blog', function() {
-              it('should not return an error', function(done) {
+              it('should return success message', function(done) {
                 agent
                 .post('/api/v1/update/admin/approve-blog')
                 .send({blog: '2a182f1d81c32da8adb56777', user: 'bob@example.com', action: 'approve'})
@@ -752,10 +753,45 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   done(err)
                 })
               })
-              it('should set approved to true in blog listing')
-              it('should move the blog id from "blogsForApproval" to "blogs" in the user record')
+              it('should set approved to true in blog listing', function(done) {
+                queries.getBlogs({query: {'_id' : ObjectId('2a182f1d81c32da8adb56777')}})
+                .then( args => {
+                  assert.strictEqual(args.blogs[0].approved, true)
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+              it('should move the blog id to "blogs" in the user record', function(done) {
+                queries.getUsers({query: {'email' : 'bob@example.com'}})
+                .then( args => {
+                  blogs = args.users[0].blogs
+                  let approved = blogs.some(function(id) {
+                    return id.toString() === '2a182f1d81c32da8adb56777'
+                  })
+                  assert(approved)
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+              it('should remmove the blog id from "blogsForApproval" in the user record', function(done) {
+                queries.getUsers({query: {'email' : 'bob@example.com'}})
+                .then( args => {
+                  blogs = args.users[0].blogsForApproval
+                  let forApproval = blogs.some(function(id) {
+                    return id.toString() === '2a182f1d81c32da8adb56777'
+                  })
+                  assert.notStrictEqual(forApproval, true)
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
               it('should queue an announcement')
-              it('should return updated data for admin screen')
             })
             describe('/api/v1/update/admin/reject-blog', function() {
                // need to test client side also
