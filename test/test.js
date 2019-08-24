@@ -596,7 +596,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           describe('/api/v1/admin/*', function() {
             describe('/api/v1/admin/blogs-for-approval', function() {
               it('should return an array of users and their claims', function(done) {
-                this.timeout(5000)
+                // this.timeout(5000)
                 agent
                 .get('/api/v1/admin/blogs-for-approval')
                 .expect(200)
@@ -616,7 +616,19 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
               // TODO:
             describe('/api/v1/admin/failing-blogs', function() {
-              it('should return blog info for failing blogs')
+              it('should return blog array for failing blogs', function(done) {
+                agent
+                .get('/api/v1/admin/failing-blogs')
+                .expect(200)
+                .then( res => {
+                  console.log(res)
+                  assert(Array.isArray(res))
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
             })
             describe('/api/v1/admin/reported-blogs', function() {
               it('should return blog info for reported blogs')

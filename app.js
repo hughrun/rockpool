@@ -1303,7 +1303,16 @@ app.get('/api/v1/admin/blogs-for-approval', function(req, res) {
 })
 
 app.get('/api/v1/admin/failing-blogs', function(req, res) {
-  res.sendStatus(404)
+  const args = req.body
+  args.query = {failing: true}
+  db.getBlogs(args)
+  .then( args => {
+    res.json(args.blogs)
+  })
+  .catch(e => {
+    debug(e)
+    res.json({error: e})
+  })
 })
 
 app.get('/api/v1/admin/reported-blogs', function(req, res) {
