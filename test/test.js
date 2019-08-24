@@ -351,6 +351,12 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             .expect(200, done)
           })
         })
+        describe('/user/pocket', function() {
+          it('should redirect to pocket')
+        })
+        describe('/user/pocket-redirect', function() {
+          it('should add pocket value to user as object with username and token values')
+        })
       })
       describe('admin routes', function() {
         describe('/admin', function() {
@@ -779,7 +785,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                       {
                         $set: {
                           blogs: [
-                          ObjectId("124e07a27998d130d1d3ab0d")
+                          ObjectId("124e07a27998d130d1d3ab0d"),
+                          ObjectId("761924060db4a4b2c3b7fcc5")
                           ],
                         blogsForApproval: [
                           ObjectId("e2280a977d8ccd54ce133c7f")
@@ -851,7 +858,10 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 .post('/api/v1/update/user/delete-blog')
                 .send({blog: '124e07a27998d130d1d3ab0d', action: 'delete'})
                 .then( data => {
-                  assert(data.body.blogs.length === 0)
+                  let blogs = data.body.blogs.map( x => {
+                    x.toString()
+                  })
+                  assert.strictEqual(blogs.includes('124e07a27998d130d1d3ab0d'), false)
                   done()
                 })
                 .catch(err => {
@@ -876,9 +886,6 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
             describe('/api/v1/update/user/edit-blog', function(done) {
               it('should update the blog category')
-            })
-            describe('/api/v1/update/user/register-pocket', function() { 
-              it('should redirect to pocket')
             })
             describe('/api/v1/update/user/remove-pocket', function() {
               it('should remove pocket key:value from user record')
@@ -1023,12 +1030,59 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             describe('/api/v1/update/admin/delete-blog', function() {
               // need to test client side also
               // need to require a 'reason' for deletion if owned
-              it('should return success message')
-              it('should remove the blog from the owner blogs array if there is an owner')
-              it('should remove the blog from the blogs collection')
+              it('should return success message', function(done) {
+                agent
+                .post('/api/v1/update/admin/delete-blog')
+                .send({blog: '761924060db4a4b2c3b7fcc5', url: 'https://alice.blog'})
+                .then( res => {
+                  assert.strictEqual(res.body.text, 'https://alice.blog deleted')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should remove the blog from the owner blogs array if there is an owner', function(done) {
+                queries.getUsers({_id: ObjectId('9798925b467e1bf17618d095')})
+                .then( args => {
+                  let blogs = args.users[0].blogs.map( x => {
+                    return x.toString()
+                  })
+                  assert.strictEqual(blogs.includes('761924060db4a4b2c3b7fcc5'), false)
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should remove the blog from the blogs collection', function(done) {
+                queries.getBlogs({query: {_id: ObjectId('761924060db4a4b2c3b7fcc5')}})
+                .then( args => {
+                  assert(args.blogs.length === 0)
+                  done()
+                })
+                .catch( e => {
+                  done(e)
+                })
+              })
             })
             describe('/api/v1/update/admin/make-admin', function() {
-              it('should change the user permission value to "admin"')
+              it('should return error message if user does not exist')
+              it('should change the user permission value to "admin"', function(done) {
+                agent
+                .post('/api/v1/update/admin/make-admin')
+                .send({user: 'bob@example.com'})
+                .then( args => {
+                  queries.getUsers({query: {'email': 'bob@example.com'}})
+                  .then( res => {
+                    assert.strictEqual(res.users[0].permission, 'admin')
+                    done()
+                  })
+                  .catch(e => {
+                    done(e)
+                  })
+                })
+              })
             })
             describe('/api/v1/update/admin/remove-admin', function() {
               // need to test client side also

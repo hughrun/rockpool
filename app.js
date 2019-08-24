@@ -418,106 +418,106 @@ app.get('/user',
 //   )
 
 // update user details
-app.post('/user/update-user',
-    [
-      // normalise email
-      body('email').isEmail().normalizeEmail(),
-      // validate twitter with custom check
-      body('twitter').custom( val => {
-        let valid = val.match(/^@+[A-Za-z0-9_]*$/) || val == ""
-        return valid
-      }).withMessage("Twitter handles must start with '@' and contain only alphanumerics or underscores"),
-      // validate twitter length
-      body('twitter').isLength({max: 16}).withMessage("Twitter handles must contain fewer than 16 characters"),
-      // validate mastodon with custom check
-      body('mastodon').custom( val => {
-        let valid = val.match(/^@+\S*@+\S*/) || val == ""
-        return valid
-      }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
-    ],
-    (req, res, next) => {
-      if (!validationResult(req).isEmpty()) {
-        // flash errors
-        let valArray = validationResult(req).array()
-        for (var i=0; i < valArray.length; ++i) {
-          req.flash('error', valArray[i].msg)
-        }
-        // reload page with flashes instead of updating
-        res.redirect('/user')
-      } else {
-        next()
-      }
-    },
-    function(req, res, next) {
-    // here we need to check for other users with the same email
-      if (req.user != req.body.email) {
-        throw new Error('Cannot update another user')
-      }
-      db.checkEmailIsUnique(req.body)
-        .then(updateUserContacts)
-        .then(() => {
-          if (req.body.email != req.session.passwordless) {
-            res.redirect('/email-updated') // force logout if email has changed
-          } else {
-            req.flash("success", "Your details have been updated")
-            next() // if email unchanged, reload the page with update info
-          }
-        })
-        .catch(err => {
-            debug.log(err)
-            req.flash("error", `Something went wrong:\n${err}`)
-            next()
-        })
-      },
-      (req, res) => {
-        res.redirect('/user')
-      }
-  )
+// app.post('/user/update-user',
+//     [
+//       // normalise email
+//       body('email').isEmail().normalizeEmail(),
+//       // validate twitter with custom check
+//       body('twitter').custom( val => {
+//         let valid = val.match(/^@+[A-Za-z0-9_]*$/) || val == ""
+//         return valid
+//       }).withMessage("Twitter handles must start with '@' and contain only alphanumerics or underscores"),
+//       // validate twitter length
+//       body('twitter').isLength({max: 16}).withMessage("Twitter handles must contain fewer than 16 characters"),
+//       // validate mastodon with custom check
+//       body('mastodon').custom( val => {
+//         let valid = val.match(/^@+\S*@+\S*/) || val == ""
+//         return valid
+//       }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
+//     ],
+//     (req, res, next) => {
+//       if (!validationResult(req).isEmpty()) {
+//         // flash errors
+//         let valArray = validationResult(req).array()
+//         for (var i=0; i < valArray.length; ++i) {
+//           req.flash('error', valArray[i].msg)
+//         }
+//         // reload page with flashes instead of updating
+//         res.redirect('/user')
+//       } else {
+//         next()
+//       }
+//     },
+//     function(req, res, next) {
+//     // here we need to check for other users with the same email
+//       if (req.user != req.body.email) {
+//         throw new Error('Cannot update another user')
+//       }
+//       db.checkEmailIsUnique(req.body)
+//         .then(updateUserContacts)
+//         .then(() => {
+//           if (req.body.email != req.session.passwordless) {
+//             res.redirect('/email-updated') // force logout if email has changed
+//           } else {
+//             req.flash("success", "Your details have been updated")
+//             next() // if email unchanged, reload the page with update info
+//           }
+//         })
+//         .catch(err => {
+//             debug.log(err)
+//             req.flash("error", `Something went wrong:\n${err}`)
+//             next()
+//         })
+//       },
+//       (req, res) => {
+//         res.redirect('/user')
+//       }
+//   )
 
 // register blog
-app.post('/user/register-blog',
-  [userIsThisUser],
-  function(req, res, next) {
-    feedfinder.getFeed(req.body.url)
-    .then( ff => {
-      const args = req.body
-      args.user = req.user
-      args.feed = ff.feed // add the feed to the form data object
-      args.action = "register" // this is used in updateUserBlogs
-      args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
-      // we match on the FEED rather than the URL (below)
-      // because if there is a redirect, the URL might not match even though it's the same blog
-      args.query = {feed: args.feed}
-      return args
-    })
-    .then(db.getBlogs) // check the blog isn't already registered
-    .then( args => { 
-      if (args.blogs.length < 1) {
-        return args
-      } else {
-        throw new Error("That blog is already registered!")
-      }
-    }) 
-    .then(registerBlog) // create new blog document
-    .then(updateUserBlogs) // add blog _id to user's blogsForApproval array
-    .then( args => {
-      message = {
-        text: `User ${req.user} has registered ${args.url} with ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to accept or reject the registration.`,
-        to: 'admins',
-        subject: `New blog registered for ${settings.app_name}`,
-      }
-      sendEmail(message) // send email to admins
-      req.flash('success', 'Blog registered!')
-      next()
-    }).catch( e => {
-      debug.log(e)
-      req.flash('error', `Something went wrong registering your blog: ${e}`)
-      next()
-    })
-  }, 
-  function(req, res) {
-    res.redirect('/user')
-  })
+// app.post('/user/register-blog',
+//   [userIsThisUser],
+//   function(req, res, next) {
+//     feedfinder.getFeed(req.body.url)
+//     .then( ff => {
+//       const args = req.body
+//       args.user = req.user
+//       args.feed = ff.feed // add the feed to the form data object
+//       args.action = "register" // this is used in updateUserBlogs
+//       args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
+//       // we match on the FEED rather than the URL (below)
+//       // because if there is a redirect, the URL might not match even though it's the same blog
+//       args.query = {feed: args.feed}
+//       return args
+//     })
+//     .then(db.getBlogs) // check the blog isn't already registered
+//     .then( args => { 
+//       if (args.blogs.length < 1) {
+//         return args
+//       } else {
+//         throw new Error("That blog is already registered!")
+//       }
+//     }) 
+//     .then(registerBlog) // create new blog document
+//     .then(updateUserBlogs) // add blog _id to user's blogsForApproval array
+//     .then( args => {
+//       message = {
+//         text: `User ${req.user} has registered ${args.url} with ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to accept or reject the registration.`,
+//         to: 'admins',
+//         subject: `New blog registered for ${settings.app_name}`,
+//       }
+//       sendEmail(message) // send email to admins
+//       req.flash('success', 'Blog registered!')
+//       next()
+//     }).catch( e => {
+//       debug.log(e)
+//       req.flash('error', `Something went wrong registering your blog: ${e}`)
+//       next()
+//     })
+//   }, 
+//   function(req, res) {
+//     res.redirect('/user')
+//   })
 
 // claim blog (legacy DB only)
 // app.post('/user/claim-blog',
@@ -568,27 +568,27 @@ app.post('/user/register-blog',
   // })
 
 // delete (own) blog
-app.post('/user/delete-blog',
-  [userIsThisUser],
-  function(req, res, next) {
-    const args = req.body
-    args.user = req.user
-    args.action = 'delete'
-    updateUserBlogs(args)
-    .then(deleteBlog)
-    .then( () => {
-      req.flash('success', 'Blog deleted')
-      next()
-    }).catch( e => {
-      debug.log('**ERROR DELETING BLOG**')
-      debug.log(e)
-      req.flash('error', `Something went wrong deleting your blog: ${e}`)
-      next()
-    })
-  }, 
-  function(req, res) {
-    res.redirect('/user')
-  })
+// app.post('/user/delete-blog',
+//   [userIsThisUser],
+//   function(req, res, next) {
+//     const args = req.body
+//     args.user = req.user
+//     args.action = 'delete'
+//     updateUserBlogs(args)
+//     .then(deleteBlog)
+//     .then( () => {
+//       req.flash('success', 'Blog deleted')
+//       next()
+//     }).catch( e => {
+//       debug.log('**ERROR DELETING BLOG**')
+//       debug.log(e)
+//       req.flash('error', `Something went wrong deleting your blog: ${e}`)
+//       next()
+//     })
+//   }, 
+//   function(req, res) {
+//     res.redirect('/user')
+//   })
 
 // pocket routes
 
@@ -604,6 +604,7 @@ app.get('/user/pocket',
     })
     .catch( err => {
       debug.log(err)
+      // FIXME: should use session for messages
       req.flash('error', `Something went wrong trying to authenticate with Pocket: ${err}`)
       res.redirect('/subscribe')
     })
@@ -618,6 +619,7 @@ app.get('/user/pocket-redirect',
     args.user = req.user
     finalisePocketAuthentication(args)
       .then( () => {
+        // FIXME: should use session for messages
         req.flash('success', 'Pocket account registered')
         res.redirect('/user')
       })
@@ -739,48 +741,48 @@ app.get('/admin', function (req, res) {
 // TODO: all these post routes should be replaced with /update/admin API calls
 
 // post admin/deleteblog  
-app.post('/admin/deleteblog', function(req, res) {
-  body().exists({checkNull: true}) // make sure there's a value
-  if (validationResult(req).isEmpty()) {
-    const args = {}
-    args.action = "delete"
-    args.blog = req.body.id
-    db.getUsers({"blogs" : req.body.id}) // get the user with this blog in their 'blogs' array
-      .then( vals => {
-        if (vals[0]) { // if this is a legacy DB there may be no users with this blog listed
-          args.user = vals[0]._id // for deleteBlog below
-          args.email = vals[0].email // for sendEmail later
-          updateUserBlogs(args) // remove the blog _id from the owner's 'blogs' array
-            .then( args => { 
-              return args
-            })
-        } else {
-          return args // for legacy DB entry with no blog owner simply skip this step
-        }
-      })
-      .then(deleteBlog) // now we actually delete the document from the blogs collection
-      .then( args => { // if there was an owner, send email
-        message = {
-          text: `User ${req.user} has deleted ${args.url} from ${settings.app_name}.`,
-          to: args.email,
-          subject: `Your blog listing has been removed from ${settings.app_name}`,
-        }
-        sendEmail(message) // send email to admins
-        req.flash('success', 'Blog deleted')
-        res.redirect('/admin')
-      }).catch(err => {
-        const msg = err.message
-        debug.log('error deleting blog', err)
-        req.flash('error', msg)
-        res.redirect('/admin')
-      })
-  } else {
-    let valArray = validationResult(req).array()
-    debug.log('error deleting blog', valArray)
-    req.flash('error', 'There was a problem deleting blogs.')
-    res.redirect('/admin')
-  }
-})
+// app.post('/admin/deleteblog', function(req, res) {
+  // body().exists({checkNull: true}) // make sure there's a value
+  // if (validationResult(req).isEmpty()) {
+  //   const args = {}
+  //   args.action = "delete"
+  //   args.blog = req.body.id
+  //   db.getUsers({"blogs" : req.body.id}) // get the user with this blog in their 'blogs' array
+  //     .then( vals => {
+  //       if (vals[0]) { // if this is a legacy DB there may be no users with this blog listed
+  //         args.user = vals[0]._id // for deleteBlog below
+  //         args.email = vals[0].email // for sendEmail later
+  //         updateUserBlogs(args) // remove the blog _id from the owner's 'blogs' array
+  //           .then( args => { 
+  //             return args
+  //           })
+  //       } else {
+  //         return args // for legacy DB entry with no blog owner simply skip this step
+  //       }
+  //     })
+  //     .then(deleteBlog) // now we actually delete the document from the blogs collection
+  //     .then( args => { // if there was an owner, send email
+  //       message = {
+  //         text: `User ${req.user} has deleted ${args.url} from ${settings.app_name}.`,
+  //         to: args.email,
+  //         subject: `Your blog listing has been removed from ${settings.app_name}`,
+  //       }
+  //       sendEmail(message) // send email to admins
+  //       req.flash('success', 'Blog deleted')
+  //       res.redirect('/admin')
+  //     }).catch(err => {
+  //       const msg = err.message
+  //       debug.log('error deleting blog', err)
+  //       req.flash('error', msg)
+  //       res.redirect('/admin')
+  //     })
+  // } else {
+  //   let valArray = validationResult(req).array()
+  //   debug.log('error deleting blog', valArray)
+  //   req.flash('error', 'There was a problem deleting blogs.')
+  //   res.redirect('/admin')
+  // }
+// })
 
 // approve blog
 // app.post('/admin/approve-blog', function(req, res, next) {
@@ -1019,9 +1021,9 @@ app.get('/api/v1/user/unapproved-blogs', function(req, res) {
   })
 })
 
-/*  ########
-      POST
-    ########
+/*  #############
+      USER POST
+    #############
 */
 
 // UPDATE/user routes
@@ -1264,6 +1266,14 @@ app.all('/api/v1/admin*',
   // in this case we trust the user input because we have already checked 
   // server side that they are a logged-in admin (see above: app.all('/api/v1/update/admin*')
 
+// TODO: admin GET routes
+
+
+/*  #############
+      ADMIN POST
+    #############
+*/
+
 app.post('/api/v1/update/admin/approve-blog', function(req, res, next) {
   const args = req.body 
   // user will be the owner email
@@ -1341,13 +1351,49 @@ app.post('/api/v1/update/admin/unsuspend-blog', function(req, res) {
   // unsuspend
 })
 
-// TODO:
 app.post('/api/v1/update/admin/delete-blog', function(req, res) {
-  // delete as admin
-  const args = req.body // req.body
   // there is no reason for owner email to be displayed
-  //so we should find it here
+  // so we should find it here
+  // args.blog is the idString of the blog
+  // args.url is the blog url
+  body().exists({checkNull: true}) // make sure there's a value
+  if (validationResult(req).isEmpty()) {
+    const args = req.body
+    args.action = "delete"
+    args.query = {'blogs' : ObjectId(args.blog)}
+    db.getUsers(args) // get the user with this blog in their 'blogs' array
+      .then( args => {
+        if (args.users[0]) { // if this is a legacy DB there may be no users with this blog listed
+          args.user = args.users[0].email // for deleteBlog and sendEmail
+          return updateUserBlogs(args) // remove the blog _id from the owner's 'blogs' array
+            .then( args => { 
+              return args
+            })
+        } else {
+          return args // for legacy DB entry with no blog owner simply skip this step
+        }
+      })
+      .then(deleteBlog) // now we actually delete the document from the blogs collection
+      .then( args => { // if there was an owner, send email
+        const message = {
+          text: `User ${req.user} has deleted ${args.url} from ${settings.app_name}.`,
+          to: args.user,
+          subject: `Your blog listing has been removed from ${settings.app_name}`,
+        }
+        sendEmail(message) // send email to admins
+        res.send({class: 'flash-success', text: `${args.url} deleted`})
+      }).catch(err => {
+        debug.log('error deleting blog', err)
+        res.send({class: 'flash-error', text: `Error deleting ${args.url}: ${err.message}`})
+      })
+  } else {
+    let valArray = validationResult(req).array()
+    debug.log('error deleting blog', valArray)
+    res.send({class: 'flash-error', text: `Cannot delete blog without id string`})
+  }
 })
+
+
 
 // 404 errors: this should always be the last route
 app.use(function (req, res, next) {
