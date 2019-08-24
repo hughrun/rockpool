@@ -783,82 +783,82 @@ app.post('/admin/deleteblog', function(req, res) {
 })
 
 // approve blog
-app.post('/admin/approve-blog', function(req, res, next) {
-  var args = req.body
-  args.user = req.user
-  args.query = {"email": args.user}
-  db.getUsers(args)
-  .then(approveBlog)
-  .then(updateUserBlogs)
-  .then( args => { // now we need to get the user's email address so we can send a confirmation
-    args.query = {'email' : args.user} // query for getUsers
-    return args
-  })
-  .then(db.getUsers)
-  .then( args => {
-    const user = args.users[0]
-    message = {
-      text: `Your blog ${args.url} has been approved on ${settings.app_name}.\n\nTime to get publishing!`,
-      to: user.email,
-      subject: `Your blog has been approved on ${settings.app_name}`,
-    }
-    sendEmail(message)
-    req.flash('success', 'Blog approved')
-    return next()
-  })
-  .catch( error => {
-    debug.log(error)
-    req.flash('error', 'Something went wrong approving the blog')
-    return next()
-  })
-},
-function (req, res, next) {
-  res.redirect('/admin')
-})
+// app.post('/admin/approve-blog', function(req, res, next) {
+//   var args = req.body
+//   args.user = req.user
+//   args.query = {"email": args.user}
+//   db.getUsers(args)
+//   .then(approveBlog)
+//   .then(updateUserBlogs)
+//   .then( args => { // now we need to get the user's email address so we can send a confirmation
+//     args.query = {'email' : args.user} // query for getUsers
+//     return args
+//   })
+//   .then(db.getUsers)
+//   .then( args => {
+//     const user = args.users[0]
+//     message = {
+//       text: `Your blog ${args.url} has been approved on ${settings.app_name}.\n\nTime to get publishing!`,
+//       to: user.email,
+//       subject: `Your blog has been approved on ${settings.app_name}`,
+//     }
+//     sendEmail(message)
+//     req.flash('success', 'Blog approved')
+//     return next()
+//   })
+//   .catch( error => {
+//     debug.log(error)
+//     req.flash('error', 'Something went wrong approving the blog')
+//     return next()
+//   })
+// },
+// function (req, res, next) {
+//   res.redirect('/admin')
+// })
 
 // reject blog
-app.post('/admin/reject-blog', function(req, res, next) {
-  const args = req.body
-  args.action = "reject"
-  updateUserBlogs(args)
-    .then( args => {
-      args.query = {"_id" : ObjectId(args.blog)}
-      return args
-    })
-    .then(db.getBlogs)
-    .then( args => {
-      if (args.blogs[0] && args.blogs[0].approved) {
-        // if approved is true then the blog is a legacy one and this is a 'claim'
-        // rather than a new registration, so we do NOT want to delete it!
-        return args
-      } else { 
-        deleteBlog(args)
-        .then( doc => {
-          return args
-        })
-      }
-    })
-    .then( args => {
-      // TODO: email user with reason
-      const user = args.users[0]
-      message = {
-        text: `Your blog registration for ${args.url} has been rejected from ${settings.app_name}.\n\nReason:\n\n${args.reason}`,
-        to: args.user,
-        subject: `Your blog registration has been rejected on ${settings.app_name}`,
-      }
-      sendEmail(message)
-      req.flash('success', 'Blog rejected')
-      return next()
-    })
-    .catch( error => {
-      debug.log(error)
-      req.flash('error', 'Something went wrong rejecting the blog')
-      return next()
-    })
-},
-function (req, res, next) {
-  res.redirect('/admin')
-})
+// app.post('/admin/reject-blog', function(req, res, next) {
+//   const args = req.body
+//   args.action = "reject"
+//   updateUserBlogs(args)
+//     .then( args => {
+//       args.query = {"_id" : ObjectId(args.blog)}
+//       return args
+//     })
+//     .then(db.getBlogs)
+//     .then( args => {
+//       if (args.blogs[0] && args.blogs[0].approved) {
+//         // if approved is true then the blog is a legacy one and this is a 'claim'
+//         // rather than a new registration, so we do NOT want to delete it!
+//         return args
+//       } else { 
+//         deleteBlog(args)
+//         .then( doc => {
+//           return args
+//         })
+//       }
+//     })
+//     .then( args => {
+//       // TODO: ensure we ask for a reason client side
+//       const user = args.users[0]
+//       message = {
+//         text: `Your blog registration for ${args.url} has been rejected from ${settings.app_name}.\n\nReason:\n\n${args.reason}`,
+//         to: args.user,
+//         subject: `Your blog registration has been rejected on ${settings.app_name}`,
+//       }
+//       sendEmail(message)
+//       req.flash('success', 'Blog rejected')
+//       return next()
+//     })
+//     .catch( error => {
+//       debug.log(error)
+//       req.flash('error', 'Something went wrong rejecting the blog')
+//       return next()
+//     })
+// },
+// function (req, res, next) {
+//   res.redirect('/admin')
+// })
 
 app.post('/admin/add-admin', 
   (req, res, next) => {
@@ -1107,7 +1107,7 @@ function(req, res, next) {
   })
 })
 
-// TODO: claim blog
+// claim blog
 app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
   const args = req.body
   args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
