@@ -210,6 +210,10 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   blogsForApproval: [
                     ObjectId("e2280a977d8ccd54ce133c7f")
                   ],
+                  pocket: {
+                    username: 'alice@example.com',
+                    token: '12345678-dddd-9999-1111-0a0a0a0a'
+                  },
                   permission: 'admin'
                 },
                 {
@@ -360,9 +364,34 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           })
         })
         describe('/user/pocket', function() {
-          it('should redirect to pocket')
+          it('should redirect to login if not logged in', function(done) {
+            request
+            .get('/user/pocket')
+            .expect(302)
+            .then ( res => {
+              assert.equal(res.headers.location, '/letmein')
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+          it('should redirect to pocket', function(done) {
+            agent
+            .get('/user/pocket')
+            .expect(302)
+            .then ( res => {
+              assert.equal(res.headers.location.slice(0, 21), 'https://getpocket.com')
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+
         })
         describe('/user/pocket-redirect', function() {
+          // TODO: mock this with nock?
           it('should add pocket value to user as object with username and token values')
         })
       })
@@ -896,7 +925,29 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               it('should update the blog category')
             })
             describe('/api/v1/update/user/remove-pocket', function() {
-              it('should remove pocket key:value from user record')
+              it('should return success message', function(done) {
+                agent
+                .post('/api/v1/update/user/remove-pocket')
+                .expect(200)
+                .then( res => {
+                  assert.strictEqual(res.body.class, 'flash-success')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should remove pocket value from user record', function(done) {
+                queries.getUsers({query: {_id: ObjectId("9798925b467e1bf17618d095")}})
+                .then( args => {
+                  assert(args.users[0])
+                  assert.strictEqual(args.users[0].pocket, undefined)
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
             })
           })
           describe('/api/v1/update/admin/*', function() {

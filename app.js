@@ -864,53 +864,53 @@ app.get('/admin', function (req, res) {
 //   res.redirect('/admin')
 // })
 
-app.post('/admin/add-admin', 
-  (req, res, next) => {
-    const args = req.body // user (email)
-    args.permission = 'admin'
-    updateUserPermission(args)
-      .then( () => {
-        message = {
-          text: `${req.user} has made you an administrator on ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to use this new power, (but only for good).`,
-          to: args.user,
-          subject: `You are now an admin on ${settings.app_name}`,
-        }
-        sendEmail(message) // send email to user
-        req.flash('success', `${args.user} is now an administrator`)
-        next()
-      })
-      .catch( err => {
-        req.flash('error', err)
-        next()
-      })
-  },
-  (req, res, next) => {
-    res.redirect('/admin')
-  })
+// app.post('/admin/add-admin', 
+//   (req, res, next) => {
+//     const args = req.body // user (email)
+//     args.permission = 'admin'
+//     updateUserPermission(args)
+//       .then( () => {
+//         message = {
+//           text: `${req.user} has made you an administrator on ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to use this new power, (but only for good).`,
+//           to: args.user,
+//           subject: `You are now an admin on ${settings.app_name}`,
+//         }
+//         sendEmail(message) // send email to user
+//         req.flash('success', `${args.user} is now an administrator`)
+//         next()
+//       })
+//       .catch( err => {
+//         req.flash('error', err)
+//         next()
+//       })
+//   },
+//   (req, res, next) => {
+//     res.redirect('/admin')
+//   })
 
-app.post('/admin/remove-admin', 
-(req, res, next) => {
-  const args = req.body // user (email)
-  args.permission = 'user'
-  updateUserPermission(args)
-    .then( () => {
-      message = {
-        text: `You have been removed as an administrator on ${settings.app_name} by ${req.user}.`,
-        to: args.user,
-        subject: `You are no longer an admin on ${settings.app_name}`,
-      }
-      sendEmail(message) // send email to user
-      req.flash('success', `${args.user} is no longer an administrator`)
-      next()
-    })
-    .catch( err => {
-      req.flash('error', err)
-      next()
-    })
-},
-(req, res, next) => {
-  res.redirect('/admin')
-})
+// app.post('/admin/remove-admin', 
+// (req, res, next) => {
+//   const args = req.body // user (email)
+//   args.permission = 'user'
+//   updateUserPermission(args)
+//     .then( () => {
+//       message = {
+//         text: `You have been removed as an administrator on ${settings.app_name} by ${req.user}.`,
+//         to: args.user,
+//         subject: `You are no longer an admin on ${settings.app_name}`,
+//       }
+//       sendEmail(message) // send email to user
+//       req.flash('success', `${args.user} is no longer an administrator`)
+//       next()
+//     })
+//     .catch( err => {
+//       req.flash('error', err)
+//       next()
+//     })
+// },
+// (req, res, next) => {
+//   res.redirect('/admin')
+// })
 
 /*  
     #######################
@@ -1192,7 +1192,7 @@ app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
         blogs: null,
         msg: {
           class:'flash-error',
-          text: e.message // FIXME: probably not great to just send the error message
+          text: `Error deleting blog: ${e.message}`
         }
       })
   })
@@ -1202,20 +1202,18 @@ app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
 app.post('/api/v1/update/user/remove-pocket', 
   (req, res, next) => {
     unsubscribeFromPocket(req.user)
+    .then( () => {
+      res.send({
+          class: 'flash-success',
+          text: 'Pocket account unsubscribed. You should also "remove access" by this app at https://getpocket.com/connected_applications'
+      })
+    })
     .catch(err => {
       debug.log('error removing pocket account', err)
       res.send({
         msg: {
           class: 'flash-error',
           text: err.message
-        }
-      })
-    })
-    .then( () => {
-      res.send({
-        msg: {
-          class: 'flash-success',
-          text: 'Pocket account unsubscribed. You should also "remove access" by this app at https://getpocket.com/connected_applications'
         }
       })
     })
