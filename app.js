@@ -1413,7 +1413,23 @@ app.post('/api/v1/update/admin/make-admin', function(req, res) {
   })
 })
 
-
+app.post('/api/v1/update/admin/remove-admin', function(req,res) {
+  const args = req.body // args.user is the email of the user who we want to remove as admin
+  args.permission = 'user'
+  updateUserPermission(args)
+  .then( () => {
+    message = {
+      text: `${req.user} has removed you as administrator on ${settings.app_name}.`,
+      to: args.user,
+      subject: `You are no longer an admin on ${settings.app_name}`,
+    }
+    sendEmail(message) // send email to user
+    res.send({class: 'flash-success', text: `${args.user} is no longer an administrator`})
+  })
+  .catch( err => {
+    res.send({class: 'flash-error', text: `Something went wrong: ${err.message}`})
+  })
+})
 
 // 404 errors: this should always be the last route
 app.use(function (req, res, next) {

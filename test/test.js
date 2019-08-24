@@ -1114,7 +1114,40 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               // need to test client side also
               // need to require a 'reason' for removal and who did it
               // also really should do some proper logging
-              it('should change the user permission value to "user"')
+              it('should return error message if user does not exist', function(done) {
+                agent
+                .post('/api/v1/update/admin/remove-admin')
+                .send({user: 'dan@example.com'})
+                .then( res => {
+                  assert.strictEqual(res.body.class, 'flash-error')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should return a success message', function(done) {
+                agent
+                .post('/api/v1/update/admin/remove-admin')
+                .send({user: 'charlie@example.com'})
+                .then( res => {
+                  assert.strictEqual(res.body.text, 'charlie@example.com is no longer an administrator')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should change the user permission value to "user"', function(done) {
+                queries.getUsers({query: {'email': 'charlie@example.com'}})
+                .then( res => {
+                  assert.strictEqual(res.users[0].permission, 'user')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
             })
           })
         })
