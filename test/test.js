@@ -223,6 +223,14 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                     ObjectId("5d592f2ed6e95e2d3bd1a69b"),
                     ObjectId('5d5932f5d6e95e2d3bd1a69c')
                   ]
+                },
+                {
+                  _id: ObjectId("5d60ef41d6e95e2d3bd1a69f"),
+                  email: 'charlie@example.com',
+                  twitter: 'charlie@twitter.com',
+                  mastodon: '@charlie@rockpool.town',
+                  blogs: [],
+                  blogsForApproval: []
                 }
               ]
             )
@@ -1067,20 +1075,38 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
             describe('/api/v1/update/admin/make-admin', function() {
-              it('should return error message if user does not exist')
-              it('should change the user permission value to "admin"', function(done) {
+              it('should return error message if user does not exist', function(done) {
                 agent
                 .post('/api/v1/update/admin/make-admin')
-                .send({user: 'bob@example.com'})
-                .then( args => {
-                  queries.getUsers({query: {'email': 'bob@example.com'}})
-                  .then( res => {
-                    assert.strictEqual(res.users[0].permission, 'admin')
-                    done()
-                  })
-                  .catch(e => {
-                    done(e)
-                  })
+                .send({user: 'dan@example.com'})
+                .then( res => {
+                  assert.strictEqual(res.body.class, 'flash-error')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should return a success message', function(done) {
+                agent
+                .post('/api/v1/update/admin/make-admin')
+                .send({user: 'charlie@example.com'})
+                .then( res => {
+                  assert.strictEqual(res.body.text, 'charlie@example.com is now an administrator')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should change the user permission value to "admin"', function(done) {
+                queries.getUsers({query: {'email': 'charlie@example.com'}})
+                .then( res => {
+                  assert.strictEqual(res.users[0].permission, 'admin')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
                 })
               })
             })

@@ -346,16 +346,16 @@ app.get('/user',
       foot: __dirname+'/views/partials/foot.html',
       footer: __dirname+'/views/partials/footer.html'
     },
-    user: doc.user,
-    admin: doc.user.permission === "admin",
-    new: doc.new,
-    blogs: doc.blogs,
-    ownedBlogs: doc.ownedBlogs,
-    blogsForApproval: doc.blogsForApproval,
-    legacy: settings.legacy_db,
-    warnings: req.flash('warning'),
-    success: req.flash('success'),
-    errors: req.flash('error')
+    // user: doc.user,
+    // admin: doc.user.permission === "admin",
+    // new: doc.new,
+    // blogs: doc.blogs,
+    // ownedBlogs: doc.ownedBlogs,
+    // blogsForApproval: doc.blogsForApproval,
+    // legacy: settings.legacy_db,
+    // warnings: req.flash('warning'),
+    // success: req.flash('success'),
+    // errors: req.flash('error')
     })
   )
 })
@@ -660,6 +660,7 @@ app.all('/admin*',
       if (doc.user.permission && doc.user.permission === "admin") {
         next()
       } else {
+        // FIXME: use session messages
         req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
         res.status(403)
         res.redirect('/user')
@@ -667,6 +668,7 @@ app.all('/admin*',
     })
     .catch(err => {
       debug.log(`Error accessing admin page: ${err}`)
+      // FIXME: use session messages
       req.flash('error', 'Something went wrong')
       res.redirect('/user')
     })
@@ -726,14 +728,14 @@ app.get('/admin', function (req, res) {
         foot: __dirname+'/views/partials/foot.html',
         footer: __dirname+'/views/partials/footer.html'
       },
-      admins: args.users,
-      user: args.user,
-      failing: args.failing,
-      legacy: settings.legacy_db,
-      approvals: args.approvals,
-      warnings: req.flash('warning'),
-      success: req.flash('success'),
-      errors: req.flash('error')
+      // admins: args.users,
+      // user: args.user,
+      // failing: args.failing,
+      // legacy: settings.legacy_db,
+      // approvals: args.approvals,
+      // warnings: req.flash('warning'),
+      // success: req.flash('success'),
+      // errors: req.flash('error')
     })
   ).catch(err => {debug.log(err)})
 })
@@ -1391,6 +1393,24 @@ app.post('/api/v1/update/admin/delete-blog', function(req, res) {
     debug.log('error deleting blog', valArray)
     res.send({class: 'flash-error', text: `Cannot delete blog without id string`})
   }
+})
+
+app.post('/api/v1/update/admin/make-admin', function(req, res) {
+  const args = req.body // args.user is the email of the user who we want to make an admin
+  args.permission = 'admin'
+  updateUserPermission(args)
+  .then( () => {
+    message = {
+      text: `${req.user} has made you an administrator on ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to use this new power, (but only for good).`,
+      to: args.user,
+      subject: `You are now an admin on ${settings.app_name}`,
+    }
+    sendEmail(message) // send email to user
+    res.send({class: 'flash-success', text: `${args.user} is now an administrator`})
+  })
+  .catch( err => {
+    res.send({class: 'flash-error', text: `Something went wrong: ${err.message}`})
+  })
 })
 
 
