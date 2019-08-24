@@ -693,7 +693,7 @@ app.get('/admin', function (req, res) {
       doc => {
         // find the claimed blogs from the users
         // mapping the array returns a Promise for each item in the array
-        // so we eed to return Promise.all() to get a result
+        // so we need to return Promise.all() to get a result
         var mapped = doc.users.map( user => {
           return db.getBlogs({query: {_id: {$in: user.blogsForApproval}}}).then( blogs => {
             user.claims = blogs
@@ -1266,8 +1266,66 @@ app.all('/api/v1/admin*',
   // in this case we trust the user input because we have already checked 
   // server side that they are a logged-in admin (see above: app.all('/api/v1/update/admin*')
 
-// TODO: admin GET routes
+/*  #############
+      ADMIN GET
+    #############
+*/
+// 688
+app.get('/api/v1/admin/blogs-for-approval', function(req, res) {
+  let query = {$where: "this.blogsForApproval && this.blogsForApproval.length > 0"}
+  db.getUsers({query: query})
+  .then( args => {
+    // find the claimed blogs from the users
+    // mapping the array returns a Promise for each item in the array
+    // so we need to return Promise.all() to get a result
+    var mapped = args.users.map( user => {
+      return db.getBlogs({query: {_id: {$in: user.blogsForApproval}}}).then( res => {
+        user.claims = res.blogs
+        return user
+      })
+    })
+    return Promise.all(mapped).then(users => {
+      let vals = users.map( user => {
+        return {
+          email: user.email,
+          twitter: user.twitter,
+          mastodon: user.mastodon,
+          claims: user.claims
+        }
+      })
+      res.json(vals)
+    })
+  })
+  .catch(e => {
+    debug(e)
+    res.json({error: e})
+  })
+})
 
+app.get('/api/v1/admin/failing-blogs', function(req, res) {
+  res.sendStatus(404)
+})
+
+app.get('/api/v1/admin/reported-blogs', function(req, res) {
+  // TODO: for future version - report a dodgy blog somehow
+  res.sendStatus(404)
+})
+
+// db.getUsers({query: {"email" : req.user}})
+// .then(
+//   doc => {
+//     var data = {}
+//     data.user = doc.users[0]._id
+//     data.email = doc.users[0].email
+//     data.twitter = doc.users[0].twitter || null
+//     data.mastodon = doc.users[0].mastodon || null
+//     data.pocket = doc.users[0].pocket || false
+//     data.admin = doc.users[0].permission === 'admin'
+//     res.json(data)
+// })
+// .catch( err => {
+//   debug.log(err)
+// })
 
 /*  #############
       ADMIN POST
@@ -1343,12 +1401,13 @@ app.post('/api/v1/update/admin/reject-blog', function(req, res) {
 // TODO:
 app.post('/api/v1/update/admin/suspend-blog', function(req, res) {
   // suspend
-  const args = req.body // req.body.user should be owner's email
+  const args = req.body // blog should be blog idString
 })
 
 // TODO:
 app.post('/api/v1/update/admin/unsuspend-blog', function(req, res) {
   // unsuspend
+  const args = req.body // blog should be blog idString
 })
 
 app.post('/api/v1/update/admin/delete-blog', function(req, res) {

@@ -594,9 +594,32 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
           })
           describe('/api/v1/admin/*', function() {
-            describe('/api/v1/admin/info', function() {
-              it('should return user & blog info for blogs to be approved')
+            describe('/api/v1/admin/blogs-for-approval', function() {
+              it('should return an array of users and their claims', function(done) {
+                this.timeout(5000)
+                agent
+                .get('/api/v1/admin/blogs-for-approval')
+                .expect(200)
+                .then( res => {
+                  assert(Array.isArray(res.body ))
+                  assert(res.body.length === 2)
+                  res.body.forEach( x => {
+                    assert(typeof x.email === 'string')
+                    assert(x.claims.length > 0)
+                  })
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+            })
+              // TODO:
+            describe('/api/v1/admin/failing-blogs', function() {
               it('should return blog info for failing blogs')
+            })
+            describe('/api/v1/admin/reported-blogs', function() {
+              it('should return blog info for reported blogs')
             })
           })
         })
