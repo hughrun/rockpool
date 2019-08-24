@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+  <channel>
+    <title>
+    Bob Craps On
+    </title>
+    <description>
+    A blog about crap
+    </description>
+    <link>https://www.bob.craps.on</link>
+    <generator>Eleventy</generator>
+    <lastBuildDate> Sat, 22 Jun 2019 04:51:56 GMT </lastBuildDate>
+    <atom:link href="https://www.bob.craps.on/rss" rel="self" type="application/rss+xml"/>
+    <ttl>60</ttl>
+      <item>
+        <title>
+        Baby it's cold outside
+        </title>
+        <dc:creator>
+        Bob
+        </dc:creator>
+        <link>
+        https://www.bob.craps.on/4
+        </link>
+        <guid isPermaLink="true">https://www.bob.craps.on/4</guid>
+        <pubDate>Sun, 30 Aug 2019 09:24:16 GMT</pubDate>
+        <description>
+              <![CDATA[ Stop. Cabbage Time. ]]>
+        </description>
+        <content:encoded>
+        <![CDATA[ <p> Here is the content of the post. </p>]]>
+        </content:encoded>
+      </item>
+      <item>
+        <title>
+        Winter is coming
+        </title>
+        <dc:creator>
+        Bob
+        </dc:creator>
+        <link>
+        https://www.bob.craps.on/3
+        </link>
+        <guid isPermaLink="true">https://www.bob.craps.on/3</guid>
+        <pubDate>Sun, 30 Apr 2019 09:24:16 GMT</pubDate>
+        <description>
+              <![CDATA[ OMG I have So. Many. Citrus. ]]>
+        </description>
+        <content:encoded>
+        <![CDATA[ <p> Here is the content of the post. </p>]]>
+        </content:encoded>
+      </item>
+      <item>
+        <title>
+        Summertime sadness
+        </title>
+        <dc:creator>
+        Bob
+        </dc:creator>
+        <link>
+        https://www.bob.craps.on/2
+        </link>
+        <guid isPermaLink="true">https://www.bob.craps.on/2</guid>
+        <pubDate>Sun, 30 Feb 2019 09:24:16 GMT</pubDate>
+        <description>
+              <![CDATA[ There are only so many tomatoes I can eat... ]]>
+        </description>
+        <content:encoded>
+        <![CDATA[ <p> Here is the content of the post. </p>]]>
+        </content:encoded>
+      </item>
+      <item>
+        <title>
+        Spring is here!
+        </title>
+        <dc:creator>
+        Bob
+        </dc:creator>
+        <link>
+        https://www.bob.craps.on/1
+        </link>
+        <guid isPermaLink="true">https://www.bob.craps.on/1</guid>
+        <pubDate>Sun, 30 Oct 2018 09:24:16 GMT</pubDate>
+        <description>
+              <![CDATA[ Let's get planting! ]]>
+        </description>
+        <content:encoded>
+        <![CDATA[ <p> Here is the content of the post. </p>]]>
+        </content:encoded>
+      </item>
+  </channel>
+</rss>
