@@ -1,11 +1,13 @@
 // require modules
-var request = require('supertest') // test routes
+const supertest = require('supertest') // test routes
 const app = require('../app.js') // require Rockpool app
 const queries = require('../lib/queries.js')
 // NOTE: app will hang mocha because there doesn't seem to be any way to close the connection
 // workaround for now is to run with the --exit flag but this is obviously not ideal
-const agent = request.agent(app)
-var request = request(app)
+const request = supertest(app) // logged out requests
+const agent = supertest.agent(app) // logged in as admin
+const nonAdminAgent = supertest.agent(app) // logged in as non-admin
+const nock = require('nock') // external website mocking
 const assert = require('assert')
 const clipboardy = require('clipboardy')
 
@@ -185,9 +187,11 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           .get('/search?q=test')
           .expect(200, done)
         })
+        it('should load the help page')
+        it('should load the opml file')
       })
     describe('with test data', function() {
-      // TODO: insert test data
+      // insert test data
       before('insert users', function(done) {
         // insert test users including some pocket users
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
@@ -279,6 +283,14 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   url: 'https://legacy.blog',
                   feed: 'https://legacy.blog/feed',
                   category: 'podcasting',
+                  approved: true,
+                  announced: true
+                },
+                {
+                  _id: ObjectId("5d60be89d6e95e2d3bd1a69d"),
+                  url: 'https://another.legacy.blog',
+                  feed: 'https://another.legacy.blog/feed',
+                  category: 'jazz',
                   approved: true,
                   announced: true
                 }
@@ -605,25 +617,16 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 })
               })
             })
-            describe('/api/v1/update/user/register-blog', function(done) {
-              // TODO: this will run fake blogs through feedfinder and therefore fail
-              // so set up mocks with nock first?
-              it('should return an error message if the blog is already registered')
-              it('should add the blog to the DB with URL, feed, approved: false and announced:false')
-              it("should add the blog to the user's blogsForApproval")
-            })
-            describe('/api/v1/update/user/claim-blog', function() {
-              it('should return an error message if the blog is already owned')
-              it('should return an error message if the blog is already claimed')
-              it("should add the blog to the user's blogsForApproval")
-            })
-            describe('/api/v1/update/user/delete-blog', function() {
+            describe('/api/v1/update/user/register-blog', function() {
+              // This will run fake blogs through feedfinder and therefore fail
+              // so we set up mocks with nock 
+              // also need to log in again
               before('log in again', function(done) {
                 agent
                 .post('/sendtoken')
                 .type('application/x-www-form-urlencoded')
                 .send({"user" : 'alice@new.email', "delivery" : "clipboard"})
-                .then( (err,res) => {
+                .then( () => {
                   done()
                 })
                 .catch( err => {
@@ -642,6 +645,127 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   done(err)
                 })
               })
+              it('should return an error message if the blog is already registered', function(done) {
+                // mock route
+                const regRoute = nock('https://bobs-blog.com')
+                .get('/')
+                .replyWithFile(200, __dirname + '/sites/bobs-blog.com.html')
+                agent
+                .post('/api/v1/update/user/register-blog')
+                .send({url: 'https://bobs-blog.com'})
+                .expect(200)
+                .then( res => {
+                  assert.strictEqual(res.body.msg.text, 'That blog is already registered')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should add the blog to the DB with URL, feed, approved: false and announced:false', function(done) {
+                // mock route
+                const regRoute = nock('https://www.bob.craps.on')
+                .get('/')
+                .replyWithFile(200, __dirname + '/sites/www.bob.craps.on.html')
+                // NOTE: this is actually Alice registering a Bob's blog as hers!
+                agent
+                .post('/api/v1/update/user/register-blog')
+                .send({url: 'https://www.bob.craps.on', category: 'budgies'})
+                .expect(200)
+                .then( () => {
+                  // check the blogs DB
+                  queries.getBlogs({query: {url: 'https://www.bob.craps.on'}})
+                  .then( args => {
+                    assert.ok(args.blogs[0])
+                    assert.strictEqual(args.blogs[0].url, 'https://www.bob.craps.on')
+                    assert.strictEqual(args.blogs[0].feed, 'https://www.bob.craps.on/bob.xml')
+                    assert.strictEqual(args.blogs[0].approved, false)
+                    assert.strictEqual(args.blogs[0].announced, false)
+                    done()
+                  })
+                  .catch( err => {
+                    done(err)
+                  })
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+              it("should add the blog to the user's blogsForApproval", function(done) {
+                queries.getBlogs({query: {url: 'https://www.bob.craps.on'}})
+                .then( args => {
+                  args.query = {blogsForApproval: args.blogs[0]._id}
+                  return args
+                })
+                .then(queries.getUsers)
+                .then( args => {
+                  // NOTE: we need to use the string value to test equality on ObjectIds
+                  let forApprovalIds = args.users[0].blogsForApproval.map( function(id) {
+                    return id.toString()
+                  })
+                  assert(forApprovalIds.includes(args.blogs[0].idString))
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+            })
+            describe('/api/v1/update/user/claim-blog', function() {
+              it('should return an error message if the blog is already owned', function(done) {
+                agent
+                .post('/api/v1/update/user/claim-blog')
+                .send({url: 'https://alice.blog'})
+                .expect(200)
+                .then( res => {
+                  assert.strictEqual(res.body.text, 'Something went wrong: Error: Another user owns or has claimed https://alice.blog')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should return an error message if the blog is already claimed', function(done) {
+                agent
+                .post('/api/v1/update/user/claim-blog')
+                .send({url: 'https://bobs-blog.com'})
+                .expect(200)
+                .then( res => {
+                  assert.strictEqual(res.body.text, 'Something went wrong: Error: Another user owns or has claimed https://bobs-blog.com')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should return success message', function(done) {
+                agent
+                .post('/api/v1/update/user/claim-blog')
+                .send({url: 'https://another.legacy.blog'})
+                .expect(200)
+                .then( res => {
+                  assert.strictEqual(res.body.text, 'Your https://another.legacy.blog claim is now awaiting admin approval')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it("should add the blog to the user's blogsForApproval", function(done) {
+                queries.getUsers({query: {_id: ObjectId('9798925b467e1bf17618d095')}})
+                .then( args => {
+                  let forApprovalIds = args.users[0].blogsForApproval.map( function(id) {
+                    return id.toString()
+                  })
+                  assert(forApprovalIds.includes('5d60be89d6e95e2d3bd1a69d'))
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+            })
+            describe('/api/v1/update/user/delete-blog', function() {
               beforeEach('update user blogs', function(done) {
                 // insert test users including some pocket users
                 MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
@@ -753,7 +877,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             describe('/api/v1/update/user/edit-blog', function(done) {
               it('should update the blog category')
             })
-            describe('/api/v1/update/user/register-pocket', function() {
+            describe('/api/v1/update/user/register-pocket', function() { 
               it('should redirect to pocket')
             })
             describe('/api/v1/update/user/remove-pocket', function() {
@@ -898,7 +1022,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
             describe('/api/v1/update/admin/delete-blog', function() {
               // need to test client side also
-              // need to require a 'reason' for deletion
+              // need to require a 'reason' for deletion if owned
+              it('should return success message')
               it('should remove the blog from the owner blogs array if there is an owner')
               it('should remove the blog from the blogs collection')
             })
@@ -915,18 +1040,59 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         })
       })
       describe('admin routes that should error out', function() {
-        // use Bob as agent (var userAgent?)
+        // use before with Bob as agent (nonAdminAgent)
+        before('log in', function(done) {
+          agent.get('/logout') // logout to clear the cookie
+          .then( () => {
+            nonAdminAgent
+            .post('/sendtoken')
+            .type('application/x-www-form-urlencoded')
+            .send({"user" : "bob@example.com", "delivery" : "clipboard"})
+            .then( () => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+        })
+        before('complete log in', function(done) {
+          var loginLink = clipboardy.readSync()
+          var link = loginLink.slice(19)
+          nonAdminAgent
+          .get(link)
+          .then( () => {
+            done()
+          })
+          .catch( err => {
+            done(err)
+          })
+        })
         describe('/admin/*', function() {
           it('should return 302, then redirect to /letmein if user not logged in', function(done) {
             request
             .post('/admin')
             .expect(302)
             .then ( res => {
-              assert.equal( '/letmein' , res.headers.location)
+              assert.equal(res.headers.location, '/letmein')
               done()
             })
+            .catch(err => {
+              done(err)
+            })
           })
-          it('should return 403 if user logged in but not admin')
+          it('should return 302, then redirect to /user if user logged in but not admin', function(done) {
+            nonAdminAgent
+            .post('/admin')
+            .expect(302)
+            .then ( res => {
+              assert.equal(res.headers.location, '/user')
+              done()
+            })
+            .catch(err => {
+              done(err)
+            })
+          })
         })
         describe('/api/v1/admin/*', function() {
           it('should return 401 if user not logged in', function(done) {
@@ -934,7 +1100,11 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             .post('/api/v1/admin/info')
             .expect(401, done)
           })
-          it('should return 403 if user logged in but not admin')
+          it('should return 403 if user logged in but not admin', function(done) {
+            nonAdminAgent
+            .post('/api/v1/admin/info')
+            .expect(403, done)
+          })
         })
         describe('/api/v1/update/admin/*', function() {
           it('should return 401 if user not logged in', function(done) {
@@ -942,7 +1112,11 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             .post('/api/v1/update/admin/approve-blog')
             .expect(401, done)
           })
-          it('should return 403 if user logged in but not admin')
+          it('should return 403 if user logged in but not admin', function(done) {
+            nonAdminAgent
+            .post('/api/v1/update/admin/approve-blog')
+            .expect(403, done)
+          })
         })
       })
       describe('checkfeeds()', function() {
@@ -978,6 +1152,11 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         it('should restrict toot length to 500 chars max')
         it('should include title, author and link')
         it('should use owner mastodon @name if listed')
+      })
+      describe('makeOPML()', function() {
+        it('should return an xml file')
+        it('should list active blogs under each category')
+        it('should exclude suspended blogs')
       })
     })
     after('All tests completed', function(done) {

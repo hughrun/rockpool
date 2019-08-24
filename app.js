@@ -520,52 +520,52 @@ app.post('/user/register-blog',
   })
 
 // claim blog (legacy DB only)
-app.post('/user/claim-blog',
-  [userIsThisUser],
-  function(req, res, next) {
-    const args = req.body
-    args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
-    args.query = { "url" : args.url}
-    args.action = "register"
-    db.getBlogs(args)
-      // then check users for any claiming this blog
-      .then( args => {
-        if (args.blogs.length < 1) {
-          throw new Error("Blog does not exist: check the URL or try registering") // if there are no results the blog doesn't exist
-        } else {
-          args.blog = args.blogs[0].idString
-          args.query = {"blogsForApproval" : args.blogs[0]._id}
-          return args
-        }
-      })
-      .then(db.getUsers)
-      .then( args => {
-        if (args.users.length < 1) {
-          return args
-        } else {
-          throw new Error("Another user has claimed that blog!")
-        } 
-      })
-      .then(updateUserBlogs)
-      .then( args => {
-        message = {
-          text: `User ${req.user} has claimed ${args.url} on ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to accept or reject the registration.`,
-          to: 'admins',
-          subject: `New blog claimed on ${settings.app_name}`,
-        }
-        sendEmail(message) // send email to admins
-      req.flash('success', 'Blog claimed!')
-      next()
-    }).catch( e => {
-      debug.log('**ERROR CLAIMING BLOG**')
-      debug.log(e)
-      req.flash('error', `Something went wrong claiming your blog: ${e}`)
-      next()
-    })
-  }, 
-  function(req, res) {
-    res.redirect('/user')
-  })
+// app.post('/user/claim-blog',
+//   [userIsThisUser],
+  // function(req, res, next) {
+  //   const args = req.body
+  //   args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
+  //   args.query = { "url" : args.url}
+  //   args.action = "register"
+  //   db.getBlogs(args)
+  //     // then check users for any claiming this blog
+  //     .then( args => {
+  //       if (args.blogs.length < 1) {
+  //         throw new Error("Blog does not exist: check the URL or try registering") // if there are no results the blog doesn't exist
+  //       } else {
+  //         args.blog = args.blogs[0].idString
+  //         args.query = {"blogsForApproval" : args.blogs[0]._id}
+  //         return args
+  //       }
+  //     })
+  //     .then(db.getUsers)
+  //     .then( args => {
+  //       if (args.users.length < 1) {
+  //         return args
+  //       } else {
+  //         throw new Error("Another user has claimed that blog!")
+  //       } 
+  //     })
+  //     .then(updateUserBlogs)
+  //     .then( args => {
+  //       message = {
+  //         text: `User ${req.user} has claimed ${args.url} on ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to accept or reject the registration.`,
+  //         to: 'admins',
+  //         subject: `New blog claimed on ${settings.app_name}`,
+  //       }
+  //       sendEmail(message) // send email to admins
+  //     req.flash('success', 'Blog claimed!')
+  //     next()
+  //   }).catch( e => {
+  //     debug.log('**ERROR CLAIMING BLOG**')
+  //     debug.log(e)
+  //     req.flash('error', `Something went wrong claiming your blog: ${e}`)
+  //     next()
+  //   })
+  // }, 
+  // function(req, res) {
+  //   res.redirect('/user')
+  // })
 
 // delete (own) blog
 app.post('/user/delete-blog',
@@ -627,18 +627,19 @@ app.get('/user/pocket-redirect',
       })
   })
 
-app.post('/user/pocket-unsubscribe', 
-  (req, res, next) => {
-    unsubscribeFromPocket(req.user)
-      .then( () => {
-        req.flash('success', 'Pocket subscription cancelled. You should also "remove access" by this app at https://getpocket.com/connected_applications')
-        res.redirect('/user')
-      })
-      .catch(err => {
-        debug.log(err)
-        req.flash('error', `Something went wrong cancelling your Pocket subscription: ${err}`)
-      })
-  })
+  //TODO: remove this
+// app.post('/user/pocket-unsubscribe', 
+//   (req, res, next) => {
+//     unsubscribeFromPocket(req.user)
+//       .then( () => {
+//         req.flash('success', 'Pocket subscription cancelled. You should also "remove access" by this app at https://getpocket.com/connected_applications')
+//         res.redirect('/user')
+//       })
+//       .catch(err => {
+//         debug.log(err)
+//         req.flash('error', `Something went wrong cancelling your Pocket subscription: ${err}`)
+//       })
+//   })
 
 /*  
     ###############
@@ -1080,7 +1081,8 @@ function(req, res, next) {
     return args
   })
   .then(db.getBlogs) // check the blog isn't already registered
-  .then( args => { 
+  .then(
+     args => { 
     if (args.blogs.length < 1) {
       registerBlog(args) // create new blog document
       .then(updateUserBlogs) // add blog _id to user's blogsForApproval array
@@ -1099,8 +1101,55 @@ function(req, res, next) {
     } else {
       res.send({status: 'error', msg: {class: 'flash-error', text: `That blog is already registered`} })
     }
-  }) 
+  })
+  .catch(err => {
+    res.send({status: 'error', msg: {class: 'flash-error', text: `Something went wrong registering your blog: ${err}`} })
+  })
+})
 
+// TODO: claim blog
+app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
+  const args = req.body
+  args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
+  args.query = { "url" : args.url}
+  args.action = "register"
+  args.user = req.user
+  db.getBlogs(args)
+    // then check users for any claiming this blog
+    .then( args => {
+      if (args.blogs.length < 1) {
+        throw new Error("Blog does not exist: check the URL or try registering") // if there are no results the blog doesn't exist
+      } else {
+        args.blog = args.blogs[0].idString
+        args.query = {
+          $or: [
+            {"blogs" : args.blogs[0]._id},
+            {"blogsForApproval" : args.blogs[0]._id} 
+          ]
+        }
+        return args
+      }
+    })
+    .then(db.getUsers)
+    .then( args => {
+      if (args.users.length < 1) {
+        return args
+      } else {
+        throw new Error(`Another user owns or has claimed ${args.url}`)
+      } 
+    })
+    .then(updateUserBlogs)
+    .then( args => {
+      message = {
+        text: `User ${req.user} has claimed ${args.url} on ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to accept or reject the registration.`,
+        to: 'admins',
+        subject: `New blog claimed on ${settings.app_name}`,
+      }
+      sendEmail(message) // send email to admins
+      res.send({class: 'flash-success', text: `Your ${args.url} claim is now awaiting admin approval`})
+  }).catch( e => {
+    res.send({class: 'flash-error', text: `Something went wrong: ${e}`})
+  })
 })
 
 // delete blog
@@ -1139,9 +1188,8 @@ app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
         blogs: null,
         msg: {
           class:'flash-error',
-          text: e.message // TODO: probably not great to just send the error message
-        }, 
-        error: e.message // should the message actually go here or is it not needed?
+          text: e.message // FIXME: probably not great to just send the error message
+        }
       })
   })
 })
@@ -1181,14 +1229,14 @@ app.all('/api/v1/admin*',
       } else {
         // FIXME: use session storage for temporarily persistent messages?
         req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
-        res.status(403)
-        res.redirect('/user')
+        res.sendStatus(403)
       }
     })
     .catch(err => {
       debug.log(`Error accessing admin page: ${err}`)
       req.flash('error', 'Something went wrong')
-      res.redirect('/user')
+       // FIXME: use session storage for temporarily persistent messages?
+       res.sendStatus(500)
     })
   })
 
@@ -1203,13 +1251,12 @@ app.all('/api/v1/admin*',
       } else {
         // FIXME: use session storage for temporarily persistent messages?
         req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
-        res.status(403)
-        res.redirect('/user')
+        res.sendStatus(403)
       }
     })
     .catch(err => {
       debug.log(`Error for ${req.user} when attempting to access admin page: ${err}`)
-      res.sendStatus(403)
+      res.sendStatus(500)
     })
   })
 
@@ -1245,11 +1292,10 @@ app.post('/api/v1/update/admin/approve-blog', function(req, res, next) {
   })
 })
 
-// TODO:
 app.post('/api/v1/update/admin/reject-blog', function(req, res) {
   // reject as admin
   const args = req.body 
-  // user is owner's email
+  // user is owner's email 
   // blog is blog _id as string
   // reason is the reason provided as a string
   // url is blog url
@@ -1291,9 +1337,16 @@ app.post('/api/v1/update/admin/suspend-blog', function(req, res) {
 })
 
 // TODO:
+app.post('/api/v1/update/admin/unsuspend-blog', function(req, res) {
+  // unsuspend
+})
+
+// TODO:
 app.post('/api/v1/update/admin/delete-blog', function(req, res) {
   // delete as admin
-  const args = req.body // req.body.user should be owner's email
+  const args = req.body // req.body
+  // there is no reason for owner email to be displayed
+  //so we should find it here
 })
 
 // 404 errors: this should always be the last route
