@@ -235,6 +235,15 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   mastodon: '@charlie@rockpool.town',
                   blogs: [],
                   blogsForApproval: []
+                },
+                {
+                  _id: ObjectId("5d61c1d7d6e95e2d3bd1a6a1"),
+                  email: 'emile@example.com',
+                  twitter: 'emile@twitter.com',
+                  mastodon: '@emile@rockpool.town',
+                  blogs: [],
+                  blogsForApproval: [],
+                  permission: 'admin'
                 }
               ]
             )
@@ -305,6 +314,15 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   category: 'jazz',
                   approved: true,
                   announced: true
+                },
+                {
+                  _id: ObjectId("5d61b954d6e95e2d3bd1a6a0"),
+                  url: 'https://a.failing.blog',
+                  feed: 'https://a.failing.blog/feed',
+                  category: 'giving up',
+                  approved: true,
+                  announced: true,
+                  failing: true
                 }
               ]
             )
@@ -596,7 +614,6 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           describe('/api/v1/admin/*', function() {
             describe('/api/v1/admin/blogs-for-approval', function() {
               it('should return an array of users and their claims', function(done) {
-                // this.timeout(5000)
                 agent
                 .get('/api/v1/admin/blogs-for-approval')
                 .expect(200)
@@ -614,15 +631,45 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 })
               })
             })
-              // TODO:
             describe('/api/v1/admin/failing-blogs', function() {
-              it('should return blog array for failing blogs', function(done) {
+              it('should return an array of failing blogs', function(done) {
                 agent
                 .get('/api/v1/admin/failing-blogs')
                 .expect(200)
                 .then( res => {
-                  console.log(res)
-                  assert(Array.isArray(res))
+                  assert(Array.isArray(res.body))
+                  assert(res.body.length === 1)
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+            })
+            describe('/api/v1/admin/admins', function() {
+              it('should return an array of admins', function(done) {
+                agent
+                .get('/api/v1/admin/admins')
+                .expect(200)
+                .then( res => {
+                  assert(Array.isArray(res.body))
+                  assert(res.body.length === 1)
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should include all admins except the current user in the array', function(done) {
+                agent
+                .get('/api/v1/admin/admins')
+                .expect(200)
+                .then( res => {
+                  let users = res.body.map( user => {
+                    return user.email
+                  })
+                  assert.strictEqual(users.includes('emile@example.com'), true)
+                  assert.strictEqual(users.includes('alice@example.com'), false)
                   done()
                 })
                 .catch(e => {

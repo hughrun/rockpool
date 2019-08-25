@@ -676,58 +676,58 @@ app.all('/admin*',
 
 // admin home page
 app.get('/admin', function (req, res) {
-  var args = {}
-  args.user = req.user 
-  db.getUserDetails(args)
-      .then( function (user) {
-        return db.getBlogs({user: user, query: {failing: true}}) // get failing blogs
-      })
-    .then( 
-      doc => {
-        doc.failing = doc.blogs
-        doc.query = {$where: "this.blogsForApproval && this.blogsForApproval.length > 0"}
-        return doc
-    })
-    .then(db.getUsers)
-    .then( 
-      doc => {
-        // find the claimed blogs from the users
-        // mapping the array returns a Promise for each item in the array
-        // so we need to return Promise.all() to get a result
-        var mapped = doc.users.map( user => {
-          return db.getBlogs({query: {_id: {$in: user.blogsForApproval}}}).then( blogs => {
-            user.claims = blogs
-            return user
-          })
-        })
-        return Promise.all(mapped).then(updated => {
-          doc.approvals = updated
-          return doc
-        })
-    })
-    .then( args => {
-      // now we need to get all the admins!!
-      args.query = { 'permission' : 'admin'}
-      return args
-    })
-    .then(db.getUsers)
-    .then( args => {
-      // remove this user from admins
-      // this prevents the user from accidentally removing themself as an admin
-      function removeThisUser(user) {
-        return user.email !== req.user
-      }
-      args.users = args.users.filter(removeThisUser)
-      return args
-    })
-    .then( args =>
+  // var args = {}
+  // args.user = req.user 
+  // db.getUserDetails(args)
+  //     .then( function (user) {
+  //       return db.getBlogs({user: user, query: {failing: true}}) // get failing blogs
+  //     })
+  //   .then( 
+  //     doc => {
+  //       doc.failing = doc.blogs
+  //       doc.query = {$where: "this.blogsForApproval && this.blogsForApproval.length > 0"}
+  //       return doc
+  //   })
+  //   .then(db.getUsers)
+  //   .then( 
+  //     doc => {
+  //       // find the claimed blogs from the users
+  //       // mapping the array returns a Promise for each item in the array
+  //       // so we need to return Promise.all() to get a result
+  //       var mapped = doc.users.map( user => {
+  //         return db.getBlogs({query: {_id: {$in: user.blogsForApproval}}}).then( blogs => {
+  //           user.claims = blogs
+  //           return user
+  //         })
+  //       })
+  //       return Promise.all(mapped).then(updated => {
+  //         doc.approvals = updated
+  //         return doc
+  //       })
+  //   })
+  //   .then( args => {
+  //     // now we need to get all the admins!!
+  //     args.query = { 'permission' : 'admin'}
+  //     return args
+  //   })
+  //   .then(db.getUsers)
+  //   .then( args => {
+  //     // remove this user from admins
+  //     // this prevents the user from accidentally removing themself as an admin
+  //     function removeThisUser(user) {
+  //       return user.email !== req.user
+  //     }
+  //     args.users = args.users.filter(removeThisUser)
+  //     return args
+  //   })
+  //   .then( args =>
     res.render('admin', {
       partials: {
         head: __dirname+'/views/partials/head.html',
         header: __dirname+'/views/partials/header.html',
         foot: __dirname+'/views/partials/foot.html',
         footer: __dirname+'/views/partials/footer.html'
-      },
+      // },
       // admins: args.users,
       // user: args.user,
       // failing: args.failing,
@@ -736,8 +736,9 @@ app.get('/admin', function (req, res) {
       // warnings: req.flash('warning'),
       // success: req.flash('success'),
       // errors: req.flash('error')
+      }
     })
-  ).catch(err => {debug.log(err)})
+  // ).catch(err => {debug.log(err)})
 })
 
 // TODO: all these post routes should be replaced with /update/admin API calls
@@ -1307,10 +1308,41 @@ app.get('/api/v1/admin/failing-blogs', function(req, res) {
   args.query = {failing: true}
   db.getBlogs(args)
   .then( args => {
-    res.json(args.blogs)
+    let data = args.blogs.map( blog => {
+      return {
+        url: blog.url,
+        feed: blog.feed,
+        idString: blog.idString
+      }
+    })
+    res.json(data)
   })
   .catch(e => {
     debug(e)
+    res.json({error: e})
+  })
+})
+
+app.get('/api/v1/admin/admins', function(req, res) {
+  const args = { query: { permission: 'admin' } }
+  db.getUsers(args)
+  .then( args => {
+    // remove this user from admins
+    // this prevents the user from accidentally removing themself as an admin
+    function removeThisUser(user) {
+      return user.email !== req.user
+    }
+    
+    args.users = args.users.filter(removeThisUser)
+
+    const admins = args.users.map( user => {
+      return {
+        email: user.email // only return the email addresses
+      }
+    })
+    res.json(admins)
+  })
+  .catch(e => {
     res.json({error: e})
   })
 })
@@ -1319,22 +1351,6 @@ app.get('/api/v1/admin/reported-blogs', function(req, res) {
   // TODO: for future version - report a dodgy blog somehow
   res.sendStatus(404)
 })
-
-// db.getUsers({query: {"email" : req.user}})
-// .then(
-//   doc => {
-//     var data = {}
-//     data.user = doc.users[0]._id
-//     data.email = doc.users[0].email
-//     data.twitter = doc.users[0].twitter || null
-//     data.mastodon = doc.users[0].mastodon || null
-//     data.pocket = doc.users[0].pocket || false
-//     data.admin = doc.users[0].permission === 'admin'
-//     res.json(data)
-// })
-// .catch( err => {
-//   debug.log(err)
-// })
 
 /*  #############
       ADMIN POST
