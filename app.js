@@ -20,7 +20,7 @@ const engines = require('consolidate') // use consolidate with whiskers template
 // require locals
 const db = require('./lib/queries.js') // local database queries module
 const { updateUserContacts, updateUserBlogs, unsubscribeFromPocket, updateUserPermission } = require('./lib/users.js') // local database updates module
-const { approveBlog, deleteBlog, registerBlog } = require('./lib/blogs.js') // local database updates module
+const { approveBlog, deleteBlog, registerBlog, suspendBlog } = require('./lib/blogs.js') // local database updates module
 const { authorisePocket, finalisePocketAuthentication, sendEmail } = require('./lib/utilities.js') // local pocket functions
 
 // managing users
@@ -1423,16 +1423,69 @@ app.post('/api/v1/update/admin/reject-blog', function(req, res) {
     })
 })
 
-// TODO:
 app.post('/api/v1/update/admin/suspend-blog', function(req, res) {
   // suspend
-  const args = req.body // blog should be blog idString
+  const args = req.body // url should be blog url
+  // assign suspended to true
+  args.suspend = true
+  args.query = {url: args.url} // query for getBlogs
+  suspendBlog(args)
+  .then( args => {
+    db.getBlogs(args)
+    .then( args => {
+      args.query = {blogs: args.blogs[0]._id}
+      return args
+    })
+    .then(db.getUsers)
+    .then( args => {
+      if (args.users.length > 0) {
+        message = {
+          text: `Your blog ${args.url} has been suspended from ${settings.app_name}.\n\nReason:\n\n${args.reason}`,
+          to: args.users[0].email,
+          subject: `Your blog has been suspended from ${settings.app_name}`,
+        }
+        sendEmail(message)
+      }
+      // return json regardless
+      res.json({class: 'flash-success', text: 'blog suspended'})
+    })
+  })
+  .catch(e => {
+    debug.log(e)
+    res.json({class: 'flash-error', text: 'Error suspending blog'})
+  })
 })
 
-// TODO:
 app.post('/api/v1/update/admin/unsuspend-blog', function(req, res) {
   // unsuspend
-  const args = req.body // blog should be blog idString
+  const args = req.body // url should be blog url
+  args.suspend = false
+  args.query = {url: args.url} // query for getBlogs
+  suspendBlog(args)
+  .then( args => {
+    db.getBlogs(args)
+    .then( args => {
+      args.query = {blogs: args.blogs[0]._id}
+      return args
+    })
+    .then(db.getUsers)
+    .then( args => {
+      if (args.users.length > 0) {
+        message = {
+          text: `Your blog ${args.url} is no longer suspended from ${settings.app_name}.\n\nPosts from now on will be included as usual.`,
+          to: args.users[0].email,
+          subject: `Your blog is no longer suspended from ${settings.app_name}`,
+        }
+        sendEmail(message)
+      }
+      // return json regardless
+      res.json({class: 'flash-success', text: 'blog unsuspended'})
+    })
+    .catch(e => {
+      debug.log(e)
+      res.json({class: 'flash-error', text: 'Error unsuspending blog'})
+    })
+  })
 })
 
 app.post('/api/v1/update/admin/delete-blog', function(req, res) {
@@ -1440,7 +1493,7 @@ app.post('/api/v1/update/admin/delete-blog', function(req, res) {
   // so we should find it here
   // args.blog is the idString of the blog
   // args.url is the blog url
-  body().exists({checkNull: true}) // make sure there's a value
+  body().exists({checkNull: true}) // make sure there's a value so we don't delete everything
   if (validationResult(req).isEmpty()) {
     const args = req.body
     args.action = "delete"

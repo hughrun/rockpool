@@ -1141,7 +1141,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   url: 'https://legacy.blog',
                   reason: 'Does not belong to Bob'
                 })
-                .then( x => {
+                .then( () => {
                   return queries.getBlogs({
                     query: {'_id' : ObjectId('5d5932f5d6e95e2d3bd1a69c')}
                   })
@@ -1159,14 +1159,68 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                // need to test client side also
               // need to require a 'reason' for suspension
               // and also check if there is an owner
-              it('should set suspended.start to datetime in blog listing')
-              it('should return updated data for admin screen')
+              it('should return success message', function(done) {
+                agent
+                .post('/api/v1/update/admin/suspend-blog')
+                .send({url: 'https://alice.blog'})
+                .expect(200)
+                .then( res => {
+                  assert(res.body.class === 'flash-success')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should set suspended to true in blog listing', function(done) {
+                queries
+                .getBlogs({query: {url: 'https://alice.blog'}})
+                .then( args => {
+                  assert.strictEqual(args.blogs[0].suspended, true)
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
             })
             describe('/api/v1/update/admin/unsuspend-blog', function() {
-              it('should set suspended.end to datetime in blog listing') 
-              // TODO: what about multiple suspensions?
-              // maybe it should be an array of objects with start and end times?
-              it('should return updated data for admin screen')
+              it('should return success message', function(done) {
+                agent
+                .post('/api/v1/update/admin/unsuspend-blog')
+                .send({url: 'https://alice.blog'})
+                .expect(200)
+                .then( res => {
+                  assert(res.body.class === 'flash-success')
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should set suspensionEndDate to a datetime in blog listing', function(done) {
+                queries
+                .getBlogs({query: {url: 'https://alice.blog'}})
+                .then( args => {
+                  let type = args.blogs[0].suspensionEndDate instanceof Date
+                  assert.strictEqual(type, true)
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
+              it('should set suspended to false in blog listing', function(done) {
+                queries
+                .getBlogs({query: {url: 'https://alice.blog'}})
+                .then( args => {
+                  assert.strictEqual(args.blogs[0].suspended, false)
+                  done()
+                })
+                .catch(e => {
+                  done(e)
+                })
+              })
             })
             describe('/api/v1/update/admin/delete-blog', function() {
               // need to test client side also
@@ -1371,7 +1425,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         it('should not duplicate blogs with the same URL or GUID')
         it('should add new articles if there are new (i.e. not in the DB) articles')
         it('should skip articles with exclude tags')
-        it('should skip articles published between suspend.start and suspend.end')
+        it('should skip articles published prior to suspensionEndDate') 
+        // this (above) accounts for multiple suspensions because it progressively becomes more recent
         it('should queue announcements for added articles')
         it('should not queue announcements for added articles that are older than 48 hours')
       })
