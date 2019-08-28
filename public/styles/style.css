@@ -279,6 +279,7 @@ input[type="submit"].email-signup {
 .claimed-blogs {
 	border: 1px solid #3a3a3a;
 	border-radius: 5px;
+	margin-top: 1em;
 	padding: 1em;
 }
 
@@ -298,6 +299,20 @@ input[type="submit"].email-signup {
 
 .deleting .approved-blog {
 	background-color: slategray;
+}
+
+/* buttons */
+
+.approve-button {
+	border: 2px solid green;
+}
+
+.reject-button {
+	border: 2px solid red;
+}
+
+.confirm-button {
+	border: 2px solid blue;
 }
 
 /* flash messages */

@@ -1360,11 +1360,10 @@ app.get('/api/v1/admin/reported-blogs', function(req, res) {
 app.post('/api/v1/update/admin/approve-blog', function(req, res, next) {
   const args = req.body 
   // user will be the owner email
-  // email is owner's email
   // url is blog url
   // blog is blog _id as a string
   args.action= 'approve'
-  args.query = {'email' : args.email} // query for getUsers later
+  args.query = {'email' : args.user} // query for getUsers later
   db.getUsers(args) 
   .then(approveBlog) // set to approved: true
   .then(updateUserBlogs) // move from blogsForApproval to blogs

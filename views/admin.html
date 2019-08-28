@@ -1,46 +1,27 @@
 {>head}
   {>header}
-
-  
+    <!-- vuejs prototyping -->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <!-- axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <section class="main">
-      {if errors}
-      {for msg in errors}<div class="flash-error">{msg}</div>{/for}
-      {/if}
-      {if warnings}
-        {for msg in warnings}<div class="flash-warning">{msg}</div>{/for}
-      {/if}
-      {if success}
-        {for msg in success}<div class="flash-success">{msg}</div>{/for}
-      {/if}
-      <h2>Awaiting Approval</h2>
-      {if approvals}
-      <div class="flash-warning">You have blog {if legacy}claims or {/if}approvals to deal with</div>
-      {else}
-      <div>There are no blogs awaiting approval.</div>
-      {/if}
-      {for user in approvals}
-      <div class="claimed-blogs">
-        <div><strong>Email:</strong> <a href="mailto:{user.email}">{user.email}</a></div>
-        <div><strong>Twitter:</strong> <a href="https://twitter.com/{user.twitter}">{user.twitter}</a></div>
-        <div><strong>Mastodon:</strong> {user.mastodon}</div>
-        <div><strong>{if legacy}Claiming or {/if}Awaiting Approval:</strong></div>
-          <ul class="blog-list">
-            {for blog in user.claims.blogs}
-            <li>
-              <form method="post">
-                <a href="{blog.url}">{blog.url}</a>
-                <input type="hidden" name="url" value="{blog.url}">
-                <input type="hidden" name="user" value="{user._id}">
-                <input type="hidden" name="blog" value="{blog._id}">
-                <button class="approve-button" formaction="/admin/approve-blog" type="submit" >Approve</button>
-                <button class="reject-claim-button" formaction="/admin/reject-blog" type="button">Reject</button>
-              </form>
-            </li>
-            {/for}
-          </ul>
+      <div v-if="messages" id="user-messages">
+        <ul v-for="msg in messages" class="blog-list">
+          <li v-bind:class="msg.class">{{ msg.text }}</li>
+        </ul>
       </div>
-      {/for}
-    </div>
+      <section v-if="approvals" id="blogs-for-approval">
+        <h2>Awaiting Approval</h2>
+        <div v-for="user in approvals" class="claimed-blogs">
+          <div><strong>Email:</strong> <a v-bind:href="'mailto:' + user.email">{{ user.email }}</a></div>
+          <div><strong>Twitter:</strong> <a v-bind:href="'https://twitter.com/' + user.twitter">{{ user.twitter }}</a></div>
+          <div><strong>Mastodon:</strong> {{ user.mastodon }}</div>
+          <div><strong>{if legacy}Claiming or {/if}Awaiting Approval:</strong></div>
+          <blogs-for-approval v-bind:blogs="user.claims" v-bind:email="user.email" v-bind:reason="null"></blogs-for-approval>
+        </div>
+        <div v-else>There are no blogs awaiting approval.</div>
+      </section>
+
     <div class="failing-feeds">
       <h2>Failing feeds</h2>
       {if failing}
