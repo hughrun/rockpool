@@ -79,13 +79,9 @@ Vue.component('reject-reason', {
 Vue.component('blogs-for-approval', {
   props: ['blogs', 'email'],
   data () {
-    return {
-      messages: []
-    }
+    return {}
   },
   template: `
-  <div>
-  <message-list v-bind:messages="messages"></message-list>
   <ul class="blog-list">
     <li v-for="blog in blogs">
       <form>
@@ -101,11 +97,10 @@ Vue.component('blogs-for-approval', {
       </form>
     </li>
   </ul>
-</div>
   `,
   methods: {
     addMessage(msg) {
-      this.messages.push(msg)
+      this.$emit('add-message', msg)
     },
     approve(blog) {
       blog.approving = true
@@ -120,7 +115,8 @@ Vue.component('blogs-for-approval', {
         reason: this.reason
       })
       .then( res => {
-        messages.push(res.data)
+        // this.messages.push(res.data)
+        this.addMessage(res.data)
         if (res.data.class === "flash-success") {
           Vue.delete(this.blogs, this.blogs.indexOf(blog))
         }
@@ -130,6 +126,7 @@ Vue.component('blogs-for-approval', {
           class: 'flash-error',
           text: 'Something went wrong approving that blog.'
         }
+        // this.addMessage(msg)
         this.addMessage(msg)
       })
     },
@@ -140,15 +137,55 @@ Vue.component('blogs-for-approval', {
     rejectBlog(blog) {
       // TODO: here we should check length of this.blogs and if 1, $emit a remove-approval up the chain
       Vue.delete(this.blogs, this.blogs.indexOf(blog))
+      this.$emit('add-message', {class: 'flash-success', text: `${blog.url} rejected`})
     }
   }
 })
 
-var unapprovedBlogs = new Vue({
-  el: '#blogs-for-approval',
+Vue.component('users-with-approvals', {
+  props: ['approvals', 'messages'],
   data() {
     return {
-      approvals: []
+      legacy: legacy,
+      messages: [{class: 'flash-success', text: 'this is a message'}]
+    }
+  },
+  template: `
+  <section v-if="approvals">
+  <message-list v-bind:messages="messages"></message-list>
+  <h2>Awaiting Approval</h2>
+  <div v-for="user in approvals" class="claimed-blogs">
+    <div><strong>Email:</strong> <a v-bind:href="'mailto:' + user.email">{{ user.email }}</a></div>
+    <div><strong>Twitter:</strong> <a v-bind:href="'https://twitter.com/' + user.twitter">{{ user.twitter }}</a></div>
+    <div><strong>Mastodon:</strong> {{ user.mastodon }}</div>
+    <div v-if:legacy><strong>Claiming or Awaiting Approval:</strong></div>
+    <div v-else><strong>Awaiting Approval:</strong></div>
+    <blogs-for-approval v-bind:blogs="user.claims" v-bind:email="user.email" @add-message="addMessage"></blogs-for-approval>
+  </div>
+  <div v-else>There are no blogs awaiting approval.</div>
+  </section>
+  `,
+  methods: {
+    addMessage(msg) {
+      this.messages.push(msg)
+      // this.$emit('add-message', msg) 
+    }
+  }
+})
+
+
+
+new Vue({
+  el: '#main',
+  data () {
+    return {
+      approvals: [],
+      messages: []
+    }
+  },
+  methods: {
+    addMessage(msg) {
+      this.messages.push(msg)
     }
   },
   mounted() {
