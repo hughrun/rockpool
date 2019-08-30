@@ -1,11 +1,16 @@
-const messages = []
-var uBlogs = []
-
-var userMessages =  new Vue({
-  el: '#user-messages',
+Vue.component('message-list', {
+  // el: '#user-messages',
+  props: ['messages'],
+  template: `
+<div v-if="messages" id="user-messages">
+  <ul v-for="msg in messages" class="blog-list">
+    <li v-bind:class="msg.class">{{ msg.text }}</li>
+  </ul>
+</div>
+  `,
   data() {
     return {
-      messages: messages
+      messages: this.messages
     }
   },
   methods: {
@@ -24,17 +29,21 @@ var userInfo =  new Vue({
   el: '#user-info',
   data() {
     return {
-      user : {
+      user: {
         email: null,
         twitter: null,
         mastodon: null,
         pocket: false,
         admin: false
       },
-      editing : false
+      editing: false,
+      messages: []
     }
   },
   methods: {
+    addMessage(msg) {
+      this.messages.push(msg)
+    },
     updateUser(event) {
       var params = {
         email : event.target.parentNode.email.value,
@@ -44,11 +53,10 @@ var userInfo =  new Vue({
       axios.post('/api/v1/update/user/info', params)
       .then( response => {
         this.editing = false
-
         if (response.data.user) {
           this.user = response.data.user
         } else if (response.data.error) {
-          this.messages.push(response.data.error)
+          this.addMessage(res.data.msg)
         }
       })
       .catch( err => {
@@ -60,7 +68,7 @@ var userInfo =  new Vue({
     cancelPocket() {
       axios.post('/api/v1/update/user/remove-pocket')
       .then( res => {
-        messages.push(res.data.msg)
+        this.addMessage(res.data.msg)
         this.user.pocket = false
       })
     }
@@ -79,7 +87,8 @@ var userBlogs =  new Vue({
     return {
       userIdString: null,
       blogs : [],
-      editing: false
+      editing: false,
+      messages: []
     }
   },
   mounted () {
@@ -95,6 +104,9 @@ var userBlogs =  new Vue({
     .catch( err => this.blogs = 'error')
   },
   methods: {
+    addMessage(msg) {
+      this.messages.push(msg)
+    },
     deleteBlog(blog) {
       var payload = {
         blog: event.target.id,
@@ -104,7 +116,7 @@ var userBlogs =  new Vue({
       .then( response => {
         var msg = response.data.msg || response.data.error
         // this.editing = false
-        messages.push(msg)
+        this.addMessage(msg)
         blog.editing = false
         if (response.data.blogs) { // TODO: see addBlog below for a better way to do this
           this.blogs = response.data.blogs
@@ -119,77 +131,125 @@ var userBlogs =  new Vue({
   }
 })
 
+Vue.component('register-or-claim-blogs', {
+  props: ['url', 'category'],
+  data () {
+    return {
+      categories: blogCategories,
+      legacy: legacy
+    }
+  },
+  template: `
+  <form id="registerBlog">
+    <label for="url">URL:</label>
+    <input v-model="url" type="url" name="url" size="60"><br/>
+    <label for="category">Category:</label>
+    <select v-model="category" name="category">
+    <option v-for="cat in categories" v-bind:value="cat">{{ cat }}</option>
+    </select>
+    <button v-on:click.prevent="validateBlog('register')">Register blog</button>
+    <button v-if="legacy" v-on:click.prevent="validateBlog('claim')">Claim blog</button>
+  </form>
+  `,
+    methods: {
+      validateBlog(action) {
+        this.$emit('validate-url', 
+        {
+          url: this.url, 
+          category: this.category, 
+          action: action
+        })
+      }
+    }
+  })
+
 var userUnapprovedBlogs =  new Vue({
   el: '#user-unapproved-blogs',
   data () {
     return {
-      uBlogs : uBlogs
+      uBlogs : [],
+      category: null,
+      url: null,
+      messages: []
     }
   },
   mounted () {
     axios
     .get('/api/v1/user/unapproved-blogs')
-    .then(response => (this.uBlogs = response.data))
-    .catch( err => this.uBlogs = 'error') // TODO: fix this
-  }
-})
-
-var registerOrClaimBlogs =  new Vue({
-  el: '#registerBlog',
-  data() {
-    return {
-     url: null,
-     category: null 
-    }
+    .then(response => {
+      this.uBlogs = response.data
+    })
+    .catch( err => messages.push({class: 'flash-error', text: err}))
   },
   methods: {
-    validate(action) {
-      if (!this.validateUrl(this.url)) {
+    addMessage(msg) {
+      this.messages.push(msg)
+    },
+    validate(args) {
+      if (!this.validateUrl(args.url)) { 
         msg = {
           class: 'flash-error',
           text: 'please enter a valid url in the form http://example.com'
         }
-        messages.push(msg)
-      } else if (!this.category) {
+        this.addMessage(msg)
+      } else if (!args.category) {
         msg = {
           class: 'flash-error',
           text: 'you must select a category for your blog'
         }
-        messages.push(msg)
+        this.addMessage(msg)
       } else {
-        if (action === 'register') {
-          this.registerBlog(this.url, this.category)
-        } else if (action === 'claim') {
-          this.claimBlog(this.url, this.category)
+        if (args.action === 'register') {
+          this.registerBlog(args.url, args.category)
+        } else if (args.action === 'claim') {
+          this.claimBlog(args.url, args.category)
         } else {
           console.error('no action specified')
         }
       }
     },
-    registerBlog(url, category) {
-      axios
-      .post('/api/v1/update/user/register-blog', {url: url, category: category})
-      .then( response => {
-        var msg = response.data.msg || response.data.error // TODO: check error handling!
-        messages.push(msg)
-       // if we get an ok status, we just update the list, rather than sending the full data to the browser
-        if (response.data.status === 'ok') {
-          let index = uBlogs.length
-          Vue.set(uBlogs, index, {url: url, approved: false}) // add to the end of the blogs list
-        }
-        // clear the form
-        this.url = null
-        this.category = null
-      })
-
-    },
-    claimBlog(url, category) {
-      console.log('claiming', url, category)
-      //TODO: !
-    },
     validateUrl(input) {
       var regex = /http(s)?:\/\/([a-z0-9-_~:\/?#[\]@!$&'()*+,;=]*)(\.([a-z0-9-_~:\/?#[\]@!$&'()*+,;=]+)+)+/i
       return regex.test(input)
+    },
+    registerBlog(url, category) {
+      axios
+      .post('/api/v1/update/user/register-blog', {
+        url: url, 
+        category: category
+      })
+      .then( response => {
+        var msg = response.data.msg
+        this.addMessage(msg)
+       // if we get an ok status, we just update the list, 
+       // rather than sending the full data back and forth
+        if (response.data.status === 'ok') {
+          Vue.set(this.uBlogs, this.uBlogs.length, {url: url, approved: false}) // add to the end of the blogs list
+        }
+        this.url = null
+        this.category = null
+      })
+      .catch(err => {
+        this.addMessage({class: 'flash-error', text: err.message})
+      })
+    },
+    claimBlog(url, category) {
+      axios
+      .post('/api/v1/update/user/claim-blog', {
+        url: url,
+        category: category
+      })
+      .then( response => {
+        this.addMessage(response.data)
+        if (response.data.class === 'flash-success') {
+          Vue.set(this.uBlogs, this.uBlogs.length, {url: url, approved: false}) // add to the end of the blogs list
+        }
+        this.url = null
+        this.category = null
+      })
+      .catch(err => {
+        this.addMessage({class: 'flash-error', text: err.message})
+      })
     }
   }
 })

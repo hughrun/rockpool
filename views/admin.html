@@ -5,11 +5,6 @@
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <section class="main">
-      <div v-if="messages" id="user-messages">
-        <ul v-for="msg in messages" class="blog-list">
-          <li v-bind:class="msg.class">{{ msg.text }}</li>
-        </ul>
-      </div>
       <section v-if="approvals" id="blogs-for-approval">
         <h2>Awaiting Approval</h2>
         <div v-for="user in approvals" class="claimed-blogs">
@@ -17,12 +12,13 @@
           <div><strong>Twitter:</strong> <a v-bind:href="'https://twitter.com/' + user.twitter">{{ user.twitter }}</a></div>
           <div><strong>Mastodon:</strong> {{ user.mastodon }}</div>
           <div><strong>{if legacy}Claiming or {/if}Awaiting Approval:</strong></div>
-          <blogs-for-approval v-bind:blogs="user.claims" v-bind:email="user.email" v-bind:reason="null"></blogs-for-approval>
+          <blogs-for-approval v-bind:blogs="user.claims" v-bind:email="user.email"></blogs-for-approval>
         </div>
         <div v-else>There are no blogs awaiting approval.</div>
       </section>
 
     <div class="failing-feeds">
+      <!-- TODO: -->
       <h2>Failing feeds</h2>
       {if failing}
       <div class="flash-warning">You have failing feeds to attend to</div>
@@ -67,6 +63,10 @@
         </div>
       </div>
     </section>
+    <script type="text/javascript">
+      var blogCategories = '{blogCategories}'.split(',');
+      var legacy = Boolean.valueOf({legacy})
+    </script>
     <script src="/scripts/admin.js"></script>
   {>footer}
 {>foot}

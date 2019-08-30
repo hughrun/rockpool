@@ -5,12 +5,8 @@
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <section class="main">
-      <div v-if="messages" id="user-messages">
-        <ul v-for="msg in messages" class="blog-list">
-          <li v-bind:class="msg.class">{{ msg.text }}</li>
-        </ul>
-      </div>
       <div id="user-info">
+        <message-list v-bind:messages="messages"></message-list>
         <div v-if="user.admin">
           <button type="button" onclick="location.href='/admin'">Admin</button>
         </div>
@@ -47,36 +43,35 @@
               </form>
           </div>
       </div>
+      <!-- FIXME: this should be a vue component with subcomponents -->
       <h3 class="form-label">Your blogs</h3>
-      <ul id="user-approved-blogs" class="blog-list">
-        <li v-for='blog in blogs' class="listed-blog" v-bind:class="{deleting: blog.editing}" v-bind:key="blog.id">
-          <div class="approved-blog"></div>
-          <span>{{ blog.url }}</span>
-          <button v-if="blog.editing" v-on:click="deleteBlog(blog)" v-bind:id="blog.idString">Confirm deletion</button>
-          <button v-else v-on:click="checking(blog)" v-bind:id="blog.idString">Delete</button>
-        </li>
-      </ul>
-      <ul id="user-unapproved-blogs" class="blog-list">
-        <li v-for='blog in uBlogs' class="listed-blog">
-          <div class="unapproved-blog"></div>
-          <span>{{ blog.url }}</span><span class="awaiting-approval"> - awaiting approval</span>
-        </li>
-      </ul>
-      <h4>Register {if legacy}or claim {/if}a blog</h4>
-      <form id="registerBlog">
-        <label for="url">URL:</label>
-        <input v-model="url" type="url" name="url" size="60"><br/>
-        <label for="category">Category:</label>
-        <select v-model="category" name="category">
-        <option value="null" disabled selected>---</option>
-        {for category in blogCategories}
-        <option value={category}>{category}</option>
-        {/for}
-        </select>
-        <button name="register" v-on:click.prevent="validate('register')">Register blog</button>
-        {if legacy}<button name="claim" v-on:click.prevent="validate('claim')">Claim blog</button>{/if}
-      </form>
+      <div id="user-approved-blogs">
+        <ul class="blog-list">
+          <message-list v-bind:messages="messages"></message-list>
+          <li v-for='blog in blogs' class="listed-blog" v-bind:class="{deleting: blog.editing}" v-bind:key="blog.id">
+            <div class="approved-blog"></div>
+            <span>{{ blog.url }}</span>
+            <button v-if="blog.editing" v-on:click="deleteBlog(blog)" v-bind:id="blog.idString">Confirm deletion</button>
+            <button v-else v-on:click="checking(blog)" v-bind:id="blog.idString">Delete</button>
+          </li>
+        </ul>
+      </div>
+      <div id="user-unapproved-blogs">
+        <message-list v-bind:messages="messages"></message-list>
+        <ul class="blog-list" >
+          <li v-for='blog in uBlogs' v-bind:key="blog.idString" class="listed-blog">
+            <div class="unapproved-blog"></div>
+            <span>{{ blog.url }}</span><span class="awaiting-approval"> - awaiting approval</span>
+          </li>
+        </ul>
+        <register-or-claim-blogs @validate-url="validate"></register-or-claim-blogs>
+      </div>
     </section>
+    <!-- make blog category data available to vue -->
+    <script type="text/javascript">
+      var blogCategories = '{blogCategories}'.split(',');
+      var legacy = Boolean.valueOf({legacy})
+    </script>
     <!-- vuejs components -->
     <script src="/scripts/vue-components.js"></script>
   {>footer}
