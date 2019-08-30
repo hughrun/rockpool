@@ -1,5 +1,4 @@
 Vue.component('message-list', {
-  // el: '#user-messages',
   props: ['messages'],
   template: `
 <div v-if="messages" id="user-messages">
@@ -52,7 +51,6 @@ Vue.component('reject-reason', {
         reason: this.reason
       })
       .then( () => {
-        // TODO:this is where we push up to parent
         this.$emit('reject-blog', this.blog)
       })
       .catch( err => {
@@ -62,7 +60,6 @@ Vue.component('reject-reason', {
           text: 'Something went wrong rejecting that blog.'
         }
         this.$emit('add-message', msg)
-        // messages.push(msg)
       })
       } else {
         msg = {
@@ -75,7 +72,6 @@ Vue.component('reject-reason', {
   }
 })
 
-// Define a new component 
 Vue.component('blogs-for-approval', {
   props: ['blogs', 'email'],
   data () {
@@ -115,7 +111,6 @@ Vue.component('blogs-for-approval', {
         reason: this.reason
       })
       .then( res => {
-        // this.messages.push(res.data)
         this.addMessage(res.data)
         if (res.data.class === "flash-success") {
           Vue.delete(this.blogs, this.blogs.indexOf(blog))
@@ -126,7 +121,6 @@ Vue.component('blogs-for-approval', {
           class: 'flash-error',
           text: 'Something went wrong approving that blog.'
         }
-        // this.addMessage(msg)
         this.addMessage(msg)
       })
     },
@@ -143,24 +137,27 @@ Vue.component('blogs-for-approval', {
 })
 
 Vue.component('users-with-approvals', {
-  props: ['approvals', 'messages'],
+  props: ['approvals'],
   data() {
     return {
       legacy: legacy,
-      messages: [{class: 'flash-success', text: 'this is a message'}]
+      messages: []
     }
   },
   template: `
   <section v-if="approvals">
-  <message-list v-bind:messages="messages"></message-list>
   <h2>Awaiting Approval</h2>
+  <message-list v-bind:messages="messages"></message-list>
   <div v-for="user in approvals" class="claimed-blogs">
     <div><strong>Email:</strong> <a v-bind:href="'mailto:' + user.email">{{ user.email }}</a></div>
     <div><strong>Twitter:</strong> <a v-bind:href="'https://twitter.com/' + user.twitter">{{ user.twitter }}</a></div>
     <div><strong>Mastodon:</strong> {{ user.mastodon }}</div>
     <div v-if:legacy><strong>Claiming or Awaiting Approval:</strong></div>
     <div v-else><strong>Awaiting Approval:</strong></div>
-    <blogs-for-approval v-bind:blogs="user.claims" v-bind:email="user.email" @add-message="addMessage"></blogs-for-approval>
+    <blogs-for-approval 
+    v-bind:blogs="user.claims" 
+    v-bind:email="user.email" 
+    @add-message="addMessage"></blogs-for-approval>
   </div>
   <div v-else>There are no blogs awaiting approval.</div>
   </section>
@@ -168,31 +165,103 @@ Vue.component('users-with-approvals', {
   methods: {
     addMessage(msg) {
       this.messages.push(msg)
-      // this.$emit('add-message', msg) 
     }
   }
 })
 
+Vue.component('failing-blog', {
+  props: ['blog'],
+  data () {
+    return {}
+  },
+  methods: {
+    deleteBlog(blog) {
+      this.$emit('delete-blog', blog)
+    },
+    suspendBlog(blog) {
+      this.$emit('suspend-blog', blog)
+    }
+  },
+  template: `
+  <div class="blog-list">
+  <div>
+    <br/>
+    <a v-bind:href="blog.url">{{ blog.url }}</a> | <a class="feed-link" v-bind:href="blog.feed">feed</a>
+  </div>
+  <button class="delete-button" @click.prevent="deleteBlog(blog)">Delete</button>
+  <button class="delete-button" @click.prevent="suspendBlog(blog)">Suspend</button>
+</div>
+  `
+})
 
+Vue.component('failing-blogs-list', {
+  data () {
+    return {
+      blogs: [],
+      messages: []
+    }
+  },
+  mounted () {
+    axios
+    .get('/api/v1/admin/failing-blogs')
+    .then( res => {
+      this.blogs = res.data
+    })
+  },
+  methods: {
+    addMessage(msg) {
+      this.messages.push(msg)
+    },
+    deleteBlog(blog) {
+      // TODO:
+      this.addMessage({class: 'flash-success', text: 'I am deleting!'})
+      console.log("I'm deleting " + blog.url)
+      console.log(`the reason for deleting is ${reason}`)
+    },
+    suspendBlog(blog) {
+      // TODO:
+      // emit up the chain?
+      this.addMessage({class: 'flash-error', text: 'I am suspending!'})
+      console.log("I'm suspending " + blog.idString)
+      console.log(`the reason for suspending is ${reason}`)
+    }
+  },
+  template: `
+  <section>
+    <h2>Failing feeds</h2>
+    <message-list v-bind:messages="messages"></message-list>
+    <section v-if="blogs" class="claimed-blogs">
+      <p>
+      These blog feeds are currently failing. 
+      You can either delete them completely, or suspend them pending further research or changes. 
+      Posts published whilst a blog is suspended will never be included, even if you lift the suspension later. 
+      </p>
+      <p>
+      Note that this may be a temporary glitch: always do your homework before deleting a blog.
+      </p>
+      <form v-for="blog in blogs" class="claimed-blogs">
+        <failing-blog v-bind:blog="blog"
+        @delete-blog="deleteBlog"
+        @suspend-blog="suspendBlog"></failing-blog>
+      </form>
+    </section>
+    <div v-else>You have no failing feeds to attend to.</div>
+  </section>
+  `
+})
 
 new Vue({
   el: '#main',
   data () {
     return {
       approvals: [],
-      messages: []
-    }
-  },
-  methods: {
-    addMessage(msg) {
-      this.messages.push(msg)
     }
   },
   mounted() {
     axios
     .get('/api/v1/admin/blogs-for-approval')
-    .then( response => {
-      this.approvals = response.data
+    .then( res => {
+      this.approvals = res.data
     })
     .catch( e => {
       console.log(e)

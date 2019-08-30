@@ -4,28 +4,11 @@
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
     <section id="main" class="main" >
-      <users-with-approvals v-bind:approvals="approvals" v-bind:messages="messages" @add-message="addMessage"></users-with-approvals>
-    <div class="failing-feeds">
-      <!-- TODO: -->
-      <h2>Failing feeds</h2>
-      {if failing}
-      <div class="flash-warning">You have failing feeds to attend to</div>
-      {else}
-      <div>You have no failing feeds to attend to.</div>
-      {/if}
-      
-      {if failing}
-      <p>These blog feeds are currently failing. Note that this may be a temporary glitch: always do your homework before deleting a blog from {appName}</p>
-      {for blog in failing}
-        <form action="/admin/deleteblog" method="post" class="blog-list">
-          <!-- TODO: these need to be deleted one by one so we can update each user before deleting the blog -->
-          <a href="{blog.feed}">{blog.url}</a>
-          <input type="hidden" name="id" value={blog.idString} class="admin-checkbox">
-          <input type="submit" id="deleteFailing" class="delete-button" value="Delete">
-        </form>
-      {/for}
-      {/if}
+      <users-with-approvals v-bind:approvals="approvals"></users-with-approvals>
+      <failing-blogs-list></failing-blogs-list>
+
       <div class="administrators">
         <h2>Administrators</h2>
         {if admins}
@@ -52,6 +35,7 @@
         </div>
       </div>
     </section>
+    <!-- express globals ("locals") -->
     <script type="text/javascript">
       var blogCategories = '{blogCategories}'.split(',');
       var legacy = Boolean.valueOf({legacy})
