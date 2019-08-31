@@ -285,7 +285,9 @@ Vue.component('failing-blogs-list', {
       .post('/api/v1/update/admin/suspend-blog', data)
       .then( res => {
         this.addMessage(res.data) // then add message
-        Vue.set(this.suspended, this.suspended.length, blog) // then add to the suspended list
+        if (res.data.class === 'flash-success') {
+          Vue.set(this.suspended, this.suspended.length, blog) // then add to the suspended list
+        }
       })
     }
   },
@@ -311,6 +313,7 @@ Vue.component('failing-blogs-list', {
     </section>
     <div v-else>You have no failing feeds to attend to.</div>
     <suspended-blogs v-bind:suspended="suspended"></suspended-blogs>
+    <suspend-blog @suspend-blog="suspendBlog"></suspend-blog>
   </section>
   `
 })
@@ -407,6 +410,48 @@ Vue.component('suspended-blogs', {
       @add-message="addMessage"
       @delete-blog="deleteBlog"
       @unsuspend-blog="unsuspendBlog"></suspended-blog>
+    </form>
+  </div>
+  `
+})
+
+Vue.component('suspend-blog', {
+  data () {
+    return {
+      messages: [],
+      url: null,
+      reason: null
+    }
+  },
+  methods: {
+    suspendBlog() {
+      if (!this.reason) {
+        this.messages.push({
+          class: 'flash-error',
+          text: `You must provide a reason for suspending this blog`
+        })
+      } else if (!this.url) {
+        this.messages.push({
+          class: 'flash-error',
+          text: `You must provide the URL of the blog to suspend!`
+        })
+      } else {
+      this.$emit('suspend-blog', {url: this.url}, this.reason)
+      this.url = null
+      this.reason = null
+      }
+    }
+  },
+  template: `
+  <div>
+    <h3>Suspend Blog</h3>
+    <message-list v-bind:messages="messages"></message-list>
+    <form class="claimed-blogs">
+      <label>URL of blog to suspend:</label><br/>
+      <input v-model="url" type="url"><br/>
+      <label>Reason for suspending:</label><br/>
+      <textarea v-model="reason" cols="40" rows="6" required></textarea><br/>
+      <button @click.prevent="suspendBlog">Suspend</button>
     </form>
   </div>
   `

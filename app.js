@@ -1470,8 +1470,11 @@ app.post('/api/v1/update/admin/suspend-blog', function(req, res) {
     })
   })
   .catch(e => {
-    debug.log(e)
-    res.json({class: 'flash-error', text: 'Error suspending blog'})
+    if (e.code === 'ERR_ASSERTION') {
+      res.json({class: 'flash-error', text: 'Blog is not in the database'})
+    } else {
+      res.json({class: 'flash-error', text: 'Error suspending blog'})
+    }
   })
 })
 
