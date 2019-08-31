@@ -2,9 +2,9 @@ Vue.component('message-list', {
   props: ['messages'],
   template: `
 <div v-if="messages" id="user-messages">
-  <ul v-for="msg in messages" class="blog-list">
-    <li v-bind:class="msg.class">{{ msg.text }}</li>
-  </ul>
+  <div v-for="msg in messages" class="blog-list">
+    <div v-bind:class="msg.class">{{ msg.text }}</div>
+  </div>
 </div>
   `,
   data() {
@@ -172,14 +172,39 @@ Vue.component('users-with-approvals', {
 Vue.component('failing-blog', {
   props: ['blog'],
   data () {
-    return {}
+    return {
+      editing: false,
+      reason: null,
+      messages: []
+    }
   },
   methods: {
-    deleteBlog(blog) {
-      this.$emit('delete-blog', blog)
+    editBlog() {
+      this.editing = true
     },
-    suspendBlog(blog) {
-      this.$emit('suspend-blog', blog)
+    deleteBlog(blog, reason) {
+      if (!reason) {
+        this.messages.push({
+          class: 'flash-error',
+          text: `You must provide a reason for deleting this blog`
+        })
+      } else {
+      this.editing = false
+      this.reason = null
+      this.$emit('delete-blog', blog, reason)
+      }
+    },
+    suspendBlog(blog, reason) {
+      if (!reason) {
+        this.messages.push({
+          class: 'flash-error',
+          text: `You must provide a reason for suspending this blog`
+        })
+      } else {
+      this.editing = false
+      this.reason = null
+      this.$emit('suspend-blog', blog, reason)
+      }
     }
   },
   template: `
@@ -188,8 +213,14 @@ Vue.component('failing-blog', {
     <br/>
     <a v-bind:href="blog.url">{{ blog.url }}</a> | <a class="feed-link" v-bind:href="blog.feed">feed</a>
   </div>
-  <button class="delete-button" @click.prevent="deleteBlog(blog)">Delete</button>
-  <button class="delete-button" @click.prevent="suspendBlog(blog)">Suspend</button>
+  <message-list v-bind:messages="messages"></message-list>
+  <div v-if="editing">
+  <label>Reason for suspending/deleting:</label><br/>
+  <textarea v-model="reason" cols="40" rows="6" required></textarea>
+    <button class="delete-button" @click.prevent="deleteBlog(blog, reason)">Delete</button>
+    <button class="delete-button" @click.prevent="suspendBlog(blog, reason)">Suspend</button>
+  </div>
+  <button v-else @click.prevent="editBlog">Delete or suspend</button>
 </div>
   `
 })
@@ -212,24 +243,30 @@ Vue.component('failing-blogs-list', {
     addMessage(msg) {
       this.messages.push(msg)
     },
-    deleteBlog(blog) {
+    deleteBlog(blog, reason) {
       // TODO:
       this.addMessage({class: 'flash-success', text: 'I am deleting!'})
       console.log("I'm deleting " + blog.url)
       console.log(`the reason for deleting is ${reason}`)
+      // delete blog from server
+      // then add message
+      // then remove from blogs list
     },
-    suspendBlog(blog) {
-      // TODO:
-      // emit up the chain?
-      this.addMessage({class: 'flash-error', text: 'I am suspending!'})
-      console.log("I'm suspending " + blog.idString)
-      console.log(`the reason for suspending is ${reason}`)
+    suspendBlog(blog, reason) {
+      // suspend blog on server
+      let data = blog
+      data.reason = reason
+      axios
+      .post('/api/v1/update/admin/suspend-blog', data)
+      .then( res => {
+        this.addMessage(res.data) // then add message
+        Vue.delete(this.blogs, this.blogs.indexOf(blog)) // then remove from blogs list
+      })
     }
   },
   template: `
   <section>
     <h2>Failing feeds</h2>
-    <message-list v-bind:messages="messages"></message-list>
     <section v-if="blogs" class="claimed-blogs">
       <p>
       These blog feeds are currently failing. 
@@ -240,7 +277,8 @@ Vue.component('failing-blogs-list', {
       Note that this may be a temporary glitch: always do your homework before deleting a blog.
       </p>
       <form v-for="blog in blogs" class="claimed-blogs">
-        <failing-blog v-bind:blog="blog"
+        <failing-blog 
+        v-bind:blog="blog"
         @delete-blog="deleteBlog"
         @suspend-blog="suspendBlog"></failing-blog>
       </form>

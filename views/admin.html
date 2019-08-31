@@ -1,6 +1,6 @@
 {>head}
   {>header}
-    <!-- vuejs prototyping -->
+    <!-- vuejs prototyping TODO: use local file -->
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
@@ -9,6 +9,11 @@
       <users-with-approvals v-bind:approvals="approvals"></users-with-approvals>
       <failing-blogs-list></failing-blogs-list>
 
+<!-- TODO: unsuspend suspended blogs -->
+
+<!-- TODO: suspend non-failing blogs -->
+
+<!-- TODO: admins -->
       <div class="administrators">
         <h2>Administrators</h2>
         {if admins}
@@ -35,6 +40,7 @@
         </div>
       </div>
     </section>
+
     <!-- express globals ("locals") -->
     <script type="text/javascript">
       var blogCategories = '{blogCategories}'.split(',');
