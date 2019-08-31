@@ -21,11 +21,11 @@ Work In Progress: **Definitely not production-ready yet!**
 
 ## Documentation
 
-1. [Installation](manual/installation.md)
-2. [Database structure](manual/database.md)  
-3. [Searching](manual/search.md)
-4. [User dashboard](manual/dashboard.md)
-5. [Admin dashboard](manual/admin.md)
+1. [Installation](docs/installation.md)
+2. [Database structure](docs/database.md)  
+3. [Searching](docs/search.md)
+4. [User dashboard](docs/dashboard.md)
+5. [Admin dashboard](docs/admin.md)
 
 ## License
 
