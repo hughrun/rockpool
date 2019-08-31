@@ -244,13 +244,15 @@ Vue.component('failing-blogs-list', {
       this.messages.push(msg)
     },
     deleteBlog(blog, reason) {
-      // TODO:
-      this.addMessage({class: 'flash-success', text: 'I am deleting!'})
-      console.log("I'm deleting " + blog.url)
-      console.log(`the reason for deleting is ${reason}`)
       // delete blog from server
-      // then add message
-      // then remove from blogs list
+      let data = blog
+      data.reason = reason
+      axios
+      .post('/api/v1/update/admin/delete-blog', data)
+      .then( res => {
+        this.addMessage(res.data) // then add message
+        Vue.delete(this.blogs, this.blogs.indexOf(blog)) // then remove from blogs list
+      })
     },
     suspendBlog(blog, reason) {
       // suspend blog on server
@@ -276,6 +278,7 @@ Vue.component('failing-blogs-list', {
       <p>
       Note that this may be a temporary glitch: always do your homework before deleting a blog.
       </p>
+      <message-list v-bind:messages="messages"></message-list>
       <form v-for="blog in blogs" class="claimed-blogs">
         <failing-blog 
         v-bind:blog="blog"
@@ -286,6 +289,80 @@ Vue.component('failing-blogs-list', {
     <div v-else>You have no failing feeds to attend to.</div>
   </section>
   `
+})
+
+// TODO:
+Vue.component('suspended-blogs', {
+  data () {
+    return {
+      blogs: []
+    }
+  },
+  mounted () {
+
+  },
+  template: `
+  
+  `
+})
+
+Vue.component('admin-info', {
+  props: ['admin'],
+  data () {
+    return {
+      editing: false
+    }
+  },
+  methods: {
+    editAdmin() {
+      this.editing = true
+    },
+    removeAdmin(admin) {
+      this.$emit('remove-admin', admin)
+    }
+  },
+  template: `
+  <div>
+    {{ admin.email }}
+    <button v-if="editing" @click.prevent="removeAdmin(admin)">Confirm removal</button>
+    <button v-else @click.prevent="editAdmin">Remove as admin</button>
+  </div>
+  `
+})
+
+Vue.component('admins-list', {
+  data () {
+    return {
+      admins: []
+    }
+  },
+  mounted () {
+    axios
+    .get('/api/v1/admin/admins')
+    .then( res => {
+      this.admins = res.data
+    })
+  },
+  methods: {
+    removeAdmin(admin) {
+      Vue.delete(this.admins, this.admins.indexOf(admin))
+      console.log(`removing ${admin.email} by sending them as "user"`)
+    }
+  },
+  template: `
+  <section>
+    <h2>Administrators</h2>
+    <div v-for="admin in admins" class="claimed-blogs">
+      <admin-info 
+      v-bind:admin="admin"
+      @remove-admin="removeAdmin"></admin-info>
+    </div>
+  </section>
+  `
+})
+
+Vue.component('make-admin', {
+
 })
 
 new Vue({
