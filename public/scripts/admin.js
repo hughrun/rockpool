@@ -333,6 +333,7 @@ Vue.component('admin-info', {
 Vue.component('admins-list', {
   data () {
     return {
+      messages: [],
       admins: []
     }
   },
@@ -345,24 +346,72 @@ Vue.component('admins-list', {
   },
   methods: {
     removeAdmin(admin) {
-      Vue.delete(this.admins, this.admins.indexOf(admin))
-      console.log(`removing ${admin.email} by sending them as "user"`)
+      axios
+      .post('/api/v1/update/admin/remove-admin', {user: admin.email})
+      .then( res => {
+        this.messages.push(res.data)
+        if (res.data.class='flash-success') {
+          Vue.delete(this.admins, this.admins.indexOf(admin))
+        }
+      })
+    },
+    addAdmin(admin) {
+      axios
+      .post('/api/v1/update/admin/make-admin', {user: admin.email})
+      .then( res => {
+        this.messages.push(res.data)
+        if (res.data.class='flash-success') {
+          Vue.set(this.admins, this.admins.length, admin)
+        }
+      })
     }
   },
   template: `
-  <section>
-    <h2>Administrators</h2>
-    <div v-for="admin in admins" class="claimed-blogs">
-      <admin-info 
-      v-bind:admin="admin"
-      @remove-admin="removeAdmin"></admin-info>
-    </div>
-  </section>
-  `
+    <section>
+      <h2>Administrators</h2>
+      <message-list v-bind:messages="messages"></message-list>
+      <div v-if="admins.length">
+        <h3>Remove admin rights</h3>
+        <div v-for="admin in admins" class="claimed-blogs">
+          <admin-info 
+          v-bind:admin="admin"
+          @remove-admin="removeAdmin"></admin-info>
+        </div>
+      </div>
+      <div v-else>
+        <p><strong>You are currently the only administrator.</strong></p> 
+        <p>You should add someone else in case you get hit by a bus.</p>
+      </div>
+      <make-admin @add-admin="addAdmin"></make-admin>
+    </section>
+    `
 })
 
 Vue.component('make-admin', {
-
+  data () {
+    return {
+      user: []
+    }
+  },
+  methods: {
+    assignAdmin(user) {
+      //TODO: 
+      console.log(`${user} is now admin`)
+      this.$emit('add-admin', {email: user})// then add to user array in parent
+      this.user = null // clear form
+    }
+  },
+  template: `
+  <div class="claimed-blogs">
+    <h3>Assign admin rights</h3>
+    <p>Only make trusted users an administrator - they will have the power to remove your own admin rights!</p>
+    <form>
+      <label class="form-label" for="user">User email:</label>
+      <input v-model="user" type="email">
+      <button class="add-button" @click.prevent="assignAdmin(user)">Make user admin</button>
+    </form>
+  </div>
+  `
 })
 
 new Vue({
