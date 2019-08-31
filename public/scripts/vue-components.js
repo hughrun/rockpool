@@ -115,10 +115,9 @@ var userBlogs =  new Vue({
       axios.post('api/v1/update/user/delete-blog', payload)
       .then( response => {
         var msg = response.data.msg || response.data.error
-        // this.editing = false
         this.addMessage(msg)
         blog.editing = false
-        if (response.data.blogs) { // TODO: see addBlog below for a better way to do this
+        if (response.data.blogs) {
           this.blogs = response.data.blogs
           Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
         }
