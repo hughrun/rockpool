@@ -323,6 +323,26 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   approved: true,
                   announced: true,
                   failing: true
+                },
+                {
+                  _id: ObjectId("5d6a003cd6e95e2d3bd1a6a2"),
+                  url: 'https://a.suspended.blog',
+                  feed: 'https://a.suspended.blog/feed',
+                  category: 'spam',
+                  approved: true,
+                  announced: true,
+                  failing: false,
+                  suspended: true
+                },
+                {
+                  _id: ObjectId("5d6a003cd6e95e2d3bd1a6a3"),
+                  url: 'https://another.suspended.blog',
+                  feed: 'https://another.suspended.blog/feed',
+                  category: 'spam',
+                  approved: true,
+                  announced: true,
+                  failing: true,
+                  suspended: true
                 }
               ]
             )
@@ -638,7 +658,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 .expect(200)
                 .then( res => {
                   assert(Array.isArray(res.body))
-                  assert(res.body.length === 1)
+                  assert(res.body.length === 2)
                   done()
                 })
                 .catch(e => {
@@ -674,6 +694,51 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 })
                 .catch(e => {
                   done(e)
+                })
+              })
+            })
+            describe('/api/v1/admin/suspended-blogs', function() {
+              it('should return array of suspended blogs', function(done) {
+                agent
+                .get('/api/v1/admin/suspended-blogs')
+                .expect(200)
+                .then( res => {
+                  assert(Array.isArray(res.body))
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+              it('should return suspended blogs', function(done) {
+                agent
+                .get('/api/v1/admin/suspended-blogs')
+                .expect(200)
+                .then( res => {
+                  let ids = res.body.map( x => {
+                    return x.idString
+                  })
+                  assert(ids.includes('5d6a003cd6e95e2d3bd1a6a2'))
+                  assert(ids.includes('5d6a003cd6e95e2d3bd1a6a3'))
+                  done()
+                })
+                .catch( err => {
+                  done(err)
+                })
+              })
+              it('should not return blogs that are not suspended', function(done) {
+                agent
+                .get('/api/v1/admin/suspended-blogs')
+                .expect(200)
+                .then( res => {
+                  let ids = res.body.map( x => {
+                    return x.idString
+                  })
+                  assert.strictEqual(ids.includes('e2280a977d8ccd54ce133c7f'), false)
+                  done()
+                })
+                .catch( err => {
+                  done(err)
                 })
               })
             })

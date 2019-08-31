@@ -1347,6 +1347,26 @@ app.get('/api/v1/admin/admins', function(req, res) {
   })
 })
 
+app.get('/api/v1/admin/suspended-blogs', function(req, res) {
+  const args = req.body
+  args.query = {suspended: true}
+  db.getBlogs(args)
+  .then( args => {
+    let data = args.blogs.map( blog => {
+      return {
+        url: blog.url,
+        feed: blog.feed,
+        idString: blog.idString
+      }
+    })
+    res.json(data)
+  })
+  .catch(e => {
+    debug(e)
+    res.json({error: e})
+  })
+})
+
 app.get('/api/v1/admin/reported-blogs', function(req, res) {
   // TODO: for future version - report a dodgy blog somehow
   res.sendStatus(404)

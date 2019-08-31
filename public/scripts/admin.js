@@ -137,11 +137,22 @@ Vue.component('blogs-for-approval', {
 })
 
 Vue.component('users-with-approvals', {
-  props: ['approvals'],
+  // props: ['approvals'],
+  mounted() {
+    axios
+    .get('/api/v1/admin/blogs-for-approval')
+    .then( res => {
+      this.approvals = res.data
+    })
+    .catch( e => {
+      console.log(e)
+    })
+  },
   data() {
     return {
+      messages: [],
       legacy: legacy,
-      messages: []
+      approvals: null
     }
   },
   template: `
@@ -228,15 +239,22 @@ Vue.component('failing-blog', {
 Vue.component('failing-blogs-list', {
   data () {
     return {
-      blogs: [],
-      messages: []
+      messages: [],
+      failing: [],
+      suspended: []
     }
   },
   mounted () {
     axios
     .get('/api/v1/admin/failing-blogs')
     .then( res => {
-      this.blogs = res.data
+      this.failing = res.data
+    })
+
+    axios
+    .get('/api/v1/admin/suspended-blogs')
+    .then( res => {
+      this.suspended = res.data
     })
   },
   methods: {
@@ -251,7 +269,12 @@ Vue.component('failing-blogs-list', {
       .post('/api/v1/update/admin/delete-blog', data)
       .then( res => {
         this.addMessage(res.data) // then add message
-        Vue.delete(this.blogs, this.blogs.indexOf(blog)) // then remove from blogs list
+        if (res.data.class === 'flash-success') {
+          Vue.delete(this.failing, this.failing.indexOf(blog)) // then remove from blogs list
+        }
+      })
+      .catch(err => {
+        this.addMessage({class: 'flash-error', text: err.message})
       })
     },
     suspendBlog(blog, reason) {
@@ -262,14 +285,14 @@ Vue.component('failing-blogs-list', {
       .post('/api/v1/update/admin/suspend-blog', data)
       .then( res => {
         this.addMessage(res.data) // then add message
-        Vue.delete(this.blogs, this.blogs.indexOf(blog)) // then remove from blogs list
+        Vue.set(this.suspended, this.suspended.length, blog) // then add to the suspended list
       })
     }
   },
   template: `
   <section>
     <h2>Failing feeds</h2>
-    <section v-if="blogs" class="claimed-blogs">
+    <section v-if="failing" class="claimed-blogs">
       <p>
       These blog feeds are currently failing. 
       You can either delete them completely, or suspend them pending further research or changes. 
@@ -279,7 +302,7 @@ Vue.component('failing-blogs-list', {
       Note that this may be a temporary glitch: always do your homework before deleting a blog.
       </p>
       <message-list v-bind:messages="messages"></message-list>
-      <form v-for="blog in blogs" class="claimed-blogs">
+      <form v-for="blog in failing" class="claimed-blogs">
         <failing-blog 
         v-bind:blog="blog"
         @delete-blog="deleteBlog"
@@ -287,22 +310,105 @@ Vue.component('failing-blogs-list', {
       </form>
     </section>
     <div v-else>You have no failing feeds to attend to.</div>
+    <suspended-blogs v-bind:suspended="suspended"></suspended-blogs>
   </section>
   `
 })
 
-// TODO:
-Vue.component('suspended-blogs', {
+Vue.component('suspended-blog', {
+  props: ['blog'],
   data () {
     return {
-      blogs: []
+      editing: false,
+      reason: null
     }
   },
-  mounted () {
-
+  methods: {
+    editBlog() {
+      this.editing = true
+    },
+    deleteBlog(blog, reason) {
+      if (!reason) {
+        this.$emit('add-message', {
+          class: 'flash-error',
+          text: `You must provide a reason for deleting this blog`
+        })
+      } else {
+      this.editing = false
+      this.reason = null
+      this.$emit('delete-blog', blog, reason)
+      }
+    },
+    unsuspendBlog(blog) {
+      this.$emit('unsuspend-blog', blog)
+    }
   },
   template: `
-  
+  <div class="blog-list">
+  <div>
+    <br/>
+    <a v-bind:href="blog.url">{{ blog.url }}</a> | <a class="feed-link" v-bind:href="blog.feed">feed</a>
+  </div>
+  <div v-if="editing">
+  <label>Reason for suspending/deleting:</label><br/>
+  <textarea v-model="reason" cols="40" rows="6" required></textarea>
+    <button class="delete-button" @click.prevent="deleteBlog(blog, reason)">Confirm Deletion</button>
+  </div>
+  <button v-else @click.prevent="editBlog">Delete</button>
+  <button class="delete-button" @click.prevent="unsuspendBlog(blog)">Lift suspension</button>
+</div>
+  `
+})
+Vue.component('suspended-blogs', {
+  props: ['suspended'],
+  data () {
+    return {
+      messages: []
+    }
+  },
+  methods: {
+    addMessage(msg) {
+      this.messages.push(msg)
+    },
+    deleteBlog(blog,reason) {
+      axios
+      .post('/api/v1/update/admin/delete-blog', {url: blog.url}) // delete blog
+      .then( res => {
+        this.addMessage(res.data) // then add message
+        if (res.data.class === 'flash-success') {
+          Vue.delete(this.suspended, this.suspended.indexOf(blog)) // then remove from blogs list
+        }
+      })
+      .catch(err => {
+        this.addMessage({class: 'flash-error', text: err.message})
+      })
+    },
+    unsuspendBlog(blog) {
+      axios
+      .post('/api/v1/update/admin/unsuspend-blog', {url: blog.url}) // suspend blog
+      .then( res => {
+        this.addMessage(res.data) // then add message
+        if (res.data.class === 'flash-success') {
+          Vue.delete(this.suspended, this.suspended.indexOf(blog)) // then remove from blogs list
+        }
+      })
+      .catch(err => {
+        this.addMessage({class: 'flash-error', text: err.message})
+      })
+    }
+  },
+  template: `
+  <div>
+    <h3>Suspended Blogs</h3>
+    <message-list v-bind:messages="messages"></message-list>
+    <form v-for="blog in suspended" class="claimed-blogs">
+      <suspended-blog 
+      v-bind:blog="blog"
+      @add-message="addMessage"
+      @delete-blog="deleteBlog"
+      @unsuspend-blog="unsuspendBlog"></suspended-blog>
+    </form>
+  </div>
   `
 })
 
@@ -350,7 +456,7 @@ Vue.component('admins-list', {
       .post('/api/v1/update/admin/remove-admin', {user: admin.email})
       .then( res => {
         this.messages.push(res.data)
-        if (res.data.class='flash-success') {
+        if (res.data.class === 'flash-success') {
           Vue.delete(this.admins, this.admins.indexOf(admin))
         }
       })
@@ -360,7 +466,7 @@ Vue.component('admins-list', {
       .post('/api/v1/update/admin/make-admin', {user: admin.email})
       .then( res => {
         this.messages.push(res.data)
-        if (res.data.class='flash-success') {
+        if (res.data.class === 'flash-success') {
           Vue.set(this.admins, this.admins.length, admin)
         }
       })
@@ -395,8 +501,6 @@ Vue.component('make-admin', {
   },
   methods: {
     assignAdmin(user) {
-      //TODO: 
-      console.log(`${user} is now admin`)
       this.$emit('add-admin', {email: user})// then add to user array in parent
       this.user = null // clear form
     }
@@ -417,18 +521,6 @@ Vue.component('make-admin', {
 new Vue({
   el: '#main',
   data () {
-    return {
-      approvals: [],
-    }
-  },
-  mounted() {
-    axios
-    .get('/api/v1/admin/blogs-for-approval')
-    .then( res => {
-      this.approvals = res.data
-    })
-    .catch( e => {
-      console.log(e)
-    })
+    return {}
   }
 })
