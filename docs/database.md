@@ -31,6 +31,8 @@ A **blog** is any web resource with a valid RSS or Atom feed. The generally expe
 | approved | `Boolean` - indicates whether the blog has been approved by an administrator |
 | announced | `Boolean` - indicates whether the blog has been 'announced' on Twitter and/or Mastodon |
 | failing | `Boolean` - indicates whether errors occurred on the last attempt to read the blog's feed |
+| suspended | `Boolean` - indicates whether the blog is currently suspended |
+| suspensionEndDate | `Datetime` - if the blog has been suspended and then unsuspended, this is the time at which it was unsuspended |
 
 ## rp_articles
 
