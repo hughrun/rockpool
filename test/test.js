@@ -4,11 +4,17 @@ const app = require('../app.js') // require Rockpool app
 const queries = require('../lib/queries.js')
 // NOTE: app will hang mocha because there doesn't seem to be any way to close the connection
 // workaround for now is to run with the --exit flag but this is obviously not ideal
-const request = supertest(app) // logged out requests
-const agent = supertest.agent(app) // logged in as admin
-const nonAdminAgent = supertest.agent(app) // logged in as non-admin
+
+const request = supertest(app) // for testing requests by 'logged out' users
+const agent = supertest.agent(app) // when logged in as admin
+const nonAdminAgent = supertest.agent(app) // when logged in, but as non-admin
 const nock = require('nock') // external website mocking
+
+// nodejs inbuilt modules
 const assert = require('assert')
+const { exec } = require('child_process');
+
+// for logging in without sending emails
 const clipboardy = require('clipboardy')
 
 // settings
@@ -1485,9 +1491,20 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         })
       })
       describe('checkfeeds()', function() {
+        before('create RSS file with appropriate dates', function(done) {
+          exec('node ./test/makeTestRssFile.js', (error, stdout, stderr) => {
+            if (error) {
+              done(error)
+            } else if (stderr) {
+              done(stderr)
+            } else {
+              done()
+            }
+          }) // script to create file with dates relative to now
+        })
         it('should run every X minutes in line with settings[env].minutes_between_checking_feeds')
         it('should eventually resolve')
-        it('should not duplicate blogs with the same URL or GUID')
+        it('should not duplicate posts with the same URL or GUID')
         it('should add new articles if there are new (i.e. not in the DB) articles')
         it('should skip articles with exclude tags')
         it('should skip articles published prior to suspensionEndDate') 
