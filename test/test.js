@@ -855,7 +855,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
             it('should return an error message if the blog is already registered', function(done) {
               // mock route
-              const regRoute = nock('https://bobs-blog.com')
+              nock('https://bobs-blog.com')
               .get('/')
               .replyWithFile(200, __dirname + '/sites/bobs-blog.com.html')
               agent
@@ -872,7 +872,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
             it('should add the blog to the DB with URL, feed, approved: false and announced:false', function(done) {
               // mock route
-              const regRoute = nock('https://www.bob.craps.on')
+              nock('https://www.bob.craps.on')
               .get('/')
               .replyWithFile(200, __dirname + '/sites/www.bob.craps.on.html')
               // NOTE: this is actually Alice registering a Bob's blog as hers!
@@ -1516,17 +1516,42 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       })
       before('set up mocks for blog feeds before resting them', function(done) {
         // TODO:
+
+        // mock routes
+
+        nock('https://a.failing.blog')
+        .get('/feed')
+        .reply(404)
+
+        nock('https://legacy.blog')
+        .get('/feed')
+        .replyWithFile(200, __dirname + '/sites/testrss.xml')
+
+        nock('https://another.legacy.blog')
+        .get('/feed')
+        .replyWithFile(200, __dirname + '/sites/testrss.xml')
+
+        nock('https://bobs-blog.com')
+        .get('/atom')
+        .replyWithFile(200, __dirname + '/sites/bob.xml')
+
+        nock('https://www.bob.craps.on')
+        .get('/bob.xml')
+        .replyWithFile(200, __dirname + '/sites/testrss.xml')
+
+        
         done()
       })
       it('should run every X minutes in line with settings[env].minutes_between_checking_feeds')
       it('should eventually resolve', function(done) {
-        console.log(typeof feeds.checkfeeds)
-        feeds.checkfeeds()
+
+        feeds.checkFeeds()
         .then( res => {
-          assert.ok(res, done)
+          assert.strictEqual(res, true)
+          done()
         })
         .catch( err => {
-          reject(err)
+          done(err)
         })
       })
       it('should not duplicate posts with the same URL or GUID')
