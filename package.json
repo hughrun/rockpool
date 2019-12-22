@@ -15,8 +15,7 @@
     "blogs",
     "twitter",
     "mastodon",
-    "express",
-    "nodejs"
+    "express"
   ],
   "repository": {
     "type": "git",
@@ -35,7 +34,7 @@
     "express-flash": "0.0.2",
     "express-session": "^1.16.1",
     "express-validator": "^5.3.1",
-    "feedparser-promised": "^2.0.0",
+    "feedparser-promised": "^2.0.1",
     "moment": "^2.24.0",
     "mongodb": "^3.2.6",
     "passwordless": "^1.1.3",
