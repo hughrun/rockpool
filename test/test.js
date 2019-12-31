@@ -282,6 +282,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
         assert.strictEqual(null, err)
         const db = client.db(dbName)
+
+        let now = new Date()
+        let lastWeek = new Date(now - 6.048e+8)
         const insertUsers = function(db, callback) {
           db.collection('rp_blogs').insertMany(
             [
@@ -307,7 +310,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 feed: 'https://bobs-blog.com/atom',
                 category: 'cats',
                 approved: false,
-                announced: false
+                announced: false,
+                suspensionEndDate: lastWeek // one week ago
               },
               {
                 _id: ObjectId('5d592f2ed6e95e2d3bd1a69b'),
@@ -322,6 +326,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 url: 'https://legacy.blog',
                 feed: 'https://legacy.blog/feed',
                 category: 'podcasting',
+                twHandle: '@rockpool',
                 approved: true,
                 announced: true
               },
@@ -447,7 +452,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
 
       })
       describe('/user/pocket-redirect', function() {
-        // TODO: mock this with nock?
+        // TODO: mock this with nock
         it('should add pocket value to user as object with username and token values')
       })
     })
@@ -1503,8 +1508,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       })
     })
     describe('checkfeeds()', function() {
-      before('create RSS file with appropriate dates', function(done) {
-        exec('node ./test/makeTestRssFile.js', (error, stdout, stderr) => {
+      before('create Bob RSS files with appropriate dates', function(done) {
+        exec('node ./test/makeBobRssFile.js', (error, stdout, stderr) => {
           if (error) {
             done(error)
           } else if (stderr) {
@@ -1512,39 +1517,124 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           } else {
             done()
           }
-        }) // script to create file with dates relative to now
+        }) // script to create RSS file with dates relative to now
+        before('create Legacy RSS files with appropriate dates', function(done) {
+          exec('node ./test/makeLegacyOneRssFile.js', (error, stdout, stderr) => {
+            if (error) {
+              done(error)
+            } else if (stderr) {
+              done(stderr)
+            } else {
+              done()
+            }
+          }) // script to create RSS file with dates relative to now
+        })
+        before('create Legacy RSS files with appropriate dates', function(done) {
+          exec('node ./test/makeLegacyTwoRssFile.js', (error, stdout, stderr) => {
+            if (error) {
+              done(error)
+            } else if (stderr) {
+              done(stderr)
+            } else {
+              done()
+            }
+          }) // script to create RSS file with dates relative to now
+        })
       })
       before('set up mocks for blog feeds before resting them', function(done) {
-        // TODO:
-
-        // mock routes
 
         nock('https://a.failing.blog')
         .get('/feed')
         .reply(404)
-
+        // TODO: adjust these feeds: there should be 3 different ones with different dates etc
         nock('https://legacy.blog')
         .get('/feed')
-        .replyWithFile(200, __dirname + '/sites/testrss.xml')
+        .replyWithFile(200, __dirname + '/sites/LegacyOneRss.xml')
 
         nock('https://another.legacy.blog')
         .get('/feed')
-        .replyWithFile(200, __dirname + '/sites/testrss.xml')
+        .replyWithFile(200, __dirname + '/sites/legacyTwoRss.xml')
 
         nock('https://bobs-blog.com')
         .get('/atom')
-        .replyWithFile(200, __dirname + '/sites/bob.xml')
-
-        nock('https://www.bob.craps.on')
-        .get('/bob.xml')
-        .replyWithFile(200, __dirname + '/sites/testrss.xml')
-
+        .replyWithFile(200, __dirname + '/sites/bobRss.xml')
         
         done()
+      }),
+      before('change failing blog to failing:false prior to test', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err)
+          const db = client.db(dbName)
+          const updateBlog = function(db, callback) {
+            db.collection('rp_blogs').updateOne(
+                {
+                  url: 'https://a.failing.blog',
+                },
+                {
+                  $set: {
+                    failing: false
+                  }
+                }
+            )
+            .then( doc => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          }
+          updateBlog(db, function() {
+            client.close()
+          })
+        })
+      }),
+      before('add "duplicate" items to DB for guid/id matching', function(done) {
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err)
+          const db = client.db(dbName)
+          const insertArticles = function(db, callback) {
+            db.collection('rp_articles').insertMany(
+              [
+                {
+                  _id: ObjectId("5e0982862de11e851b1e6f51"),
+                  link: 'https://another.legacy.blog/3',
+                  guid: 'https://another.legacy.blog/3',
+                  author: 'Ella',
+                  blogLink: 'https://another.legacy.blog',
+                  date: Date("2019-11-06T17:00:16Z"),
+                  title: 'Trumpets!!!',
+                  tags: 'Jazz',
+                  blogTitle: "I don't actually know much about Jazz",
+                  blog_id: ObjectId("5e0986d32de11e851b1e6f52")
+                },
+                {
+                  _id: ObjectId("5e0982862de11e851b1e6f53"),
+                  link: 'https://legacy.blog/old-url',
+                  guid: 'ABCD-1234',
+                  author: 'Alice',
+                  blogLink: 'https://legacy.blog',
+                  date: Date("2019-10-09T17:01:17Z"),
+                  title: 'Yesterday, all my problems seemed to far away',
+                  tags: '',
+                  blogTitle: "Legacy Blog One",
+                  blog_id: ObjectId("5e0986d32de11e851b1e6f54")
+                }
+              ]
+            )
+            .then( doc => {
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          }
+          insertArticles(db, function() {
+            client.close()
+          })
+        })
       })
       it('should run every X minutes in line with settings[env].minutes_between_checking_feeds')
       it('should eventually resolve', function(done) {
-
         feeds.checkFeeds()
         .then( res => {
           assert.strictEqual(res, true)
@@ -1554,13 +1644,205 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           done(err)
         })
       })
-      it('should not duplicate posts with the same URL or GUID')
-      it('should add new articles if they are new (i.e. not in the DB) articles')
-      it('should skip articles with exclude tags')
-      it('should skip articles published prior to suspensionEndDate') 
+      it('should NOT duplicate (i.e. add again) posts with the same url', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_articles')
+              posts.find({link: 'https://another.legacy.blog/3'}).toArray()
+              .then( docs => {
+                assert(docs.length == 1)
+                done()
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
+      it('should NOT duplicate (i.e. add again) posts with the same guid', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_articles')
+              posts.find({guid: 'ABCD-1234'}).toArray()
+              .then( docs => {
+                assert(docs.length == 1)
+                done()
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
+      it('should add new articles if they are not in the database', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_articles')
+              posts.find({guid: 'https://www.bob.craps.on/4'}).toArray()
+              .then( docs => {
+                assert(docs.length == 1)
+                done()
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
+      it('should assign values for author, blog_id, blogLink, blogTitle, date, guid, link, tags, and title', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_articles')
+              posts.findOne({guid: 'https://www.bob.craps.on/4'})
+              .then( doc => {
+                assert.ok(doc)
+                assert.ok(doc.author)
+                assert.ok(doc.blog_id)
+                assert.ok(doc.blogLink)
+                assert.ok(doc.blogTitle)
+                assert.ok(doc.date)
+                assert.ok(doc.guid)
+                assert.ok(doc.link)
+                assert.ok(doc.tags)
+                assert.ok(doc.title)
+                done()
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
+      it('should NOT add articles that have exclude tags', function(done) {
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_articles')
+              posts.findOne({guid: 'https://another.legacy.blog/2'})
+              .then( doc => {
+                assert.equal(doc, null)
+                done()
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
+      it('should NOT add articles published prior to suspensionEndDate', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_articles')
+              posts.findOne({guid: 'https://www.bob.craps.on/2'})
+              .then( doc => {
+                assert.equal(doc, null)
+                done()
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
       // this (above) accounts for multiple suspensions because it progressively becomes more recent
-      it('should queue announcements for added articles')
-      it('should not queue announcements for added articles that are older than 48 hours')
+      it('should queue announcements for articles after they are added', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_announcements')
+              posts.countDocuments()
+              .then( doc => {
+                assert.equal(doc > 0, true)
+                done()
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
+      it('should NOT queue announcements for added articles that are older than 48 hours', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_announcements')
+              posts.countDocuments()
+              .then( doc => {
+                assert.equal(doc < 7, true)
+                done()
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
+      it('should set failing to true if blog 404s', function(done) {
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_blogs')
+              posts.findOne({url: 'https://a.failing.blog'})
+              .then( doc => {
+                assert.equal(doc.failing, true)
+                done()
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
     })
     describe('queueAnnouncement()', function() {
       it('should queue tweets if settings[env].useTwitter is true')
@@ -1595,18 +1877,28 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
     })
   })
   after('All tests completed', function(done) {
+
     function wipeDb() {
-      MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
-        assert.strictEqual(null, err);
-        const db = client.db(dbName);
-          const dropDb = function(db, callback) {
-            db.dropDatabase()
-          }
-          dropDb(db, function() {
-            client.close()
-            return
-          })
+      return new Promise(function (resolve, reject) {
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const dropDb = function(db, callback) {
+              db.dropDatabase()
+              .then( () => {
+                callback()
+                resolve() // dropped
+              })
+              .catch(e => {
+                console.error(e)
+              })
+            }
+            return dropDb(db, function() {
+              client.close()
+            })
+        })
       })
+
     }
 
     agent.get('/logout') // logout to clear the cookie
@@ -1616,7 +1908,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
     })
     
       // close all mongo connections if I ever work out how to tear it down in a way that actually works...
-      // TODO: is there an open Mongo connection in the app somewhere?
+      // TODO: is there an open Mongo connection in the app somewhere? (possibly previously above in 'after')
       // TODO: check whether MongoStore can/needs to be closed.
     })
   })

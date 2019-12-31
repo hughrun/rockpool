@@ -41,16 +41,17 @@ An **article** is a standalone _item_ from an RSS/Atom feed, with its own URL. G
 | field | description   |
 | ---:  |   :---        |
 | _id   | `ObjectId` - assigned automatically by Mongo   |
-| link  | `String` - a valid URL pointing to the article. This is taken from the RSS/Atom feed |
 | author  | `String` -  Author of the article. This is taken from the RSS/Atom feed |
-| blogLink  | `String` - URL of the publication this article is a part of. This is taken from the RSS/Atom feed |
-| date  | `Datetime` - Publication date stored as a UTC datetime. This is taken from the RSS/Atom feed |
-| title  | `String` - Title of the article. This is taken from the RSS/Atom feed |
-| tweeted  | `Object` - An object containing values for `date` (the last time a tweet was posted about this article, stored as a UTC `Datetime`), and `times` (an `Integer` listing how many times the article has been tweeted) |
-| tooted | `Object` - An object containing values for `date` (the last time a toot was posted about this article, stored as a UTC `Datetime`), and `times` (an `Integer` listing how many times the article has been tooted) |
-| tags  | `Array` - Metadata tags associated with this article, as an array of strings. This is taken from the _category_ element of the RSS/Atom feed |
-| blogTitle  | `String` - The title of the publication this article is a part of. This is taken from the RSS/Atom feed |
 | blog_id  | `ObjectId` - The `_id` of the parent **blog**. This is recorded so that articles can still be linked back to the parent blog regardless of whether URLs change |
+| blogLink  | `String` - URL of the publication this article is a part of. This is taken from the RSS/Atom feed |
+| blogTitle  | `String` - The title of the publication this article is a part of. This is taken from the RSS/Atom feed |
+| date  | `Datetime` - Publication date stored as a UTC datetime. This is taken from the RSS/Atom feed |
+| guid | `String` - the `guid` (RSS) or `id` (Atom) of the article, as supplied by `feedparser` |
+| link  | `String` - a valid URL pointing to the article. This is taken from the RSS/Atom feed |
+| tags  | `Array` - Metadata tags associated with this article, as an array of strings. This is taken from the _category_ element of the RSS/Atom feed |
+| title  | `String` - Title of the article. This is taken from the RSS/Atom feed |
+| tooted | `Object` - An object containing values for `date` (the last time a toot was posted about this article, stored as a UTC `Datetime`), and `times` (an `Integer` listing how many times the article has been tooted) |
+| tweeted  | `Object` - An object containing values for `date` (the last time a tweet was posted about this article, stored as a UTC `Datetime`), and `times` (an `Integer` listing how many times the article has been tweeted) |
 
 ## rp_tags
 
@@ -62,10 +63,21 @@ A **tag** is a metadata string indicating a topic associated with one or more ar
 | tag  | `String` - The tag text, e.g. "museums" |
 | total  | `Integer` - The total number of articles using this tag |
 
+## rp_announcements
+
+Announcements are queued for new blog posts and blogs newly added to the database. This collection is then queried periodically and the appropriate action taking depending on the type of announcement that is queued (currently types available are `toot` and `tweet`).
+
+| field | description   |
+| ---:  |   :---        |
+| _id   | `ObjectId` - assigned automatically by Mongo   |
+| scheduled | `Datetime` - when it was added to the announcements collection |
+| type  | `enum` - must be one of the values in `['tweet', 'toot']` |
+| message | `String` - the text of the announcement |
+
 ---
 [Home](/README.md)  
 [Database structure](database.md)  
 [Installation](installation.md)  
 [Search](search.md)  
 [User dashboard](dashboard.md)  
-[Admin dashboard](admin.md)  
+[Admin dashboard](admin.md)

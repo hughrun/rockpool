@@ -5,4 +5,7 @@ public/assets/*.svg
 public/assets/*.svg_old
 public/assets/fonts/*
 !public/assets/**/.gitkeep
+test/sites/bobRss.xml
+test/sites/LegacyOneRss.xml
+test/sites/LegacyTwoRss.xml
 *.bak

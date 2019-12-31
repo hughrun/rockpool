@@ -22,6 +22,7 @@ const db = require('./lib/queries.js') // local database queries module
 const { updateUserContacts, updateUserBlogs, unsubscribeFromPocket, updateUserPermission } = require('./lib/users.js') // local database updates module
 const { approveBlog, deleteBlog, registerBlog, suspendBlog } = require('./lib/blogs.js') // local database updates module
 const { authorisePocket, finalisePocketAuthentication, sendEmail } = require('./lib/utilities.js') // local pocket functions
+const feeds = require('./lib/feeds.js')
 
 // managing users
 const session = require('express-session') // sessions so people can log in
@@ -37,7 +38,7 @@ const { body, validationResult } = require('express-validator/check') // validat
 const { sanitizeBody } = require('express-validator/filter') // sanitise TODO: this is never called
 
 // other stuff
-const flash = require('express-flash') // flash messages
+const flash = require('express-flash') // flash messages FIXME: should not need this any more
 const feedfinder = require('@hughrun/feedfinder') // get feeds from site URLs
 
 /*  ######################################
@@ -111,33 +112,7 @@ app.use(session(sess)) // use sessions
 app.use(passwordless.sessionSupport()) // makes session persistent
 app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
-app.use(flash()) // use flash messages
-
-// Middleware to check that ObjectId(req.body.user) is the user who is logged in
-// TODO: this shouldn't be needed if we just use email instead of id in most instances
-function userIsThisUser (req, res, next) {
-  const thisUserEmail = req.session.passwordless
-  const claimedUserIdString = req.body.user || req.user
-  const args = req.body
-  args.query = {"email" : thisUserEmail}
-  db.getUsers(args)
-    .then( data => {
-      if (data.users.length === 1 && data.users[0]._id.equals(ObjectId(claimedUserIdString))) {
-        // user is logged in and acting on self
-        next()
-      } else {
-        // logged in user and user being updated don't match
-        res.status(403)
-        req.flash('error', 'Not allowed to update other user data')
-        res.redirect('/user')
-      }
-    })
-    .catch( e => {
-      debug.log(e)
-      req.flash('error', e)
-      res.redirect('/user')
-    })
-}
+app.use(flash()) // use flash messages FIXME: this should not be needed once cleaned up
 
 // locals (variables for all routes)
 app.locals.pageTitle = settings.app_name
@@ -229,7 +204,7 @@ app.get('/subscribe', function (req, res) {
       footer: __dirname+'/views/partials/footer.html'
     },
     user: req.session.passwordless,
-    errors: req.flash('error')
+    errors: req.flash('error') // FIXME: replace flash 
   })
 })
 

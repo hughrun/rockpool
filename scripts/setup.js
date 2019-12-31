@@ -8,6 +8,53 @@ const assert = require('assert');
 const url = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}`
 const dbName = settings[env].mongo_db
 
+// create collections
+const createCollections = new Promise( function (resolve, reject) {
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+    assert.strictEqual(null, err);
+    console.log("Connected successfully to server");
+    const db = client.db(dbName);
+
+    // create text index for search to work
+    const createCollection = function(db, callback) {
+      db.createCollection('rp_announcements', {
+        validator: {
+          $jsonSchema: {
+            bsonType: "object",
+            required: ["scheduled", "type", "message"],
+            properties: {
+              scheduled: {
+                bsonType: "Date",
+                description: "Time announcement was added"
+              },
+              type: {
+                enum: ["toot", "tweet"],
+                description: "Announcement type: must only be one of toot or tweet"
+              }, 
+              message: {
+                bsonType: "string",
+                description: "the text of the announcement"
+              }
+            }
+          }
+        }
+      }, function(err, result) {
+        if (err) {
+          resolve(err.codeName)
+        } else {
+          resolve(result)
+        }
+      })
+    callback() // close the connection
+    }
+
+    // this actually calls everything above
+    createCollection(db, function() {
+      client.close()
+    })
+  })
+})
+
 // create indexes
 const createIndexes = new Promise( function (resolve, reject) {
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
@@ -54,7 +101,8 @@ const createIndexes = new Promise( function (resolve, reject) {
 })
 
 // let's do this...
-createIndexes
+createCollections
+  .then(createIndexes)
   .then( function(msg){
     console.log(msg)
   })
