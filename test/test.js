@@ -3,6 +3,7 @@ const supertest = require('supertest') // test routes
 const app = require('../app.js') // require Rockpool app
 const queries = require('../lib/queries.js')
 const feeds = require('../lib/feeds.js')
+const users = require('../lib/users.js')
 // NOTE: app will hang mocha because there doesn't seem to be any way to close the connection
 // workaround for now is to run with the --exit flag but this is obviously not ideal
 
@@ -239,7 +240,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 email: 'bob@example.com',
                 twitter: 'bob@twitter.com',
                 mastodon: '@bob@rockpool.town',
-                blogs: [],
+                blogs: [ObjectId("5e0bbef72de11e851b1e6f55")],
                 blogsForApproval: [
                   ObjectId("2a182f1d81c32da8adb56777"),
                   ObjectId("5d592f2ed6e95e2d3bd1a69b"),
@@ -292,6 +293,14 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId("761924060db4a4b2c3b7fcc5"),
                 url: 'https://alice.blog',
                 feed: 'https://alice.blog/rss',
+                category: 'dogs',
+                approved: true,
+                announced: true
+              },
+              {
+                _id: ObjectId("5e0bbef72de11e851b1e6f55"),
+                url: 'https://bobbie.blog',
+                feed: 'https://bobbie.blog/rss',
                 category: 'dogs',
                 approved: true,
                 announced: true
@@ -1518,35 +1527,46 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             done()
           }
         }) // script to create RSS file with dates relative to now
-        before('create Legacy RSS files with appropriate dates', function(done) {
-          exec('node ./test/makeLegacyOneRssFile.js', (error, stdout, stderr) => {
-            if (error) {
-              done(error)
-            } else if (stderr) {
-              done(stderr)
-            } else {
-              done()
-            }
-          }) // script to create RSS file with dates relative to now
-        })
-        before('create Legacy RSS files with appropriate dates', function(done) {
-          exec('node ./test/makeLegacyTwoRssFile.js', (error, stdout, stderr) => {
-            if (error) {
-              done(error)
-            } else if (stderr) {
-              done(stderr)
-            } else {
-              done()
-            }
-          }) // script to create RSS file with dates relative to now
-        })
       })
-      before('set up mocks for blog feeds before resting them', function(done) {
+      before('create Legacy RSS files with appropriate dates', function(done) {
+        exec('node ./test/makeLegacyOneRssFile.js', (error, stdout, stderr) => {
+          if (error) {
+            done(error)
+          } else if (stderr) {
+            done(stderr)
+          } else {
+            done()
+          }
+        }) // script to create RSS file with dates relative to now
+      })
+      before('create Legacy RSS files with appropriate dates', function(done) {
+        exec('node ./test/makeLegacyTwoRssFile.js', (error, stdout, stderr) => {
+          if (error) {
+            done(error)
+          } else if (stderr) {
+            done(stderr)
+          } else {
+            done()
+          }
+        }) // script to create RSS file with dates relative to now
+      })
+      before('create Bobbie RSS files with appropriate dates', function(done) {
+        exec('node ./test/makeBobbieRssFile.js', (error, stdout, stderr) => {
+          if (error) {
+            done(error)
+          } else if (stderr) {
+            done(stderr)
+          } else {
+            done()
+          }
+        }) // script to create RSS file with dates relative to now
+      })
+      before('set up mocks for blog feeds before testing them', function(done) {
 
         nock('https://a.failing.blog')
         .get('/feed')
         .reply(404)
-        // TODO: adjust these feeds: there should be 3 different ones with different dates etc
+
         nock('https://legacy.blog')
         .get('/feed')
         .replyWithFile(200, __dirname + '/sites/LegacyOneRss.xml')
@@ -1556,11 +1576,15 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         .replyWithFile(200, __dirname + '/sites/legacyTwoRss.xml')
 
         nock('https://bobs-blog.com')
-        .get('/atom')
+        .get('/atom') // this should probably be an Atom feed
         .replyWithFile(200, __dirname + '/sites/bobRss.xml')
         
+        nock('https://bobbie.blog')
+        .get('/rss')
+        .replyWithFile(200, __dirname + '/sites/bobbieRss.xml')
+
         done()
-      }),
+      })
       before('change failing blog to failing:false prior to test', function(done){
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
           assert.strictEqual(null, err)
@@ -1587,7 +1611,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             client.close()
           })
         })
-      }),
+      })
       before('add "duplicate" items to DB for guid/id matching', function(done) {
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
           assert.strictEqual(null, err)
@@ -1800,7 +1824,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               client.close()
             })
         })
-      })
+      }) // NOTE: if use_twitter and use_mastodon are both set to 'false' in the test settings, this will fail
       it('should NOT queue announcements for added articles that are older than 48 hours', function(done){
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
           assert.strictEqual(null, err);
@@ -1809,7 +1833,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               const posts = db.collection('rp_announcements')
               posts.countDocuments()
               .then( doc => {
-                assert.equal(doc < 7, true)
+                assert.equal(doc < 11, true) // 5 posts to announce on each of twitter and mastodon
                 done()
                 callback()
               })
@@ -1845,12 +1869,239 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       })
     })
     describe('queueAnnouncement()', function() {
-      it('should queue tweets if settings[env].useTwitter is true')
-      it('should not queue tweets if settings[env].useTwitter is false')
-      it('should queue toots if settings[env].useMastodon is true')
-      it('should not queue toots if settings[env].useMastodon is false')   
+      it('should queue/not queue tweets according to settings[env].use_twitter', function(done){
+        // check announcements for tweets
+        // use_twitter is true by default for test 
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_announcements')
+              posts.countDocuments({
+                type: 'tweet'
+              })
+              .then( doc => {
+                if (settings.test.use_twitter) {
+                  assert.equal(doc > 0, true)
+                } else {
+                  assert.equal(doc > 0, false)
+                }
+                done()
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
+      it('should queue/not queue toots according to settings[env].use_mastodon', function(done){
+        // check announcements for toots
+        // use_mastodon is true by default for test 
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_announcements')
+              posts.countDocuments({
+                type: 'toot'
+              })
+              .then( doc => {
+                if (settings.test.use_mastodon) {
+                  assert.equal(doc > 0, true)
+                } else {
+                  assert.equal(doc > 0, false)
+                }
+                done()
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
+      it('should include title, author and link', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_announcements')
+              posts.find({
+                type: 'toot'
+              })
+              .toArray()
+              .then( docs => {
+                let hasTitle = docs.some(function(doc){
+                  return doc.message.includes('Lorem ipsum dolor')
+                })
+                let hasName = docs.some(function(doc){
+                  return doc.message.includes('Dizzy')
+                })
+                let hasLink = docs.every(function(doc){
+                  return doc.message.includes('https://')
+                })
+                assert.ok(hasTitle)
+                assert.ok(hasName)
+                assert.ok(hasLink)
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+        })
+      })
+      it('should restrict tweet length to 280 chars max', function(done){
+        // check announcements collection for tweets
+        // check they are all shorter than 280 chars
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_announcements')
+              posts.find({
+                type: 'tweet'
+              })
+              .toArray()
+              .then( docs => {
+                docs.every(function(doc){
+                  assert.ok(doc.message.length < 280)
+                })
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+        })
+      })
+      it('should restrict toot length to 500 chars max', function(done){
+        // check announcements collection for toots
+        // check they are all shorter than 500 chars
+        return MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_announcements')
+              posts.find({
+                type: 'toot'
+              })
+              .toArray()
+              .then( docs => {
+                docs.every(function(doc){
+                  assert.ok(doc.message.length < 500)
+                })
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+        })
+      })
+      it('tweets should use owner twitter @name if listed', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_announcements')
+              posts.find({
+                type: 'tweet'
+              })
+              .toArray()
+              .then( docs => {
+                let passes = docs.some(function(doc){
+                  return doc.message.includes('bob@twitter.com')
+                })
+                assert.ok(passes)
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+        })
+      })
+      it('tweets should use blog twitter @name if listed in twHandle, when owner not available', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_announcements')
+              posts.find({
+                type: 'tweet'
+              })
+              .toArray()
+              .then( docs => {
+                let passes = docs.some(function(doc){
+                  return doc.message.includes('@rockpool')
+                })
+                assert.ok(passes)
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+        })
+      })
+      it('toots should use owner mastodon @name if listed', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_announcements')
+              posts.find({
+                type: 'toot'
+              })
+              .toArray()
+              .then( docs => {
+                let passes = docs.some(function(doc){
+                  return doc.message.includes('@bob@rockpool.town')
+                })
+                assert.ok(passes)
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+        })
+      })
     })
     describe('checkAnnouncementsQueue()', function() {
+      before('run checkAnnouncementsQueue()')
       it('should run every X minutes in line with settings[env].minutes_between_announcements')
       it('should send the next announcement if there are any in the queue')
       it('should not send more than one announcement per cycle')
@@ -1858,17 +2109,12 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
     describe('sendTweet()', function() {
       // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Twitter API
       // use nock to simulate and check data sent is correct
-      it('should restrict tweet length to 280 chars max')
-      it('should include title, author and link')
-      it('should use owner twitter @name if listed')
-      it('should use blog twitter @name if listed, when owner not available and using legacy DB')
+
     })
     describe('sendToot()', function() {
       // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Mastodon API
       // use nock to simulate and check data sent is correct
-      it('should restrict toot length to 500 chars max')
-      it('should include title, author and link')
-      it('should use owner mastodon @name if listed')
+      
     })
     describe('makeOPML()', function() {
       it('should return an xml file')
