@@ -23,6 +23,7 @@ const { updateUserContacts, updateUserBlogs, unsubscribeFromPocket, updateUserPe
 const { approveBlog, deleteBlog, registerBlog, suspendBlog } = require('./lib/blogs.js') // local database updates module
 const { authorisePocket, finalisePocketAuthentication, sendEmail } = require('./lib/utilities.js') // local pocket functions
 const feeds = require('./lib/feeds.js')
+const announcements = require('./lib/announcements.js') // local database blogs module
 
 // managing users
 const session = require('express-session') // sessions so people can log in
@@ -889,8 +890,11 @@ app.post('/api/v1/update/admin/approve-blog', function(req, res, next) {
       subject: `Your blog ${args.url} has been approved on ${settings.app_name}`,
     }
     sendEmail(message)
+    return args
   })
   .then( args => {
+    // TODO: queue announcement here
+    announcements.queueBlogAnnouncement(args)
     res.send({class: 'flash-success', text: `blog approved`})
   })
   .catch( e => {

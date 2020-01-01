@@ -1,4 +1,5 @@
 // require modules
+const debug = require('debug')
 const supertest = require('supertest') // test routes
 const app = require('../app.js') // require Rockpool app
 const queries = require('../lib/queries.js')
@@ -1181,7 +1182,27 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 done(err)
               })
             })
-            it('should queue an announcement')
+            it('should queue an announcement', function(done){
+              MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+                assert.strictEqual(null, err);
+                const db = client.db(dbName);
+                  const findDocuments = function(db, callback) {
+                    const posts = db.collection('rp_announcements')
+                    posts.countDocuments()
+                    .then( count => {
+                      assert.equal(count == 2, true) // one tweet and one toot
+                      done()
+                      callback()
+                    })
+                    .catch(err => {
+                      done(err)
+                    })
+                  }
+                  findDocuments(db, function() {
+                    client.close()
+                  })
+              })
+            })
           })
           describe('/api/v1/update/admin/reject-blog', function() {
               // need to test client side also
@@ -1833,7 +1854,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               const posts = db.collection('rp_announcements')
               posts.countDocuments()
               .then( doc => {
-                assert.equal(doc < 11, true) // 5 posts to announce on each of twitter and mastodon
+                assert.equal(doc < 13, true) 
+                // 1 post on each of twitter and masto announcing approved blog
+                // 5 posts to announce on each of twitter and mastodon
                 done()
                 callback()
               })
@@ -2056,6 +2079,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
               .toArray()
               .then( docs => {
+                // TESTING:
+                debug.log(docs)
                 let passes = docs.some(function(doc){
                   return doc.message.includes('@rockpool')
                 })
@@ -2083,6 +2108,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
               .toArray()
               .then( docs => {
+                // TESTING:
+                debug.log(docs)
                 let passes = docs.some(function(doc){
                   return doc.message.includes('@bob@rockpool.town')
                 })
