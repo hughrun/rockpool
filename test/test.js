@@ -2100,11 +2100,47 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         })
       })
     })
+    describe('checkArticleAnnouncements', function() {
+      before('run checkArticleAnnouncements', function(){
+        //run
+      })
+      it('should run every X minutes')
+      it('should check tweeted.date if use_twitter is true and tweeted.times is fewer than number_of_tweets_per_article')
+      it('should queue a tweet if tweeted.date is older than hours_between_announcements')
+      it('should increment tweeted.times by 1')
+      it('should do nothing if tweeted times is equal to (or greater than) number_of_tweets_per_article')
+      it('should check tooted.date if use_mastodon is true and tooted.times is fewer than number_of_toots_per_article')
+      it('should queue a toot if tooted.date is older than hours_between_announcements')
+      it('should increment tooted.times by 1')
+      it('should do nothing if tooted times is equal to (or greater than) number_of_toots_per_article')
+    })
     describe('checkAnnouncementsQueue()', function() {
-      before('run checkAnnouncementsQueue()')
+      before('run checkAnnouncementsQueue()', function(){
+        // run
+      })
       it('should run every X minutes in line with settings[env].minutes_between_announcements')
       it('should send the next announcement if there are any in the queue')
-      it('should not send more than one announcement per cycle')
+      it('should not send more than one announcement per cycle', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              db.collection('rp_announcements')
+              .countDocuments()
+              .then( total => {
+                assert.ok(total === 9)
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+        })
+      })
     })
     describe('sendTweet()', function() {
       // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Twitter API
