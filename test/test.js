@@ -4,7 +4,7 @@ const supertest = require('supertest') // test routes
 const app = require('../app.js') // require Rockpool app
 const queries = require('../lib/queries.js')
 const feeds = require('../lib/feeds.js')
-const users = require('../lib/users.js')
+const announcements = require('../lib/announcements.js')
 // NOTE: app will hang mocha because there doesn't seem to be any way to close the connection
 // workaround for now is to run with the --exit flag but this is obviously not ideal
 
@@ -2079,8 +2079,6 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
               .toArray()
               .then( docs => {
-                // TESTING:
-                debug.log(docs)
                 let passes = docs.some(function(doc){
                   return doc.message.includes('@rockpool')
                 })
@@ -2108,8 +2106,6 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
               .toArray()
               .then( docs => {
-                // TESTING:
-                debug.log(docs)
                 let passes = docs.some(function(doc){
                   return doc.message.includes('@bob@rockpool.town')
                 })
@@ -2144,9 +2140,34 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
     describe('checkAnnouncementsQueue()', function() {
       before('run checkAnnouncementsQueue()', function(){
         // run
+        return announcements.checkAnnouncementsQueue()
       })
       it('should run every X minutes in line with settings[env].minutes_between_announcements')
-      it('should send the next announcement if there are any in the queue')
+      it('should send the next announcement if there are any in the queue', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              db.collection('rp_announcements')
+              .find().toArray()
+              .then( docs => {
+                let passes = docs.some(function(doc){
+                  // this should be the first message out because it was the first message in
+                  return doc.message.includes('https://bobs-blog.com by bob@twitter.com has been added to Aus GLAM Blogs!')
+                })
+                assert.ok(passes === false)
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+        })
+      })
       it('should not send more than one announcement per cycle', function(done){
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
           assert.strictEqual(null, err);
@@ -2155,7 +2176,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               db.collection('rp_announcements')
               .countDocuments()
               .then( total => {
-                assert.ok(total === 9)
+                assert.ok(total === 11) // TODO: this will increase when testing for checkArticleAnnouncements is completed
                 callback()
               })
               .catch(err => {
