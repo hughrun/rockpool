@@ -2137,10 +2137,10 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       it('should increment tooted.times by 1')
       it('should do nothing if tooted times is equal to (or greater than) number_of_toots_per_article')
     })
-    describe('checkAnnouncementsQueue()', function() {
-      before('run checkAnnouncementsQueue()', function(){
+    describe('announce()', function() {
+      before('run announce()', function(){
         // run
-        return announcements.checkAnnouncementsQueue()
+        return announcements.announce()
       })
       it('should run every X minutes in line with settings[env].minutes_between_announcements')
       it('should send the next announcement if there are any in the queue', function(done){
