@@ -775,7 +775,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
           })
-          describe('/api/v1/admin/reported-blogs', function() {
+          describe('/api/v1/admin/reported-blogs (TODO)', function() {
             it('should return blog info for reported blogs')
           })
         })
@@ -1101,7 +1101,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
           })
-          describe('/api/v1/update/user/edit-blog', function(done) {
+          describe('/api/v1/update/user/edit-blog (TODO)', function(done) {
             it('should update the blog category')
           })
           describe('/api/v1/update/user/remove-pocket', function() {
@@ -1646,11 +1646,19 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   guid: 'https://another.legacy.blog/3',
                   author: 'Ella',
                   blogLink: 'https://another.legacy.blog',
-                  date: Date("2019-11-06T17:00:16Z"),
+                  date: new Date("2019-11-06T17:00:16Z"),
                   title: 'Trumpets!!!',
                   tags: 'Jazz',
                   blogTitle: "I don't actually know much about Jazz",
-                  blog_id: ObjectId("5e0986d32de11e851b1e6f52")
+                  blog_id: ObjectId("5d60be89d6e95e2d3bd1a69d"),
+                  tweeted: {
+                    date: new Date('2019-11-06T18:04:00Z'),
+                    times: 3
+                  },
+                  tooted: {
+                    date: new Date('2019-11-06T18:04:10Z'),
+                    times: 1
+                  }
                 },
                 {
                   _id: ObjectId("5e0982862de11e851b1e6f53"),
@@ -1658,11 +1666,19 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   guid: 'ABCD-1234',
                   author: 'Alice',
                   blogLink: 'https://legacy.blog',
-                  date: Date("2019-10-09T17:01:17Z"),
-                  title: 'Yesterday, all my problems seemed to far away',
+                  date: new Date("2019-10-09T17:01:17Z"),
+                  title: 'Yesterday, all my problems seemed so far away',
                   tags: '',
                   blogTitle: "Legacy Blog One",
-                  blog_id: ObjectId("5e0986d32de11e851b1e6f54")
+                  blog_id: ObjectId('5d5932f5d6e95e2d3bd1a69c'), 
+                  tweeted: {
+                    date: new Date('2019-10-09T18:04:15Z'),
+                    times: 2
+                  },
+                  tooted: {
+                    date: new Date('2019-10-09T18:14:15Z'),
+                    times: 2
+                  }
                 }
               ]
             )
@@ -1891,7 +1907,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         })
       })
     })
-    describe('queueAnnouncement()', function() {
+    describe('queueArticleAnnouncement()', function() {
       it('should queue/not queue tweets according to settings[env].use_twitter', function(done){
         // check announcements for tweets
         // use_twitter is true by default for test 
@@ -2125,22 +2141,195 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
     })
     describe('checkArticleAnnouncements', function() {
       before('run checkArticleAnnouncements', function(){
-        //run
+        return announcements.checkArticleAnnouncements()
       })
       it('should run every X minutes')
-      it('should check tweeted.date if use_twitter is true and tweeted.times is fewer than number_of_tweets_per_article')
-      it('should queue a tweet if tweeted.date is older than hours_between_announcements')
-      it('should increment tweeted.times by 1')
-      it('should do nothing if tweeted times is equal to (or greater than) number_of_tweets_per_article')
-      it('should check tooted.date if use_mastodon is true and tooted.times is fewer than number_of_toots_per_article')
-      it('should queue a toot if tooted.date is older than hours_between_announcements')
-      it('should increment tooted.times by 1')
-      it('should do nothing if tooted times is equal to (or greater than) number_of_toots_per_article')
+      describe('if tweeted.times is fewer than number_of_tweets_per_article', function(){
+        it('should queue a tweet if tweeted.date is older than hours_between_announcements', function(done){
+          MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+            assert.strictEqual(null, err);
+            const db = client.db(dbName);
+              const findDocuments = function(db, callback) {
+                const posts = db.collection('rp_announcements')
+                posts.find({
+                  type: 'tweet'
+                })
+                .toArray()
+                .then( docs => {
+                  let passes = docs.some(function(doc){
+                    return doc.message.includes('Winter is coming')
+                  })
+                  assert.ok(passes)
+                  callback()
+                })
+                .catch(err => {
+                  done(err)
+                })
+              }
+              findDocuments(db, function() {
+                client.close()
+                done()
+              })
+          })
+        })
+          it('should NOT queue a tweet if tweeted.date is more recent than hours_between_tweets', function(done){
+            MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+              assert.strictEqual(null, err);
+              const db = client.db(dbName);
+                const findDocuments = function(db, callback) {
+                  const posts = db.collection('rp_announcements')
+                  posts.find({
+                    type: 'tweet'
+                  })
+                  .toArray()
+                  .then( docs => {
+                    let tooOld = docs.some(function(doc){
+                      return doc.message.includes('Yesterday, all my problems seemed')
+                    })
+                    assert.ok(!tooOld)
+                    callback()
+                  })
+                  .catch(err => {
+                    done(err)
+                  })
+                }
+                findDocuments(db, function() {
+                  client.close()
+                  done()
+                })
+            })
+          })
+        })
+        describe('if tweeted times is equal to (or greater than) number_of_tweets_per_article', function(){
+        it('should do nothing', function(done){
+          MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+            assert.strictEqual(null, err);
+            const db = client.db(dbName);
+              const findDocuments = function(db, callback) {
+                const posts = db.collection('rp_articles')
+                posts.findOne({
+                  _id: ObjectId("5e0982862de11e851b1e6f51")
+                })
+                .then( doc => {
+                  assert.ok(doc.tweeted.times === 3)
+                  callback()
+                })
+                .catch(err => {
+                  done(err)
+                })
+              }
+              findDocuments(db, function() {
+                client.close()
+                done()
+              })
+          })
+        })
+      })
+      describe('if tooted.times is fewer than number_of_toots_per_article', function(){
+        it('should queue a toot if tooted.date is older than hours_between_announcements', function(done){
+          MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+            assert.strictEqual(null, err);
+            const db = client.db(dbName);
+              const findDocuments = function(db, callback) {
+                const posts = db.collection('rp_announcements')
+                posts.find({
+                  type: 'toot'
+                })
+                .toArray()
+                .then( docs => {
+                  let passes = docs.some(function(doc){
+                    return doc.message.includes("I don't actually know much about Jazz")
+                  })
+                  assert.ok(passes)
+                  callback()
+                })
+                .catch(err => {
+                  done(err)
+                })
+              }
+              findDocuments(db, function() {
+                client.close()
+                done()
+              })
+          })
+        })
+        it('should NOT queue a toot if tooted.date is more recent than hours_between_toots', function(done){
+          MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+            assert.strictEqual(null, err);
+            const db = client.db(dbName);
+              const findDocuments = function(db, callback) {
+                const posts = db.collection('rp_announcements')
+                posts.find({
+                  type: 'tweet'
+                })
+                .toArray()
+                .then( docs => {
+                  let tooOld = docs.some(function(doc){
+                    return doc.message.includes('Star wars is massively over-rated')
+                  })
+                  assert.ok(!tooOld)
+                  callback()
+                })
+                .catch(err => {
+                  done(err)
+                })
+              }
+              findDocuments(db, function() {
+                client.close()
+                done()
+              })
+          })
+        })
+      })
+      describe('if tooted.times is equal to (or greater than) number_of_toots_per_article', function(){
+        it('should do nothing', function(done){
+          MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+            assert.strictEqual(null, err);
+            const db = client.db(dbName);
+              const findDocuments = function(db, callback) {
+                const posts = db.collection('rp_articles')
+                posts.findOne({
+                  _id: ObjectId("5e0982862de11e851b1e6f53")
+                })
+                .then( doc => {
+                  assert.ok(doc.tooted.times === 2)
+                  callback()
+                })
+                .catch(err => {
+                  done(err)
+                })
+              }
+              findDocuments(db, function() {
+                client.close()
+                done()
+              })
+            })
+        })
+      })
     })
     describe('announce()', function() {
       before('run announce()', function(){
-        // run
         return announcements.announce()
+      })
+      before('check announcements - TEST', function(done){
+        return MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              db.collection('rp_announcements').find()
+              .toArray()
+              .then( docs => {
+                return callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+        })
       })
       it('should run every X minutes in line with settings[env].minutes_between_announcements')
       it('should send the next announcement if there are any in the queue', function(done){
@@ -2148,8 +2337,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           assert.strictEqual(null, err);
           const db = client.db(dbName);
             const findDocuments = function(db, callback) {
-              db.collection('rp_announcements')
-              .find().toArray()
+              db.collection('rp_announcements').find()
+              .toArray()
               .then( docs => {
                 let passes = docs.some(function(doc){
                   // this should be the first message out because it was the first message in
@@ -2176,7 +2365,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               db.collection('rp_announcements')
               .countDocuments()
               .then( total => {
-                assert.ok(total === 11) // TODO: this will increase when testing for checkArticleAnnouncements is completed
+                assert.ok(total === 11)
                 callback()
               })
               .catch(err => {
@@ -2190,15 +2379,61 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         })
       })
     })
-    describe('sendTweet()', function() {
+    describe('sendTweet()', function(){
       // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Twitter API
       // use nock to simulate and check data sent is correct
-
+      it('should send tweet')
+      it('should increment tweeted.times by 1', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_articles')
+              posts.findOne({
+                _id: ObjectId("5e0982862de11e851b1e6f53")
+              })
+              .then( doc => {
+                assert.ok(doc.tweeted.times === 3)
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+          })
+        })
     })
-    describe('sendToot()', function() {
-      // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Mastodon API
+    describe('sendToot()', function(){
+      // NOTE: testing only need to check if a toot would have been sent - we're not testing the Mastodon API
       // use nock to simulate and check data sent is correct
-      
+      it('should send tweet')
+      it('should increment tooted.times by 1', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_articles')
+              posts.findOne({
+                _id: ObjectId("5e0982862de11e851b1e6f51")
+              })
+              .then( doc => {
+                assert.ok(doc.tooted.times === 2)
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+        })
+      })
     })
     describe('makeOPML()', function() {
       it('should return an xml file')
@@ -2220,7 +2455,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 resolve() // dropped
               })
               .catch(e => {
-                console.error(e)
+                debug.error(e)
               })
             }
             return dropDb(db, function() {
