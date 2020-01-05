@@ -1861,7 +1861,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               client.close()
             })
         })
-      }) // NOTE: if use_twitter and use_mastodon are both set to 'false' in the test settings, this will fail
+      })  // NOTE: if use_twitter and use_mastodon are both set to 'false' in the test settings, this will fail
+          // leave them both set to 'true' whilst testing, unless testing what happens when they are false
+          // but be aware this and other tests will fail in that case because of how the testing is set up
       it('should NOT queue announcements for added articles that are older than 48 hours', function(done){
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
           assert.strictEqual(null, err);
@@ -1908,7 +1910,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       })
     })
     describe('queueArticleAnnouncement()', function() {
-      it('should queue/not queue tweets according to settings[env].use_twitter', function(done){
+      it('should queue/not queue tweets according to use_twitter', function(done){
         // check announcements for tweets
         // use_twitter is true by default for test 
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
@@ -1920,7 +1922,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 type: 'tweet'
               })
               .then( doc => {
-                if (settings.test.use_twitter) {
+                if (settings.test.twitter.use_twitter) {
                   assert.equal(doc > 0, true)
                 } else {
                   assert.equal(doc > 0, false)
@@ -1937,7 +1939,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
         })
       })
-      it('should queue/not queue toots according to settings[env].use_mastodon', function(done){
+      it('should queue/not queue toots according to use_mastodon', function(done){
         // check announcements for toots
         // use_mastodon is true by default for test 
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
@@ -1949,7 +1951,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 type: 'toot'
               })
               .then( doc => {
-                if (settings.test.use_mastodon) {
+                if (settings.test.mastodon.use_mastodon) {
                   assert.equal(doc > 0, true)
                 } else {
                   assert.equal(doc > 0, false)
@@ -2380,9 +2382,47 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       })
     })
     describe('sendTweet()', function(){
-      // NOTE: testing only need to check if a tweet would have been sent - we're not testing the Twitter API
+      // testing only needs to check if a tweet would have been sent - we're not testing the Twitter API
       // use nock to simulate and check data sent is correct
-      it('should send tweet')
+      before('mock tweet response', function(){
+        nock('https://api.twitter.com/1.1')
+        .post('/statuses/update.json')
+        .query({status: 'undefined'})
+        .replyWithError('Status is undefined')
+
+        nock('https://api.twitter.com/1.1')
+        .post('/statuses/update.json')
+        .query({status: /Today\'s Legacy One Blog Post*/})
+        .reply(200)
+
+      })
+      it('should send tweet', function(){
+        return new Promise(function (resolve, reject) {
+          MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+            assert.strictEqual(null, err);
+            const db = client.db(dbName);
+              const getId = function(db, callback) {
+                const collection = db.collection('rp_announcements')
+                collection.findOne( {
+                  message: {$regex: /Today\'s Legacy One Blog Post/}
+                })
+                .then( res => {
+                  callback(res)
+                })
+                .catch(err => {
+                  reject(err)
+                })
+              }
+              getId(db, function(msg) {
+                client.close()
+                resolve(msg)
+              })
+          })
+        })
+        .then( msg => {
+          return announcements.sendTweet(msg)
+        })
+      })
       it('should increment tweeted.times by 1', function(done){
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
           assert.strictEqual(null, err);
@@ -2390,10 +2430,10 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             const findDocuments = function(db, callback) {
               const posts = db.collection('rp_articles')
               posts.findOne({
-                _id: ObjectId("5e0982862de11e851b1e6f53")
+                title: "Today's Legacy One Blog Post"
               })
               .then( doc => {
-                assert.ok(doc.tweeted.times === 3)
+                assert.ok(doc.tweeted.times === 1)
                 callback()
               })
               .catch(err => {
@@ -2408,9 +2448,47 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         })
     })
     describe('sendToot()', function(){
-      // NOTE: testing only need to check if a toot would have been sent - we're not testing the Mastodon API
+      // testing only needs to check if a toot would have been sent - we're not testing the Mastodon API
       // use nock to simulate and check data sent is correct
-      it('should send tweet')
+      before('mock toot response', function(){
+        nock('https://ausglam.space/api/v1')
+        .post('/statuses')
+        .query({status: 'undefined'})
+        .replyWithError('Status is undefined')
+
+        nock('https://ausglam.space/api/v1')
+        .post('/statuses')
+        .query({status: /Today\'s Legacy One Blog Post*/})
+        .reply(200)
+
+      })
+      it('should send toot', function(){
+        return new Promise(function (resolve, reject) {
+          MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+            assert.strictEqual(null, err);
+            const db = client.db(dbName);
+              const getId = function(db, callback) {
+                const collection = db.collection('rp_announcements')
+                collection.findOne( {
+                  message: {$regex: /Today\'s Legacy One Blog Post/}
+                })
+                .then( res => {
+                  callback(res)
+                })
+                .catch(err => {
+                  reject(err)
+                })
+              }
+              getId(db, function(msg) {
+                client.close()
+                resolve(msg)
+              })
+          })
+        })
+        .then( msg => {
+          return announcements.sendToot(msg)
+        })
+      })
       it('should increment tooted.times by 1', function(done){
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
           assert.strictEqual(null, err);
@@ -2421,7 +2499,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId("5e0982862de11e851b1e6f51")
               })
               .then( doc => {
-                assert.ok(doc.tooted.times === 2)
+                assert.ok(doc.tooted.times === 1)
                 callback()
               })
               .catch(err => {
