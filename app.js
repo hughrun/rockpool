@@ -65,7 +65,7 @@ if (env === 'production') { // in production force https
 
 // MongoDB TokenStore for passwordless login tokens
 const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collection for tokens
-passwordless.init(new MongoStore(pathToMongoDb)) // initiate store
+passwordless.init(new MongoStore(pathToMongoDb, { useNewUrlParser: true })) // initiate store
 
 // Set up an email delivery service for passwordless logins
 passwordless.addDelivery('email',
