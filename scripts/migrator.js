@@ -226,7 +226,7 @@ function LinkArticlesToBlogs(records) {
           records.forEach( record => {
             // check against each article to see if the blogLink matches the url
             // run through regex to match regardless of http or https protocols
-            // NOTE: other variations (e.g. www subdomains) will not be checked
+            // NOTE: other variations (e.g. www subdomains) will not be checked.
             // for blogs where the url has changed, this will leave orphan articles
             const match = blogs.find( blog => {
               const regex = /(http(s)?:\/\/)(.*)/i
@@ -238,8 +238,8 @@ function LinkArticlesToBlogs(records) {
               record.blog_id = match._id // record the _id when there is a match
             }
           })
-          resolve(records) // resolve update articles
           callback() // close the connection
+          resolve(records) // resolve update articles
         })
       }
       update(db, function() {
@@ -259,12 +259,12 @@ function migrateArticles(records) {
       const db = client.db(dbName)
       const update = function(db, callback) {
         const create = db.collection("rp_articles").insertMany(records)
-        resolve(create) // resolve
         callback() // close the connection
       }
       update(db, function() {
         client.close()
         debug.log('Articles migration complete.')
+        resolve(create) // resolve
       })
     })
   })
@@ -274,6 +274,18 @@ function migrateArticles(records) {
 prepareTags.then(migrateTags).catch(error => {
   debug.log(error)
 })
+
+// TODO: should this be a seven-promise chain? i.e. 
+// prepareTags
+// .then(migrateTags)
+// .then(prepareBlogs)
+// .then(migrateBlogs)
+// .then(prepareArticles)
+// .then(LinkArticlesToBlogs)
+// .then(migrateArticles)
+// .catch( err => {
+//   console.log(error)
+// })
 
 prepareBlogs.then(migrateBlogs).catch(error => {
   debug.log(error)

@@ -310,7 +310,7 @@ app.get('/user',
   .then(
     doc => {
       if (!doc.blogs || doc.blogs.length < 1) {
-        req.flash('warning', 'You have not registered a blog yet')
+        req.flash('warning', 'You have not registered a blog yet') // FIXME: replace flash 
       }
       return doc
     })
@@ -361,7 +361,7 @@ app.get('/user/pocket-redirect',
         res.redirect('/user')
       })
       .catch(e => {
-        req.flash('error', e)
+        req.flash('error', e) // FIXME: replace flash 
         res.redirect('/subscribe')
       })
   })
@@ -893,7 +893,6 @@ app.post('/api/v1/update/admin/approve-blog', function(req, res, next) {
     return args
   })
   .then( args => {
-    // TODO: queue announcement here
     announcements.queueBlogAnnouncement(args)
     res.send({class: 'flash-success', text: `blog approved`})
   })

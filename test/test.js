@@ -12,6 +12,7 @@ const request = supertest(app) // for testing requests by 'logged out' users
 const agent = supertest.agent(app) // when logged in as admin
 const nonAdminAgent = supertest.agent(app) // when logged in, but as non-admin
 const nock = require('nock') // external website mocking
+const pocketApiAdd = nock('https://getpocket.com')
 
 // nodejs inbuilt modules
 const assert = require('assert')
@@ -462,8 +463,41 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
 
       })
       describe('/user/pocket-redirect', function() {
-        // TODO: mock this with nock
-        it('should add pocket value to user as object with username and token values')
+        // mock 'https://getpocket.com/v3/oauth/authorize' with nock
+        before('nock API route', function(){
+          nock('https://getpocket.com')
+          .post('/v3/oauth/authorize')
+          .reply(200, {
+            "access_token":"5678defg-5678-defg-5678-defg56",
+            "username":"alice@example.com"
+          })
+        })
+        it('should add pocket value to user as object with username and token values', function(done){
+          agent
+          .get('/user/pocket-redirect')
+          .then( () => {
+            // check mongoDB for values
+            MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+              assert.strictEqual(null, err);
+              const db = client.db(dbName);
+                const findDocuments = function(db, callback) {
+                  const users = db.collection('rp_users')
+                  users.findOne({email: 'alice@example.com'})
+                  .then( doc => {
+                    assert.equal(doc.pocket.token, '5678defg-5678-defg-5678-defg56')
+                    done()
+                    callback()
+                  })
+                  .catch(err => {
+                    done(err)
+                  })
+                }
+                findDocuments(db, function() {
+                  client.close()
+                })
+            })
+          })
+        })
       })
     })
     describe('admin routes', function() {
@@ -775,7 +809,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
           })
-          describe('/api/v1/admin/reported-blogs (TODO)', function() {
+          describe('/api/v1/admin/reported-blogs (FUTURE FEATURE)', function() {
             it('should return blog info for reported blogs')
           })
         })
@@ -869,7 +903,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
             it('should return an error message if the blog is already registered', function(done) {
-              // mock route
+              // mock route - should this be in a 'before'?
               nock('https://bobs-blog.com')
               .get('/')
               .replyWithFile(200, __dirname + '/sites/bobs-blog.com.html')
@@ -1101,7 +1135,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
           })
-          describe('/api/v1/update/user/edit-blog (TODO)', function(done) {
+          describe('/api/v1/update/user/edit-blog (FUTURE FEATURE)', function(done) {
             it('should update the blog category')
           })
           describe('/api/v1/update/user/remove-pocket', function() {
@@ -2141,6 +2175,48 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         })
       })
     })
+    describe('pushToPockets()', function(){
+      before('mock pocket API calls', function(){
+        // mock calls here
+        pocketApiAdd
+        .post('/v3/add')
+        .reply(200)
+      })
+      it('should not throw if there are no registered Pocket accounts', function() {
+        assert.doesNotThrow(feeds.pushToPockets)
+      })
+      describe('with registered Pocket user', function() {
+        before('make Bob a pocket user', function() {
+          return MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+            assert.strictEqual(null, err);
+            const db = client.db(dbName);
+              const updateBob = function(db, callback) {
+                const posts = db.collection('rp_users')
+                posts.updateOne({
+                  email: 'bob@example.com'
+                },
+                {
+                  $set: {
+                    pocket: {
+                      username: 'bob@example.com',
+                      token: '5678defg-5678-defg-5678-defg56'
+                    }
+                  }
+                })
+              }
+              return updateBob(db, function() {
+                client.close()
+              })
+          })
+        })
+        it('should send Pocket API call to add item to each registered account', function() {
+          return feeds.pushToPockets()
+          .then( () => {
+            assert.ok(pocketApiAdd.isDone()) // we only set up one nock route (i.e. not persisting) and it has been used, therefore the call to Pocket was made
+          })
+        })
+      })
+    })
     describe('checkArticleAnnouncements', function() {
       before('run checkArticleAnnouncements', function(){
         return announcements.checkArticleAnnouncements()
@@ -2313,7 +2389,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       before('run announce()', function(){
         return announcements.announce()
       })
-      before('check announcements - TEST', function(done){
+      before('check announcements', function(done){
         return MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
           assert.strictEqual(null, err);
           const db = client.db(dbName);
