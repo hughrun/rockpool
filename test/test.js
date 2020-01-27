@@ -210,7 +210,13 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         .expect(200, done)
       })
       it('should load the help page')
-      it('should load the opml file')
+      it('should load the opml file', function(done){
+        this.timeout(5000)
+        request
+        .get('/opml')
+        .expect('Content-Type', 'text/x-opml; charset=UTF-8')
+        .expect(200, done)
+      })
     })
   describe('with test data', function() {
     // insert test data

@@ -21,7 +21,7 @@ const engines = require('consolidate') // use consolidate with whiskers template
 const db = require('./lib/queries.js') // local database queries module
 const { updateUserContacts, updateUserBlogs, unsubscribeFromPocket, updateUserPermission } = require('./lib/users.js') // local database updates module
 const { approveBlog, deleteBlog, registerBlog, suspendBlog } = require('./lib/blogs.js') // local database updates module
-const { authorisePocket, finalisePocketAuthentication, sendEmail } = require('./lib/utilities.js') // local pocket functions
+const { authorisePocket, finalisePocketAuthentication, makeOpml, sendEmail } = require('./lib/utilities.js') // local pocket functions
 const feeds = require('./lib/feeds.js')
 const announcements = require('./lib/announcements.js') // local database blogs module
 
@@ -41,6 +41,7 @@ const { sanitizeBody } = require('express-validator/filter') // sanitise TODO: t
 // other stuff
 const flash = require('express-flash') // flash messages
 const feedfinder = require('@hughrun/feedfinder') // get feeds from site URLs
+const fs = require('fs') // node file system
 
 /*  ######################################
     ### initiate and configure modules ###
@@ -209,7 +210,25 @@ app.get('/subscribe', function (req, res) {
   })
 })
 
+// TODO: /help
+
 // TODO: /opml
+app.get('/opml', function(req, res) {
+  makeOpml()
+  .then( file => {
+    let filepath = path.join(__dirname, 'public/files/feeds.opml')
+    fs.writeFileSync(filepath, file)
+      let options = {
+        root: path.join(__dirname, 'public/files'),
+        dotfiles: 'deny',
+        headers: {
+          'x-timestamp': Date.now(),
+          'x-sent': true
+        }
+      }
+      res.download('/feeds.opml', 'feeds.opml', options)
+  })
+})
 
 /*  
     ###############
