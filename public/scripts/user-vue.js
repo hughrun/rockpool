@@ -15,6 +15,7 @@ Vue.component('message-list', {
   },
   methods: {
     removeMessage(msg) {
+      // TODO:
       // fired when click on X to get rid of it
       // reloading the page will also remove any messages that aren't in the DB
     }
@@ -56,7 +57,7 @@ var userInfo =  new Vue({
         if (response.data.user) {
           this.user = response.data.user
         } else if (response.data.error) {
-          this.addMessage(res.data.msg)
+          this.addMessage(res.data.error)
         }
       })
       .catch( err => {
@@ -76,7 +77,13 @@ var userInfo =  new Vue({
   mounted () {
     axios
     .get('/api/v1/user/info')
-    .then(response => (this.user = response.data))
+    .then(response => {
+      console.log(response.data)
+      this.user = response.data
+      if (response.data.error) {
+        this.addMessage(response.data.error) // if the user is not registered yet
+      }
+    })
     .catch( err => this.user = 'error')
   }
 })
@@ -95,11 +102,15 @@ var userBlogs =  new Vue({
     axios
     .get('/api/v1/user/blogs')
     .then(response => {
+      console.log(response.data)
       this.userIdString = response.data.user
       this.blogs = response.data.blogs
       this.blogs.forEach( blog => {
         blog.editing = false
       })
+      if (response.data.blogs.length == 0) {
+        this.messages.push({class: 'flash-warning', text: 'You have no registered/approved blogs yet'})
+      }
     })
     .catch( err => this.blogs = 'error')
   },

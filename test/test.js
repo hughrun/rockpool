@@ -41,6 +41,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
   })
 
   // MIGRATE.JS
+  // TODO: the script already exists, just need the tests
   describe('npm migrate - to migrate legacy DB from existing CommunityTweets (ausglamblogs) DB', function() {
     describe('for the articles collection', function() {
       it('should rename to rp_articles')

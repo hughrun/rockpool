@@ -1,6 +1,6 @@
 {>head}
   {>header}
-    <!-- vuejs prototyping -->
+    <!-- vuejs prototyping TODO: this should be a local prod file -->
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
@@ -46,8 +46,8 @@
       <!-- FIXME: this should be a vue component with subcomponents -->
       <h3 class="form-label">Your blogs</h3>
       <div id="user-approved-blogs">
+        <message-list v-bind:messages="messages"></message-list>
         <ul class="blog-list">
-          <message-list v-bind:messages="messages"></message-list>
           <li v-for='blog in blogs' class="listed-blog" v-bind:class="{deleting: blog.editing}" v-bind:key="blog.id">
             <div class="approved-blog"></div>
             <span>{{ blog.url }}</span>
@@ -73,6 +73,6 @@
       var legacy = Boolean.valueOf({legacy})
     </script>
     <!-- vuejs components -->
-    <script src="/scripts/vue-components.js"></script>
+    <script src="/scripts/user-vue.js"></script>
   {>footer}
 {>foot}

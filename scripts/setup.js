@@ -8,11 +8,40 @@ const assert = require('assert');
 const url = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}`
 const dbName = settings[env].mongo_db
 
+// create admin user
+const createAdmin = new Promise( function (resolve, reject) {
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+    assert.strictEqual(null, err);
+    const db = client.db(dbName);
+
+    // create text index for search to work
+    const create = function(db, callback) {
+      db.collection('rp_users').updateOne(
+        {
+          email: settings[env].admin_user,
+        },
+        {
+          $set: {permission: 'admin'}
+        },
+        {
+          upsert: true
+        }
+      )
+    callback() // close the connection
+    }
+    // this actually calls everything above
+    create(db, function() {
+      client.close()
+      console.log('admin created')
+      resolve()
+    })
+  })
+})
+
 // create collections
 const createCollections = new Promise( function (resolve, reject) {
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
     assert.strictEqual(null, err);
-    console.log("Connected successfully to server");
     const db = client.db(dbName);
 
     // create text index for search to work
@@ -42,10 +71,11 @@ const createCollections = new Promise( function (resolve, reject) {
         if (err) {
           resolve(err.codeName)
         } else {
-          resolve(result)
+          console.log('created collection')
         }
       })
     callback() // close the connection
+    resolve()
     }
 
     // this actually calls everything above
@@ -59,7 +89,6 @@ const createCollections = new Promise( function (resolve, reject) {
 const createIndexes = new Promise( function (resolve, reject) {
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
     assert.strictEqual(null, err);
-    console.log("Connected successfully to server");
     const db = client.db(dbName);
 
     // create text index for search to work
@@ -84,13 +113,15 @@ const createIndexes = new Promise( function (resolve, reject) {
           tags : 1
         }, function(err, result) {
           if (err) {
-            resolve(err.codeName)
+            reject(err.codeName)
           } else {
-            resolve('tags index ok')
+            console.log('tags index ok')
+
           }
         }
       )
     callback() // close the connection
+    resolve('tags index ok')
     }
 
     // this actually calls everything above
@@ -101,8 +132,6 @@ const createIndexes = new Promise( function (resolve, reject) {
 })
 
 // let's do this...
-createCollections
+createAdmin
+  .then(createCollections)
   .then(createIndexes)
-  .then( function(msg){
-    console.log(msg)
-  })

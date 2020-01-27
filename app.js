@@ -283,48 +283,52 @@ app.all('/user*',
 )
 
 // user dashboard
+// TODO: is this even needed?
+// all logic should be in the vue API calls
 app.get('/user',
   function (req, res) { 
   var args = {}
   args.user = req.user 
-  db.getUserDetails(args)
-  .then( // here we query any blogs in user.blogs or user.blogsForApproval to reduce the number of DB calls
-    doc => {
-      doc.query = {"_id": {$in: doc.user.blogsForApproval}}
-      return doc
-    })
-  .then(db.getBlogs) // get blogs for approval
-  .then( 
-    doc => {
-      doc.blogsForApproval = doc.blogs
-      doc.query = {"_id": {$in: doc.user.blogs}}
-      return doc
-  })
-  .then(db.getBlogs) // get owned blogs
-  .then( 
-    doc => {
-      doc.ownedBlogs = doc.blogs
-      doc.blogs = doc.blogs.concat(doc.blogsForApproval)
-      return doc
-  })
-  .then(
-    doc => {
-      if (!doc.blogs || doc.blogs.length < 1) {
-        req.flash('warning', 'You have not registered a blog yet') // FIXME: replace flash 
-      }
-      return doc
-    })
-    .then(
-    doc => res.render('user', {
+  // db.getUserDetails(args)
+  // .then( // here we query any blogs in user.blogs or user.blogsForApproval to reduce the number of DB calls
+  //   doc => {
+  //     doc.query = {"_id": {$in: doc.user.blogsForApproval}}
+  //     return doc
+  //   })
+  // .then(db.getBlogs) // get blogs for approval
+  // .then( 
+  //   doc => {
+  //     doc.blogsForApproval = doc.blogs
+  //     doc.query = {"_id": {$in: doc.user.blogs}}
+  //     return doc
+  // })
+  // .then(db.getBlogs) // get owned blogs
+  // .then( 
+  //   doc => {
+  //     doc.ownedBlogs = doc.blogs
+  //     doc.blogs = doc.blogs.concat(doc.blogsForApproval)
+  //     return doc
+  // })
+  // .then(
+  //   doc => {
+  //     if (!doc.blogs || doc.blogs.length < 1) {
+  //       req.flash('warning', 'You have not registered a blog yet') // FIXME: replace flash 
+  //     }
+  //     return doc
+  //   })
+  //   .then(
+    // doc => res.render('user', {
+    res.render('user', {
     partials: {
       head: __dirname+'/views/partials/head.html',
       header: __dirname+'/views/partials/header.html',
       foot: __dirname+'/views/partials/foot.html',
       footer: __dirname+'/views/partials/footer.html'
     },
-    user: doc.user
+    // user: doc.user
+    user: args.user
     })
-  )
+  // )
 })
 
 // pocket routes
@@ -473,12 +477,16 @@ app.get('/api/v1/user/info', function(req, res) {
   .then(
     doc => {
       var data = {}
-      data.user = doc.users[0]._id
-      data.email = doc.users[0].email
-      data.twitter = doc.users[0].twitter || null
-      data.mastodon = doc.users[0].mastodon || null
-      data.pocket = doc.users[0].pocket || false
-      data.admin = doc.users[0].permission === 'admin'
+      if (doc.users.length > 0) {
+        data.user = doc.users[0]._id
+        data.email = doc.users[0].email
+        data.twitter = doc.users[0].twitter || null
+        data.mastodon = doc.users[0].mastodon || null
+        data.pocket = doc.users[0].pocket || false
+        data.admin = doc.users[0].permission === 'admin'
+      } else {
+        data.error = {class: 'flash-warning', text: "You don't have an account yet! Click 'edit' to create your user profile."}
+      }
       res.json(data)
   })
   .catch( err => {
@@ -490,12 +498,17 @@ app.get('/api/v1/user/blogs', function(req, res) {
   db.getUsers({query: {"email" : req.user}})
   .then( // now get the approved blogs
     doc => {
-      doc.query = {"_id": {$in: doc.users[0].blogs}}
+      if (doc.users.length > 0) {
+        doc.query = {"_id": {$in: doc.users[0].blogs}}
+      } else {
+        doc.query = {"_id": null}
+      }
       return doc
     })
   .then(db.getBlogs)
   .then( data => {
-    res.json({user: data.users[0].idString, blogs: data.blogs})
+    let user = data.users.length > 0 ? data.users[0].idString : null
+    res.json({user: user, blogs: data.blogs})
   })
   .catch( err => {
     debug.log(err)
@@ -504,10 +517,14 @@ app.get('/api/v1/user/blogs', function(req, res) {
 
 app.get('/api/v1/user/unapproved-blogs', function(req, res) {
   db.getUsers({query: {"email" : req.user}})
-  .then( // now get the approved blogs
+  .then( // now get the unapproved blogs
     doc => {
-      doc.query = {
-        "_id": {$in: doc.users[0].blogsForApproval},
+      if (doc.users.length > 0) {
+        doc.query = {
+          "_id": {$in: doc.users[0].blogsForApproval},
+        }
+      } else {
+        doc.query = {"_id": null}
       }
       return doc
     })
@@ -1092,6 +1109,7 @@ app.use(function (req, res, next) {
 })
 
 // listen on server
+// TODO: the port number could be an NPM `config` setting
 app.listen(3000, function() {
   if (env !== 'test') {
     console.log('    *****************************************************************************')
@@ -1103,4 +1121,8 @@ app.listen(3000, function() {
 })
 
 // export app for testing
-module.exports = app;
+if (env == 'test') {
+  module.exports = app;
+}
+
+// TODO: need to run RSS checks and announcements on timer somewhere
