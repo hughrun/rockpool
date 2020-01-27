@@ -69,7 +69,7 @@ var userInfo =  new Vue({
     cancelPocket() {
       axios.post('/api/v1/update/user/remove-pocket')
       .then( res => {
-        this.addMessage(res.data.msg)
+        this.addMessage(res.data)
         this.user.pocket = false
       })
     }
@@ -78,7 +78,6 @@ var userInfo =  new Vue({
     axios
     .get('/api/v1/user/info')
     .then(response => {
-      console.log(response.data)
       this.user = response.data
       if (response.data.error) {
         this.addMessage(response.data.error) // if the user is not registered yet
@@ -102,7 +101,6 @@ var userBlogs =  new Vue({
     axios
     .get('/api/v1/user/blogs')
     .then(response => {
-      console.log(response.data)
       this.userIdString = response.data.user
       this.blogs = response.data.blogs
       this.blogs.forEach( blog => {

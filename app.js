@@ -39,7 +39,7 @@ const { body, validationResult } = require('express-validator/check') // validat
 const { sanitizeBody } = require('express-validator/filter') // sanitise TODO: this is never called
 
 // other stuff
-const flash = require('express-flash') // flash messages FIXME: should not need this any more
+const flash = require('express-flash') // flash messages
 const feedfinder = require('@hughrun/feedfinder') // get feeds from site URLs
 
 /*  ######################################
@@ -113,7 +113,7 @@ app.use(session(sess)) // use sessions
 app.use(passwordless.sessionSupport()) // makes session persistent
 app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
-app.use(flash()) // use flash messages FIXME: this should not be needed once cleaned up
+app.use(flash()) // use flash messages for non-vue messages. This may be replaced in future but works for now
 
 // locals (variables for all routes)
 app.locals.pageTitle = settings.app_name
@@ -205,7 +205,7 @@ app.get('/subscribe', function (req, res) {
       footer: __dirname+'/views/partials/footer.html'
     },
     user: req.session.passwordless,
-    errors: req.flash('error') // FIXME: replace flash 
+    errors: req.flash('error')
   })
 })
 
@@ -283,41 +283,9 @@ app.all('/user*',
 )
 
 // user dashboard
-// TODO: is this even needed?
 // all logic should be in the vue API calls
 app.get('/user',
   function (req, res) { 
-  var args = {}
-  args.user = req.user 
-  // db.getUserDetails(args)
-  // .then( // here we query any blogs in user.blogs or user.blogsForApproval to reduce the number of DB calls
-  //   doc => {
-  //     doc.query = {"_id": {$in: doc.user.blogsForApproval}}
-  //     return doc
-  //   })
-  // .then(db.getBlogs) // get blogs for approval
-  // .then( 
-  //   doc => {
-  //     doc.blogsForApproval = doc.blogs
-  //     doc.query = {"_id": {$in: doc.user.blogs}}
-  //     return doc
-  // })
-  // .then(db.getBlogs) // get owned blogs
-  // .then( 
-  //   doc => {
-  //     doc.ownedBlogs = doc.blogs
-  //     doc.blogs = doc.blogs.concat(doc.blogsForApproval)
-  //     return doc
-  // })
-  // .then(
-  //   doc => {
-  //     if (!doc.blogs || doc.blogs.length < 1) {
-  //       req.flash('warning', 'You have not registered a blog yet') // FIXME: replace flash 
-  //     }
-  //     return doc
-  //   })
-  //   .then(
-    // doc => res.render('user', {
     res.render('user', {
     partials: {
       head: __dirname+'/views/partials/head.html',
@@ -325,10 +293,8 @@ app.get('/user',
       foot: __dirname+'/views/partials/foot.html',
       footer: __dirname+'/views/partials/footer.html'
     },
-    // user: doc.user
-    user: args.user
-    })
-  // )
+    user: req.user
+  })
 })
 
 // pocket routes
@@ -345,7 +311,6 @@ app.get('/user/pocket',
     })
     .catch( err => {
       debug.log(err)
-      // FIXME: should use session for messages
       req.flash('error', `Something went wrong trying to authenticate with Pocket: ${err}`)
       res.redirect('/subscribe')
     })
@@ -360,12 +325,11 @@ app.get('/user/pocket-redirect',
     args.user = req.user
     finalisePocketAuthentication(args)
       .then( () => {
-        // FIXME: should use session for messages
         req.flash('success', 'Pocket account registered')
         res.redirect('/user')
       })
       .catch(e => {
-        req.flash('error', e) // FIXME: replace flash 
+        req.flash('error', e)
         res.redirect('/subscribe')
       })
   })
@@ -387,7 +351,6 @@ app.all('/admin*',
       if (doc.user.permission && doc.user.permission === "admin") {
         next()
       } else {
-        // FIXME: use session messages
         req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
         res.status(403)
         res.redirect('/user')
@@ -395,7 +358,6 @@ app.all('/admin*',
     })
     .catch(err => {
       debug.log(`Error accessing admin page: ${err}`)
-      // FIXME: use session messages
       req.flash('error', 'Something went wrong')
       res.redirect('/user')
     })
@@ -719,7 +681,7 @@ app.post('/api/v1/update/user/remove-pocket',
     .then( () => {
       res.send({
           class: 'flash-success',
-          text: 'Pocket account unsubscribed. You should also "remove access" by this app at https://getpocket.com/connected_applications'
+          text: 'Pocket account unsubscribed. You should also "remove access" for this app at https://getpocket.com/connected_applications'
       })
     })
     .catch(err => {
@@ -743,7 +705,6 @@ app.all('/api/v1/admin*',
       if (doc.user.permission && doc.user.permission === "admin") {
         next()
       } else {
-        // FIXME: use session storage for temporarily persistent messages?
         req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
         res.sendStatus(403)
       }
@@ -751,7 +712,6 @@ app.all('/api/v1/admin*',
     .catch(err => {
       debug.log(`Error accessing admin page: ${err}`)
       req.flash('error', 'Something went wrong')
-       // FIXME: use session storage for temporarily persistent messages?
        res.sendStatus(500)
     })
   })
@@ -765,7 +725,6 @@ app.all('/api/v1/admin*',
       if (doc.user.permission && doc.user.permission === "admin") {
         next()
       } else {
-        // FIXME: use session storage for temporarily persistent messages?
         req.flash('error', 'You are not allowed to view admin pages because you are not an administrator')
         res.sendStatus(403)
       }
