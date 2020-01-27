@@ -16,8 +16,8 @@ const createAdmin = new Promise( function (resolve, reject) {
 
     // create text index for search to work
     const create = function(db, callback) {
-      db.collection('rp_users').updateOne(
-        {
+      if (env != 'test') { // creating an admin user here causes issues with the test suite
+        db.collection('rp_users').updateOne({
           email: settings[env].admin_user,
         },
         {
@@ -25,8 +25,8 @@ const createAdmin = new Promise( function (resolve, reject) {
         },
         {
           upsert: true
-        }
-      )
+        })
+      }
     callback() // close the connection
     }
     // this actually calls everything above

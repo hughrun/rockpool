@@ -31,7 +31,7 @@ const passwordless = require('passwordless') // passwordless for ...passwordless
 const { ObjectId } = require('mongodb') // for mongo IDs
 const MongoStore = require('passwordless-mongostore-bcryptjs') // for creating and storing passwordless tokens
 var cookieParser = require('cookie-parser') // cookies
-var sessionStore = new session.MemoryStore // cookie storage
+var sessionStore = new session.MemoryStore() // cookie storage
 
 // dealing with form data
 const bodyParser = require('body-parser') // bodyparser for form data
