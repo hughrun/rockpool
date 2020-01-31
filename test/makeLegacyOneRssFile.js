@@ -42,6 +42,7 @@ let rssfile = `
         <description>
               <![CDATA[ A short description here. ]]>
         </description>
+        <category>GLAM Blog Club</category>
         <content:encoded>
         <![CDATA[ <p> Here is the content of the post. </p>]]>
         </content:encoded>

@@ -2069,6 +2069,33 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
         })
       })
+      it('should include blog_club_hashtag if blog_club_tag is in post', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const posts = db.collection('rp_announcements')
+              posts.find({
+                type: 'tweet'
+              })
+              .toArray()
+              .then( docs => {
+                let hasHashTag = docs.some(function(doc){
+                  return doc.message.includes('#GLAMBlogClub')
+                })
+                assert.ok(hasHashTag)
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+              done()
+            })
+        })
+      })
       it('should restrict tweet length to 280 chars max', function(done){
         // check announcements collection for tweets
         // check they are all shorter than 280 chars
