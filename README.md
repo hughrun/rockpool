@@ -6,18 +6,20 @@ Successor to and complete rewrite of [CommunityTweets](https://github.com/hughru
 
 Rockpool is an Express app interfacing with MongoDB to provide:
 
-* harvesting of article metadata via RSS and storage in MongoDB
-* web interface to discover articles via search or tag browse
-* announcements of new articles via Twitter and/or Mastodon
-* passwordless login
-* self-registration of blogs by owners
-* claiming of blogs by owners (for legacy DB)
-* editing of blog category, and deletion of blog listings, by authorised owners
-* admin access to approve and edit blog listings
-* subscription to all articles via Pocket
-* automatic OPML file with all blogs
+* harvesting of article metadata via RSS and storage in MongoDB ✅
+* web interface to discover articles via search or tag browse ✅
+* announcements of new articles via Twitter and/or Mastodon ✅
+* passwordless login ✅
+* self-registration of blogs by owners ✅
+* claiming of blogs by owners (for legacy DB) ✅
+* deletion of blog listings by authorised owners ✅
+* admin access to approve and edit blog listings ✅
+* subscription to all articles via Pocket ✅
+* automatic OPML file with all blogs ✅
+* editing of blog category by authorised owners
+* reporting of inappropriate/dodgy blogs
 
-Work In Progress: **Definitely not production-ready yet!**
+This is a Work In Progress
 
 ## Documentation
 
@@ -27,12 +29,16 @@ Work In Progress: **Definitely not production-ready yet!**
 4. [User dashboard](docs/dashboard.md)
 5. [Admin dashboard](docs/admin.md)
 
+## Contributing
+
+[See Contributing guide](docs/contributing.md)
+
 ## License
 
 **After 10 May 2019:** AGPL 3.0+  
 **Prior to 10 May 2019:** GPL 3.0+
 
-Copyright (C) 2019 Hugh Rundle
+Copyright (C) 2019 - 2020 Hugh Rundle
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
