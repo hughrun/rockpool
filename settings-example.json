@@ -1,42 +1,132 @@
 {
-  "app_name" : "My Community Blogs",
-  "app_url" : "https://example.com/community",
+  "app_name" : "Rockpool",
+  "app_tagline": "A web app for communities of practice.",
+  "app_description": "Support a community and store what you need from the ocean of information. Successor to CommunityTweets",
   "org_name" : "My Community",
   "org_url" : "https://example.com",
   "blog_club_name" : "Blog Club",
   "blog_club_url" : "https://example.com/blog-club",
-  "legacy_db" : false,
+  "blog_club_tag" : "pets blog club",
+  "blog_club_hashtag" : "#PetsBlogClub",
+  "blog_categories" : ["dogs", "cats", "budgies"],
+  "excluded_tags" : ["notrockpool"],
+  "filtered_tags" : ["uncategorized", "uncategorised", "post", "page"],
+  "legacy_db" : true,
+  "tag_transforms" : {
+    "petsblogclub" : "pets blog club",
+    "#petsblogclub" : "pets blog club",
+    "blogjune" : "blog june",
+    "#blogjune" : "blog june"
+  },
   "production" : {
-    "mongo_url" : "mongodb://example.com",
-    "mongo_port" : "35776",
-    "mongo_user" : "user",
-    "mongo_password:" : "password",
+  "admin_user" : "admin@example.com",
+  "app_url" : "http://example.com",
+  "mongo_url" : "mongodb://localhost",
+  "mongo_port" : "27017",
+  "mongo_user" : "rockpool",
+  "mongo_password:" : "",
+  "express_session_secret" : "",
+  "cookie_parser_secret" : "",
+  "mongo_db" : "rockpool",
+  "deliver_tokens_by" : "email",
+  "email" : {
+    "user": "postmaster@example.com",
+    "password": "",
+    "host": "smtp.mailgun.org",
+    "from": "admin@example.com"
+  },
+  "pocket_consumer_key" : "",
+  "twitter" : {
+    "use_twitter" : false,
+    "hours_between_tweets" : 6,
+    "number_of_tweets_per_article" : 3,
+    "consumer_key" : "key",
+    "consumer_secret": "secret",
+    "access_token": "token",
+    "access_token_secret": "secret"
+  },
+  "mastodon" : {
+    "use_mastodon" : false,
+    "number_of_toots_per_article" : 2,
+    "hours_between_toots" : 12,
+    "domain_name" : "ausglam.space",
+    "access_token" : "1234"
+  },
+  "announce_articles_newer_than_hours" : 48,
+  "minutes_between_announcements" : 10
+},
+  "development" : {
+    "admin_user" : "admin@example.com",
+    "app_url" : "http://example.com",
+    "mongo_url" : "mongodb://localhost",
+    "mongo_port" : "27017",
+    "mongo_user" : "rockpool",
+    "mongo_password:" : "",
+    "express_session_secret" : "",
+    "cookie_parser_secret" : "",
     "mongo_db" : "rockpool",
     "deliver_tokens_by" : "email",
     "email" : {
       "user": "postmaster@example.com",
-      "pass": "password",
-      "host": "smtp.example.com"
-    }
+      "password": "",
+      "host": "smtp.mailgun.org",
+      "from": "admin@example.com"
+    },
+    "pocket_consumer_key" : "",
+    "twitter" : {
+      "use_twitter" : false,
+      "hours_between_tweets" : 6,
+      "number_of_tweets_per_article" : 3,
+      "consumer_key" : "key",
+      "consumer_secret": "secret",
+      "access_token": "token",
+      "access_token_secret": "secret"
+    },
+    "mastodon" : {
+      "use_mastodon" : false,
+      "number_of_toots_per_article" : 2,
+      "hours_between_toots" : 12,
+      "domain_name" : "ausglam.space",
+      "access_token" : "1234"
+    },
+    "announce_articles_newer_than_hours" : 48,
+    "minutes_between_announcements" : 10
   },
-  "development" : {
+  "test" : {
+    "admin_user" : "admin@example.com",
+    "app_url" : "http://example.com",
     "mongo_url" : "mongodb://localhost",
     "mongo_port" : "27017",
-    "mongo_user" : "user",
-    "mongo_password:" : "password",
+    "mongo_user" : "rockpool",
+    "mongo_password:" : "",
+    "express_session_secret" : "",
+    "cookie_parser_secret" : "",
     "mongo_db" : "rockpool",
-    "deliver_tokens_by" : "browser",
+    "deliver_tokens_by" : "email",
     "email" : {
       "user": "postmaster@example.com",
-      "pass": "password",
-      "host": "smtp.example.com"
-    }
-  },
-  "tag_transforms" : {
-    "rockpoolblogclub" : "rockpool blog club",
-    "#rockpoolblogclub" : "rockpool blog club",
-    "blogjune" : "blog june",
-    "#blogjune" : "blog june"
-  },
-  "filtered_tags" : ["uncategorized", "uncategorised", "post", "page"]
+      "password": "",
+      "host": "smtp.mailgun.org",
+      "from": "admin@example.com"
+    },
+    "pocket_consumer_key" : "",
+    "twitter" : {
+      "use_twitter" : true,
+      "hours_between_tweets" : 6,
+      "number_of_tweets_per_article" : 3,
+      "consumer_key" : "key",
+      "consumer_secret": "secret",
+      "access_token": "token",
+      "access_token_secret": "secret"
+    },
+    "mastodon" : {
+      "use_mastodon" : true,
+      "number_of_toots_per_article" : 2,
+      "hours_between_toots" : 12,
+      "domain_name" : "ausglam.space",
+      "access_token" : "1234"
+    },
+    "announce_articles_newer_than_hours" : 48,
+    "minutes_between_announcements" : 10
+  }
 }
