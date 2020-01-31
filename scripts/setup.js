@@ -2,6 +2,11 @@
 const settings = require('../settings.json')
 const env = process.env.NODE_ENV // are we in production, development, or test?
 
+// for markdown pages
+const fs = require('fs')
+const path = require('path')
+const showdown = require('showdown')
+
 // Mongo
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
@@ -131,7 +136,31 @@ const createIndexes = new Promise( function (resolve, reject) {
   })
 })
 
+// process help.md into help.html
+const processHelp = new Promise( function (resolve, reject) {
+  // fs.readFileSync to grab markdown file
+  let converter = new showdown.Converter()
+  let filepath = path.resolve(__dirname, '../markdown')
+  let text = fs.readFileSync(filepath + '/help.md', 'utf8')
+  // use showdown to create html out of markdown
+  let html = converter.makeHtml(text)
+  // add header and footer includes markup
+  let page =`
+{>head}
+  {>header}
+  <section class="main">
+    ${html}
+  </section>
+  {>footer}
+{>foot}`
+  // fs.writeFileSync to views folder
+  filepath = path.resolve(__dirname, '../views')
+  fs.writeFileSync(filepath + '/help.html', page)
+  resolve()
+})
+
 // let's do this...
 createAdmin
   .then(createCollections)
   .then(createIndexes)
+  .then(processHelp)

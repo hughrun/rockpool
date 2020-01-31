@@ -1,6 +1,12 @@
 // require modules
 const debug = require('debug')
+const fs = require('fs')
+const opmlToJSON = require('opml-to-json')
+const path = require('path')
 const supertest = require('supertest') // test routes
+
+
+// local files
 const app = require('../app.js') // require Rockpool app
 const queries = require('../lib/queries.js')
 const feeds = require('../lib/feeds.js')
@@ -88,6 +94,15 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
     })
     // SETUP.JS
     describe('npm setup - to prepare DB before running Rockpool', function() {
+      before('delete help.html', function(done){
+        let helpfile = path.resolve(__dirname, '../views/help.html')
+        try {
+          fs.unlinkSync(helpfile)
+        } catch (err) {
+          // do nothing, file does not exist
+        }
+        done()
+      })
       before('run setup script', function(done) {
         const { exec } = require('child_process')
         // NOTE: executes as if we are in the main directory - note the file path
@@ -97,8 +112,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           }
           if (stderr) {
             done(stderr)
+          } else {
+            done()
           }
-          done()
         })
       })
       it('should build index on tags field in rp_articles', function(done) {
@@ -113,9 +129,6 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 let array = values.reduceRight(reduction).reduceRight(reduction)
                 assert.ok(array.includes('tags'))
                 callback()
-              })
-              .catch(err => {
-                done(err)
               })
             }
             findCollection(db, function() {
@@ -187,6 +200,15 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
         })
       })
+      it('should convert markdown files to html', function(done){
+        try {
+          let helpfile = path.resolve(__dirname, '../views/help.html')
+          fs.accessSync(helpfile) // does the file exist?
+          done()
+        } catch(err) {
+          done(err)
+        }
+      })
     })
     describe('when the database is empty', function() {
       it('should load homepage', function(done) { 
@@ -209,9 +231,12 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         .get('/search?q=test')
         .expect(200, done)
       })
-      it('should load the help page')
+      it('should load the help page', function(done){
+        request
+        .get('/help')
+        .expect(200, done)
+      })
       it('should load the opml file', function(done){
-        this.timeout(5000)
         request
         .get('/opml')
         .expect('Content-Type', 'text/x-opml; charset=UTF-8')
@@ -302,7 +327,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId("761924060db4a4b2c3b7fcc5"),
                 url: 'https://alice.blog',
                 feed: 'https://alice.blog/rss',
-                category: 'dogs',
+                category: 'libraries',
                 approved: true,
                 announced: true
               },
@@ -310,7 +335,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId("5e0bbef72de11e851b1e6f55"),
                 url: 'https://bobbie.blog',
                 feed: 'https://bobbie.blog/rss',
-                category: 'dogs',
+                category: 'libraries',
                 approved: true,
                 announced: true
               },
@@ -318,7 +343,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId("e2280a977d8ccd54ce133c7f"),
                 url: 'https://rockpool-blogs/alice',
                 feed: 'https://rockpool-blogs/alice/feed',
-                category: 'budgies',
+                category: 'galleries',
                 approved: false,
                 announced: false
               },
@@ -326,7 +351,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId("2a182f1d81c32da8adb56777"),
                 url: 'https://bobs-blog.com',
                 feed: 'https://bobs-blog.com/atom',
-                category: 'cats',
+                category: 'archives',
                 approved: false,
                 announced: false,
                 suspensionEndDate: lastWeek // one week ago
@@ -335,7 +360,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId('5d592f2ed6e95e2d3bd1a69b'),
                 url: 'https://roberto.blog',
                 feed: 'https://roberto.blog/feed',
-                category: 'sushi',
+                category: 'archives',
                 approved: false,
                 announced: false
               },
@@ -343,7 +368,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId('5d5932f5d6e95e2d3bd1a69c'),
                 url: 'https://legacy.blog',
                 feed: 'https://legacy.blog/feed',
-                category: 'podcasting',
+                category: 'digital humanities',
                 twHandle: '@rockpool',
                 approved: true,
                 announced: true
@@ -352,7 +377,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId("5d60be89d6e95e2d3bd1a69d"),
                 url: 'https://another.legacy.blog',
                 feed: 'https://another.legacy.blog/feed',
-                category: 'jazz',
+                category: 'GLAM',
                 approved: true,
                 announced: true
               },
@@ -360,7 +385,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId("5d61b954d6e95e2d3bd1a6a0"),
                 url: 'https://a.failing.blog',
                 feed: 'https://a.failing.blog/feed',
-                category: 'giving up',
+                category: 'galleries',
                 approved: true,
                 announced: true,
                 failing: true
@@ -369,7 +394,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId("5d6a003cd6e95e2d3bd1a6a2"),
                 url: 'https://a.suspended.blog',
                 feed: 'https://a.suspended.blog/feed',
-                category: 'spam',
+                category: 'museums',
                 approved: true,
                 announced: true,
                 failing: false,
@@ -379,7 +404,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 _id: ObjectId("5d6a003cd6e95e2d3bd1a6a3"),
                 url: 'https://another.suspended.blog',
                 feed: 'https://another.suspended.blog/feed',
-                category: 'spam',
+                category: 'libraries',
                 approved: true,
                 announced: true,
                 failing: true,
@@ -2596,10 +2621,32 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         })
       })
     })
-    describe('makeOPML()', function() {
-      it('should return an xml file')
-      it('should list active blogs under each category')
-      it('should exclude suspended blogs')
+    describe('makeOpml()', function() {
+      it('should return an xml file', function(done){
+        request
+        .get('/opml')
+        .expect('Content-Type', 'text/x-opml; charset=UTF-8')
+        .expect(200, done)
+      })
+      it('should list active blogs under each category', function() {
+        return request.get('/opml')
+        .then( res => {
+          opmlToJSON(res.text, function (error, json) {
+            let cats = json.children[0]
+            assert.strictEqual(cats.children.length, 6)
+          })
+        })
+      })
+      it('should exclude suspended blogs', function() {
+        return request.get('/opml')
+        .then( res => {
+          opmlToJSON(res.text, function (error, json) {
+            let cats = json.children[0]
+            assert.strictEqual(cats.children[1].children.length, 1)
+            assert.strictEqual(cats.children[3].children, undefined)
+          })
+        })
+      })
     })
   })
   after('All tests completed', function(done) {

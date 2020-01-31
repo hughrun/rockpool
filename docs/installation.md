@@ -8,7 +8,9 @@ To install `rockpool`, you should follow these steps in order:
 2. install nodejs
 3. download rockpool either using `git` or via zip download
 4. copy `settings-example.json` to `settings.json` and fill in the relevant values
-5. run the setup script
+5. run `npm install`
+6. optionally run `npm migrate`
+7. run `npm run setup`
 
 ## Installing MongoDB
 

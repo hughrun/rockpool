@@ -210,9 +210,20 @@ app.get('/subscribe', function (req, res) {
   })
 })
 
-// TODO: /help
+// help
+app.get('/help', function(req, res) {
+  res.render('help', {
+    partials: {
+      head: __dirname+'/views/partials/head.html',
+      header: __dirname+'/views/partials/header.html',
+      foot: __dirname+'/views/partials/foot.html',
+      footer: __dirname+'/views/partials/footer.html'
+    },
+    user: req.session.passwordless,
+    errors: req.flash('error')
+  })
+})
 
-// TODO: /opml
 app.get('/opml', function(req, res) {
   makeOpml()
   .then( file => {
@@ -859,7 +870,7 @@ app.get('/api/v1/admin/suspended-blogs', function(req, res) {
 })
 
 app.get('/api/v1/admin/reported-blogs', function(req, res) {
-  // TODO: for future version - report a dodgy blog somehow
+  // TODO: for future version - report a dodgy blog to admins
   res.sendStatus(404)
 })
 
@@ -1104,3 +1115,4 @@ if (env == 'test') {
 }
 
 // TODO: need to run RSS checks and announcements on timer somewhere
+// (not necessarily in this file)
