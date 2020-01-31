@@ -1,10 +1,8 @@
-## Help
-
 ## Registering your blog
 
 To register your blog, you first need to log in. Click `login or register`, enter an email address, and click on the link when you receive it in your email inbox. Once you are logged in, you can enter the URL of your blog (e.g. `https://blog.example.com`), select a category, and click `Register blog`.
 
-## Claiming a blog that is already registered (legacy sites)
+## Claiming a blog that is already registered
 
 If your blog was already registered, you can 'claim' a blog using the same process described above, except that you should click `Claim blog` instead of 'Register blog'.
 

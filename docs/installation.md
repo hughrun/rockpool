@@ -8,8 +8,8 @@ To install `rockpool`, you should follow these steps in order:
 2. install nodejs
 3. download rockpool either using `git` or via zip download
 4. copy `settings-example.json` to `settings.json` and fill in the relevant values
-5. run `npm install`
-6. optionally run `npm migrate`
+5. run `NODE_ENV=production npm run setup`
+6. optionally run `NODE_ENV=production npm run migrate`
 7. run `npm run setup`
 
 ## Installing MongoDB
@@ -35,14 +35,14 @@ TODO: more info about settings here
 In the unlikely event you were using [CommunityTweets](https://github.com/hughrun/CommunityTweets), you will need to migrate your database to the new `rockpool` structure. From the command line run:
 
 ```shell
-npm run migrate
+NODE_ENV=production npm run migrate
 ```
 ### Setting up 
 
 To set up your `rockpool` you need to run the setup script. Before doing so, you should have set up MongoDB, and checked that `settings.json` includes all relevant fields. Now run the script from the command line:
 
 ```shell
-npm run setup
+NODE_ENV=production npm run setup
 ```
 
 ---
