@@ -67,7 +67,6 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       assert.strictEqual(null, err);
       const db = client.db(dbName);
         const createDb = function(db, callback) {
-          // TODO: do stuff!
 
         let addPockets = db.collection('pockets').insertMany(
           [
@@ -437,13 +436,18 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
 
   // APP.JS
   describe('Rockpool - a web app for communities of practice', function() {
-    before('delete migrated test database before running all tests', function() {
+    before('delete migrated test database before running all tests', function(done) {
       MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
         assert.strictEqual(null, err);
         const db = client.db(dbName);
-          const dropDb = function(db, callback) { // TODO: callback is never called
+          const dropDb = function(db, callback) {
             if (db) { // the db should have been created to test the migrate script
               db.dropDatabase() // if it does exist, wipe it out
+              .then( () => {
+                callback()
+              })
+            } else {
+              callback()
             }
           }
           dropDb(db, function() {
@@ -594,6 +598,11 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       it('should load search results page', function(done) {
         request
         .get('/search?q=test')
+        .expect(200, done)
+      })
+      it('should load the browse page', function(done){
+        request
+        .get('/browse')
         .expect(200, done)
       })
       it('should load the help page', function(done){
@@ -1316,7 +1325,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 done(e)
               })
             })
-            it('should add the blog to the DB with URL, feed, approved: false and announced:false', function(done) {
+            it('should add the blog to the DB with URL, title, feed, approved: false and announced:false', function(done) {
               // mock route
               nock('https://www.bob.craps.on')
               .get('/')
@@ -1333,6 +1342,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                   assert.ok(args.blogs[0])
                   assert.strictEqual(args.blogs[0].url, 'https://www.bob.craps.on')
                   assert.strictEqual(args.blogs[0].feed, 'https://www.bob.craps.on/bob.xml')
+                  assert.strictEqual(args.blogs[0].title, 'Bob Craps On')
                   assert.strictEqual(args.blogs[0].approved, false)
                   assert.strictEqual(args.blogs[0].announced, false)
                   done()
@@ -1455,11 +1465,11 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
             beforeEach('insert blogs into blogs collection', function(done) {
-              // insert test blogs
+              // insert test blog
               MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
                 assert.strictEqual(null, err)
                 const db = client.db(dbName)
-                const insertUsers = function(db, callback) {
+                const insertBlog = function(db, callback) {
                   db.collection('rp_blogs').insertOne(
                     {
                       _id: ObjectId("124e07a27998d130d1d3ab0d"),
@@ -1477,7 +1487,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                     done(err)
                   })
                 }
-                insertUsers(db, function() {
+                insertBlog(db, function() {
                   client.close()
                 })
               })
@@ -1532,8 +1542,43 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
           })
-          describe('/api/v1/update/user/edit-blog (FUTURE FEATURE)', function(done) {
-            it('should update the blog category')
+          describe('/api/v1/update/user/edit-blog (FUTURE FEATURE)', function() {
+            before('add new blog with partial data', function(done){
+              // insert test blogs
+              MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+                assert.strictEqual(null, err)
+                const db = client.db(dbName)
+                const insertBlog = function(db, callback) {
+                  db.collection('rp_blogs').insertOne(
+                    {
+                      _id: ObjectId("124e07a27998d130d1d3ab0d"),
+                      url: 'https://new.alice.blog',
+                      feed: 'https://new.alice.blog/rss',
+                      category: 'rabbits',
+                      approved: true,
+                      announced: true
+                    }
+                  )
+                  .then( doc => {
+                    done()
+                  })
+                  .catch( err => {
+                    done(err)
+                  })
+                }
+                insertBlog(db, function() {
+                  client.close()
+                })
+              })
+            })
+            it('should update the blog url if changed', function(){
+                            // mock route
+                            nock('https://new.alice.blog/')
+                            .get('/')
+                            .replyWithFile(200, __dirname + '/sites/new.alice.blog.html')
+            })
+            it('should update the blog title via feed-finder')
+            it('should update the blog category if changed')
           })
           describe('/api/v1/update/user/remove-pocket', function() {
             it('should return success message', function(done) {
@@ -1966,6 +2011,14 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           .post('/api/v1/update/admin/approve-blog')
           .expect(403, done)
         })
+      })
+    })
+    describe('API - browse page', function(){
+      describe('/api/v1/browse', function(){
+        it('should list all blogs')
+        it('should include blog title if available')
+        it('should include blog URL')
+        it('should include blog category')
       })
     })
     describe('checkfeeds()', function() {
@@ -2639,6 +2692,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             assert.ok(pocketApiAdd.isDone()) // we only set up one nock route (i.e. not persisting) and it has been used, therefore the call to Pocket was made
           })
         })
+        it('should NOT sent articles when blog ID is in pocket.excluded_blogs')
       })
     })
     describe('checkArticleAnnouncements', function() {

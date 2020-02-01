@@ -50,7 +50,8 @@
         <ul class="blog-list">
           <li v-for='blog in blogs' class="listed-blog" v-bind:class="{deleting: blog.editing}" v-bind:key="blog.id">
             <div class="approved-blog"></div>
-            <span>{{ blog.url }}</span>
+            <span v-if="blog.title"><a v-bind:href="blog.url">{{ blog.title }}</a></span>
+            <span v-else>{{ blog.url }}</span>
             <button v-if="blog.editing" v-on:click="deleteBlog(blog)" v-bind:id="blog.idString">Confirm deletion</button>
             <button v-else v-on:click="checking(blog)" v-bind:id="blog.idString">Delete</button>
           </li>
@@ -61,7 +62,9 @@
         <ul class="blog-list" >
           <li v-for='blog in uBlogs' v-bind:key="blog.idString" class="listed-blog">
             <div class="unapproved-blog"></div>
-            <span>{{ blog.url }}</span><span class="awaiting-approval"> - awaiting approval</span>
+            <span v-if="blog.title"><a v-bind:href="blog.url">{{ blog.title }}</a></span>
+            <span v-else>{{ blog.url }}</span>
+            <span class="awaiting-approval"> - awaiting approval</span>
           </li>
         </ul>
         <register-or-claim-blogs @validate-url="validate"></register-or-claim-blogs>

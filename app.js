@@ -581,7 +581,12 @@ function(req, res, next) {
   feedfinder.getFeed(req.body.url)
   .then( ff => {
     const args = req.body
+    // TODO: should we just add a title for the blog?
+    // TODO: would that mean we should update the title
+    // on article ingest if it has changed?
+    // OR is that part of the blog update process?
     args.user = req.user
+    args.title = ff.title
     args.feed = ff.feed // add the feed to the form data object
     args.action = "register" // this is used in updateUserBlogs
     args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes

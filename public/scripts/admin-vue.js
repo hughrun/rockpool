@@ -81,7 +81,8 @@ Vue.component('blogs-for-approval', {
   <ul class="blog-list">
     <li v-for="blog in blogs">
       <form>
-        <a v-bind:href="blog.url" v-bind:class="{ deleting: blog.rejecting }">{{ blog.url }}</a>
+        <a v-if="blog.title" v-bind:href="blog.url" v-bind:class="{ deleting: blog.rejecting }">{{ blog.title }}</a>
+        <a v-else v-bind:href="blog.url" v-bind:class="{ deleting: blog.rejecting }">{{ blog.url }}</a>
         <div v-if="blog.rejecting">
           <reject-reason v-bind:blog="blog" v-bind:email="email" @reject-blog="rejectBlog" @add-message="addMessage"></reject-reason>
         </div>
