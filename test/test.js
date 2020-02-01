@@ -3020,15 +3020,12 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         .expect('Content-Type', 'text/x-opml; charset=UTF-8')
         .expect(200, done)
       })
-      // BUG: these two tests rely on particular categories 
-      // tests will fail if admin changes blog categories
       it('should list active blogs under each category', function() {
         return request.get('/opml')
         .then( res => {
           opmlToJSON(res.text, function (error, json) {
             let cats = json.children[0]
             assert.strictEqual(cats.children.length, 6)
-            assert.ok(false) // to remind me to fix this
           })
         })
       })
