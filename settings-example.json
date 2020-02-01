@@ -11,7 +11,7 @@
   "blog_categories" : ["dogs", "cats", "budgies"],
   "excluded_tags" : ["notrockpool"],
   "filtered_tags" : ["uncategorized", "uncategorised", "post", "page"],
-  "legacy_db" : true,
+  "legacy_db" : false,
   "tag_transforms" : {
     "petsblogclub" : "pets blog club",
     "#petsblogclub" : "pets blog club",

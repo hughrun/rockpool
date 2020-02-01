@@ -3,10 +3,10 @@
 // settings
 const settings = require('../settings.json')
 const env = process.env.NODE_ENV // are we in production, development, or test?
-const debug = require('debug'), name = 'Rockpool' // debug for development
+const debug = require('debug') // debug for development
 
 // Mongo
-const { MongoClient, ObjectID } = require('mongodb')
+const { MongoClient } = require('mongodb')
 const assert = require('assert')
 const url = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}`
 const dbName = settings[env].mongo_db
@@ -71,56 +71,33 @@ const migratePockets = new Promise( function (resolve, reject) {
   })
 })
 
-// merge pockets into users
-Promise.all([migrateUsers, migratePockets]).then(x => {
-  MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
-    assert.strictEqual(null, err);
-    const db = client.db(dbName);
-    const newUsers = db.collection('rp_users')
-
-    function addPockets(callback) {
-      const cleanPockets = x[1].filter( x => x != undefined)
-      cleanPockets.forEach(user => {
-        newUsers.updateOne(
-          {email: user.email},
-          {$set: {pocketName: user.pocketName, pocketToken: user.pocketToken}},
-          {upsert: true}
-          )
-      })
-      return callback()
-    }
-
-  // create new users collection and populate it
-  // make sure they are in this order so the users are updated before pockets are upserted
-    newUsers.insertMany(x[0]).then(
-      addPockets(function() {
-        debug.log('User migration complete.')
-        client.close()
-      })
-    )
-  })
-})
-
 // TAGS
-const prepareTags = new Promise( function (resolve, reject) {
-  MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
-    assert.strictEqual(null, err)
-    const db = client.db(dbName)
-    const dropIds = function(db, callback) {
-        db.collection("tags").find().map(entry => {
-        delete entry._id // remove _id
-        return entry // return the record
-      }).toArray(function(err, docs) {
-        assert.equal(null, err)
-        resolve( docs ) // resolve as an array of documents, now without valid _ids
-        callback() // close the connection
+const prepareTags = function() {
+  return new Promise( function (resolve, reject) {
+    MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+      assert.strictEqual(null, err)
+      const db = client.db(dbName)
+      const dropIds = function(db, callback) {
+          db.collection('tags').find()
+          .map(entry => {
+            delete entry._id // remove _id
+            return entry // return the record
+          })
+          .toArray(function(err, docs) {
+          assert.equal(null, err)
+          return callback(docs) // close the connection
+        })
+      }
+      return dropIds(db, function(docs) {
+        client.close()
+        .then( () => {
+          resolve( docs ) // resolve as an array of documents, now without valid _ids
+        })
       })
-    }
-    dropIds(db, function() {
-      client.close()
     })
   })
-})
+}
+
 
 // insert everything into a new collection
 // because there is now no _id, this creates one, as an ObjectID
@@ -130,44 +107,50 @@ function migrateTags(records) {
       assert.strictEqual(null, err)
       const db = client.db(dbName)
       const update = function(db, callback) {
-        const create = db.collection("rp_tags").insertMany(records)
-        resolve(create) // resolve
-        callback() // close the connection
+        return db.collection("rp_tags")
+        .insertMany(records)
+        .then( () => {
+          callback() // close the connection
+        })
       }
       update(db, function() {
         client.close()
-        debug.log('Tags migration complete.')
+        console.log('Tags migration complete.')
+        resolve() // resolve
       })
     })
   })
 }
 
 // BLOGS
-const prepareBlogs = new Promise( function (resolve, reject) {
-  MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
-    assert.strictEqual(null, err)
-    const db = client.db(dbName)
-    const transform = function(db, callback) {
-        db.collection("blogs").find().map(entry => {
-        delete entry._id // remove old non-object _id
-        entry.category = entry.type 
-        delete entry.type // $rename 'type' to 'category'
-        delete entry.author // delete author (we get author from posts)
-        if (!entry.twHandle) {
-          delete entry.twHandle // if twHandle is empty then delete it
-        }
-        return entry // return the amended record
-      }).toArray(function(err, docs) {
-        assert.equal(null, err)
-        resolve( docs ) // resolve as an array of documents, now without valid _ids
-        callback() // close the connection
+const prepareBlogs = function() {
+  return new Promise( function (resolve, reject) {
+    MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+      assert.strictEqual(null, err)
+      const db = client.db(dbName)
+      const transform = function(db, callback) {
+          db.collection("blogs").find().map(entry => {
+          delete entry._id // remove old non-object _id
+          entry.category = entry.type 
+          delete entry.type // $rename 'type' to 'category'
+          delete entry.author // delete author (we get author from posts)
+          if (!entry.twHandle) {
+            delete entry.twHandle // if twHandle is empty then delete it
+          }
+          return entry // return the amended record
+        }).toArray(function(err, docs) {
+          assert.equal(null, err)
+          resolve( docs ) // resolve as an array of documents, now without valid _ids
+          callback() // close the connection
+        })
+      }
+      transform(db, function() {
+        client.close()
       })
-    }
-    transform(db, function() {
-      client.close()
     })
   })
-})
+}
+
 
 // insert everything into a new collection
 // because there is now no _id, this creates one, as an ObjectID
@@ -178,11 +161,11 @@ function migrateBlogs(records) {
       const db = client.db(dbName)
       const update = function(db, callback) {
         const create = db.collection("rp_blogs").insertMany(records)
-        resolve(create) // resolve
-        callback() // close the connection
+        callback(create) // close the connection
       }
-      update(db, function() {
+      update(db, function(create) {
         client.close()
+        resolve(create) // resolve
         debug.log('Blogs migration complete.')
       })
     })
@@ -190,29 +173,31 @@ function migrateBlogs(records) {
 }
 
 // ARTICLES
-const prepareArticles = new Promise( function (resolve, reject) {
-  MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
-    assert.strictEqual(null, err)
-    const db = client.db(dbName)
-    const transform = function(db, callback) {
-      db.collection("articles").find().map(entry => {
-        delete entry._id // remove old non-object _id
-        entry.tags = entry.categories;
-        delete entry.categories; // rename 'categories' field name to 'tags' for consistency
-        entry.blogTitle = entry.blog;
-        delete entry.blog; // rename 'blog' to 'blogTitle'
-        return entry // return the amended record
-      }).toArray(function(err, docs) {
-        assert.equal(null, err)
-        resolve( docs ) // resolve as an array of documents, now without valid _ids
-        callback() // close the connection
+const prepareArticles = function() {
+  return new Promise( function (resolve, reject) {
+    MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+      assert.strictEqual(null, err)
+      const db = client.db(dbName)
+      const transform = function(db, callback) {
+        db.collection("articles").find().map(entry => {
+          delete entry._id // remove old non-object _id
+          entry.tags = entry.categories;
+          delete entry.categories; // rename 'categories' field name to 'tags' for consistency
+          entry.blogTitle = entry.blog;
+          delete entry.blog; // rename 'blog' to 'blogTitle'
+          return entry // return the amended record
+        }).toArray(function(err, docs) {
+          assert.equal(null, err)
+          resolve( docs ) // resolve as an array of documents, now without valid _ids
+          callback() // close the connection
+        })
+      }
+      transform(db, function() {
+        client.close()
       })
-    }
-    transform(db, function() {
-      client.close()
     })
   })
-})
+}
 
 // now add a blog_id field if possible
 function LinkArticlesToBlogs(records) {
@@ -259,9 +244,9 @@ function migrateArticles(records) {
       const db = client.db(dbName)
       const update = function(db, callback) {
         const create = db.collection("rp_articles").insertMany(records)
-        callback() // close the connection
+        callback(create) // close the connection
       }
-      update(db, function() {
+      update(db, function(create) {
         client.close()
         debug.log('Articles migration complete.')
         resolve(create) // resolve
@@ -270,29 +255,44 @@ function migrateArticles(records) {
   })
 }
 
-// run the functions one after the other
-prepareTags.then(migrateTags).catch(error => {
-  debug.log(error)
-})
+// combine the two user migration promises
+Promise.all([migrateUsers, migratePockets]).then(x => {
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+    assert.strictEqual(null, err);
+    const db = client.db(dbName);
+    const newUsers = db.collection('rp_users')
 
-// TODO: should this be a seven-promise chain? i.e. 
-// prepareTags
-// .then(migrateTags)
-// .then(prepareBlogs)
-// .then(migrateBlogs)
-// .then(prepareArticles)
-// .then(LinkArticlesToBlogs)
-// .then(migrateArticles)
-// .catch( err => {
-//   console.log(error)
-// })
+    function addPockets(callback) {
+      const cleanPockets = x[1].filter( x => x != undefined)
+      cleanPockets.forEach(user => {
+        newUsers.updateOne(
+          {email: user.email},
+          {$set: {pocketName: user.pocketName, pocketToken: user.pocketToken}},
+          {upsert: true}
+          )
+      })
+      return callback()
+    }
 
-prepareBlogs.then(migrateBlogs).catch(error => {
-  debug.log(error)
-})
-
-prepareArticles.then(LinkArticlesToBlogs)
-  .then(migrateArticles)
-  .catch(error => {
-    debug.log(error)
+  // create new users collection and populate it
+  // make sure they are in this order so the users are updated before pockets are upserted
+    newUsers.insertMany(x[0]).then(
+      addPockets(function() {
+        debug.log('User migration complete.')
+        client.close()
+      })
+    )
   })
+})
+
+// now run everything else
+prepareTags()
+.then(migrateTags)
+.then(prepareBlogs)
+.then(migrateBlogs)
+.then(prepareArticles)
+.then(LinkArticlesToBlogs)
+.then(migrateArticles)
+.catch( err => {
+  console.log(error)
+})

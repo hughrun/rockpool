@@ -5,7 +5,6 @@ const opmlToJSON = require('opml-to-json')
 const path = require('path')
 const supertest = require('supertest') // test routes
 
-
 // local files
 const app = require('../app.js') // require Rockpool app
 const queries = require('../lib/queries.js')
@@ -37,47 +36,413 @@ const dbName = settings.test.mongo_db
 
 // TESTS
 describe('Test suite for Rockpool: a web app for communities of practice', function() {
-
-  before('create demo legacy DB to test migration', function() {
+  before('delete test database before running all tests', function(done) {
+    MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+      assert.strictEqual(null, err);
+      const db = client.db(dbName);
+        const dropDb = function(db, callback) {
+          if (db) { // the db should not actually exist at this point, in which case it would throw an error
+            db.dropDatabase() // if it does exist, wipe it out
+            .then( () => {
+              return callback()
+            })
+          } else {
+            return callback()
+          }
+        }
+        dropDb(db, function() {
+          client.close()
+          .then( () => {
+            done()
+          })
+          .catch( err => {
+            done(err)
+          })
+        })
+    })
+  })
+  before('create demo legacy DB to test migration', function(done) {
     // insert a bunch of stuff into 'legacy'
+    MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+      assert.strictEqual(null, err);
+      const db = client.db(dbName);
+        const createDb = function(db, callback) {
+          // TODO: do stuff!
+
+        let addPockets = db.collection('pockets').insertMany(
+          [
+            {
+              "_id" : "7amrPAWKEWqNp5Yno",
+              "username" : "hello@pocketuser.com",
+              "accessToken" : "dcba4321-dcba-4321-dcba-4321dc"
+            },
+            {
+              "_id" : "8ed308b712730f8f8",
+              "username" : "pocketuser",
+              "accessToken" : "dcba1234-edcb-8765-dcba-1234dc"
+            }
+          ]
+        )
+        let addBlogs = db.collection('blogs').insertOne({
+          "_id" : "8a865f21d83eb1c39",
+          "url" : "https://example.wordpress.com",
+          "feed" : "https://example.wordpress.com/feed",
+          "author" : "Alice Aardvark",
+          "twHandle" : "@alice",
+          "type" : "dogs",
+          "approved" : true,
+          "announced" : true,
+          "failing" : false
+        })
+        let addArticles = db.collection('articles').insertOne({
+          "_id" : "22GRY8Mmi6ads6T8q",
+          "link" : "https://example.wordpress.com/2018/11/07/dogs4life",
+          "author" : "Alice Aardvark",
+          "blog" : "The Dog Lover",
+          "blogLink" : "https://example.wordpress.com",
+          "categories" : [
+            "dogs",
+            "life choices"
+          ],
+          "date" : new Date("2018-11-06T17:00:16Z"),
+          "title" : "Dogs4life and other slogans",
+          "tweeted" : {
+            "date" : new Date("2018-11-07T05:37:37.440Z"),
+            "times" : 3
+          }
+        })
+        let addTags = db.collection('tags').insertOne({
+          "_id" : "4054dcc833d51b76e", 
+          "tag" : "dogs", 
+          "total" : 1 
+        })
+
+        return db.collection('users').insertOne({
+          "_id" : "8amrQBWKEWqNo4Xop",
+          "createdAt" : new Date("2018-12-12T00:35:20.025Z"),
+          "services" : {
+            "password" : {
+              "bcrypt" : "bcrypt_hash"
+            },
+            "resume" : {
+              "loginTokens" : []
+            }
+          },
+          "emails" : [
+            {
+              "address" : "admin@legacysite.com",
+              "verified" : true
+            }
+          ],
+          "profile" : {
+            "owner" : true
+          }
+        })
+        .then(addPockets)
+        .then(addBlogs)
+        .then(addArticles)
+        .then(addTags)
+        .then( () => {
+          return callback()
+        })
+      }
+        createDb(db, function() {
+        client.close()
+        .then( () => {
+          done()
+        })
+        .catch( err => {
+          done(err)
+        })
+      })
+    })
   })
 
-  before('run migrate script', function() {
-    // run the script against 'legacy' DB
+  before('run migrate script', function(done) {
+    // run the script against 'legacy' DB we just created
+    const { exec } = require('child_process')
+    // NOTE: executes as if we are in the main directory - note the file path
+    exec("NODE_ENV=test node ./scripts/migrator.js", function(error, stdout, stderr) {
+      if (error) {
+        done(error)
+      } else {
+        done()
+      }
+    })
   })
 
   // MIGRATE.JS
-  // TODO: the script already exists, just need the tests
   describe('npm migrate - to migrate legacy DB from existing CommunityTweets (ausglamblogs) DB', function() {
     describe('for the articles collection', function() {
-      it('should rename to rp_articles')
-      it('should migrate articles')
+      it('should rename to rp_articles', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+          const findCollection = function(db, callback) {
+            return db.collections()
+            .then( collections => {
+              let mapped = collections.map( x => {
+                return x.s.name
+              })
+              let renamed = mapped.includes('rp_articles')
+              callback(renamed)
+            })
+          }
+          return findCollection(db, function(renamed) {
+            client.close()
+            .then( () => {
+              assert.strictEqual(renamed, true)
+              done()
+            })
+            .catch(err => {
+              done(err)
+            })
+          })
+        })
+      })
+      it('should migrate articles', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findCollection = function(db, callback) {
+              db.collection('rp_articles')
+              .find()
+              .toArray()
+              .then( articles => {
+                callback(articles)
+              })
+            }
+            findCollection(db, function(articles) {
+              client.close()
+              .then( () => {
+                assert.strictEqual(articles.length, 1)
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+        })
+      })
     })
     describe('for the blogs collection', function() {
-      it('should rename to rp_blogs')
-      it('should migrate blogs')
+      it('should rename to rp_blogs', function(done) {
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+          const findCollection = function(db, callback) {
+            return db.collections()
+            .then( collections => {
+              let mapped = collections.map( x => {
+                return x.s.name
+              })
+              let renamed = mapped.includes('rp_blogs')
+              callback(renamed)
+            })
+          }
+          return findCollection(db, function(renamed) {
+            client.close()
+            .then( () => {
+              assert.strictEqual(renamed, true)
+              done()
+            })
+            .catch(err => {
+              done(err)
+            })
+          })
+        })
+      })
+      it('should migrate blogs', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findCollection = function(db, callback) {
+              db.collection('rp_blogs')
+              .find()
+              .toArray()
+              .then( blogs => {
+                callback(blogs)
+              })
+            }
+            findCollection(db, function(blogs) {
+              client.close()
+              .then( () => {
+                assert.strictEqual(blogs.length, 1)
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+        })
+      })
     })
     describe('for the tags collection', function() {
-      it('should rename to rp_tags')
-      it('should migrate tags')
+      it('should rename to rp_tags', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+          const findCollection = function(db, callback) {
+            return db.collections()
+            .then( collections => {
+              let mapped = collections.map( x => {
+                return x.s.name
+              })
+              let renamed = mapped.includes('rp_tags')
+              callback(renamed)
+            })
+          }
+          return findCollection(db, function(renamed) {
+            client.close()
+            .then( () => {
+              assert.strictEqual(renamed, true)
+              done()
+            })
+            .catch(err => {
+              done(err)
+            })
+          })
+        })
+      })
+      it('should migrate tags', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findCollection = function(db, callback) {
+              db.collection('rp_tags')
+              .find()
+              .toArray()
+              .then( tags => {
+                callback(tags)
+              })
+            }
+            findCollection(db, function(tags) {
+              client.close()
+              .then( () => {
+                assert.strictEqual(tags.length, 1)
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+        })
+      })
 
     })
     describe('for the users collection', function() {
-      it('should rename to rp_users')
-      it('should migrate users')
-      it('should create users from pocket accounts with email addresses')
-      it('should not create users from pocket accounts without email addresses')
+      it('should rename to rp_users', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+          const findCollection = function(db, callback) {
+            return db.collections()
+            .then( collections => {
+              let mapped = collections.map( x => {
+                return x.s.name
+              })
+              let renamed = mapped.includes('rp_users')
+              callback(renamed)
+            })
+          }
+          return findCollection(db, function(renamed) {
+            client.close()
+            .then( () => {
+              assert.strictEqual(renamed, true)
+              done()
+            })
+            .catch(err => {
+              done(err)
+            })
+          })
+        })
+      })
+      it('should migrate users', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findCollection = function(db, callback) {
+              db.collection('rp_users')
+              .find()
+              .toArray()
+              .then( users => {
+                callback(users)
+              })
+            }
+            findCollection(db, function(users) {
+              client.close()
+              .then( () => {
+                assert.strictEqual(users.length, 2)
+                done()
+              })
+              .catch( err => {
+                done(err)
+              })
+            })
+        })
+      })
+      it('should create users from pocket accounts with email addresses', function(done) {
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+          const findCollection = function(db, callback) {
+            db.collection('rp_users')
+            .find()
+            .toArray()
+            .then( users => {
+              let emails = users.map( x => x.email)
+              callback(emails)
+            })
+          }
+          findCollection(db, function(users) {
+            client.close()
+            .then( () => {
+              assert.strictEqual(users.includes('hello@pocketuser.com'), true)
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+        })
+      })
+      it('should not create users from pocket accounts without email addresses', function(done){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+          const findCollection = function(db, callback) {
+            db.collection('rp_users')
+            .find()
+            .toArray()
+            .then( users => {
+              callback(users)
+            })
+          }
+          findCollection(db, function(users) {
+            client.close()
+            .then( () => {
+              assert.strictEqual(users.length, 2)
+              let emails = users.map(x => x.email)
+              assert.strictEqual(emails.includes('pocketuser'), false)
+              done()
+            })
+            .catch( err => {
+              done(err)
+            })
+          })
+        })
+      })
     })
   })
 
   // APP.JS
   describe('Rockpool - a web app for communities of practice', function() {
-    before('delete test database before running all tests', function() {
+    before('delete migrated test database before running all tests', function() {
       MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
         assert.strictEqual(null, err);
         const db = client.db(dbName);
-          const dropDb = function(db, callback) {
-            if (db) { // the db should not actually exist at this point, in which case it would throw an error
+          const dropDb = function(db, callback) { // TODO: callback is never called
+            if (db) { // the db should have been created to test the migrate script
               db.dropDatabase() // if it does exist, wipe it out
             }
           }
@@ -2655,12 +3020,15 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         .expect('Content-Type', 'text/x-opml; charset=UTF-8')
         .expect(200, done)
       })
+      // BUG: these two tests rely on particular categories 
+      // tests will fail if admin changes blog categories
       it('should list active blogs under each category', function() {
         return request.get('/opml')
         .then( res => {
           opmlToJSON(res.text, function (error, json) {
             let cats = json.children[0]
             assert.strictEqual(cats.children.length, 6)
+            assert.ok(false) // to remind me to fix this
           })
         })
       })
@@ -2687,7 +3055,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               db.dropDatabase()
               .then( () => {
                 callback()
-                resolve() // dropped
+                
               })
               .catch(e => {
                 debug.error(e)
@@ -2695,6 +3063,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             }
             return dropDb(db, function() {
               client.close()
+              .then( () => {
+                resolve() // dropped
+              })
             })
         })
       })
