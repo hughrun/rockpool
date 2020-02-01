@@ -4,7 +4,7 @@
 */
 
 // dev
-const debug = require('debug'), name = 'Rockpool' // debug for development
+const debug = require('debug') // debug for development
 const clipboardy = require('clipboardy') // write to and from clipboard (for development)
 
 // settings
@@ -490,7 +490,7 @@ app.get('/api/v1/user/blogs', function(req, res) {
   db.getUsers({query: {"email" : req.user}})
   .then( // now get the approved blogs
     doc => {
-      if (doc.users.length > 0) {
+      if (doc.users.length > 0 && doc.users[0].blogs) {
         doc.query = {"_id": {$in: doc.users[0].blogs}}
       } else {
         doc.query = {"_id": null}
@@ -499,6 +499,7 @@ app.get('/api/v1/user/blogs', function(req, res) {
     })
   .then(db.getBlogs)
   .then( data => {
+    console.log(data)
     let user = data.users.length > 0 ? data.users[0].idString : null
     res.json({user: user, blogs: data.blogs})
   })
