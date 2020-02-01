@@ -499,7 +499,6 @@ app.get('/api/v1/user/blogs', function(req, res) {
     })
   .then(db.getBlogs)
   .then( data => {
-    console.log(data)
     let user = data.users.length > 0 ? data.users[0].idString : null
     res.json({user: user, blogs: data.blogs})
   })
@@ -1024,7 +1023,7 @@ app.post('/api/v1/update/admin/delete-blog', function(req, res) {
   if (validationResult(req).isEmpty()) {
     const args = req.body
     args.action = "delete"
-    args.query = {'blogs' : ObjectId(args.blog)}
+    args.query = {'blogs' : args.blog}
     db.getUsers(args) // get the user with this blog in their 'blogs' array
       .then( args => {
         if (args.users[0]) { // if this is a legacy DB there may be no users with this blog listed

@@ -228,8 +228,8 @@ Vue.component('failing-blog', {
   <div v-if="editing">
   <label>Reason for suspending/deleting:</label><br/>
   <textarea v-model="reason" cols="40" rows="6" required></textarea>
-    <button class="delete-button" @click.prevent="deleteBlog(blog, reason)">Delete</button>
-    <button class="delete-button" @click.prevent="suspendBlog(blog, reason)">Suspend</button>
+  <button class="delete-button" @click.prevent="deleteBlog(blog, reason)">Delete</button>
+  <button class="delete-button" @click.prevent="suspendBlog(blog, reason)">Suspend</button>
   </div>
   <button v-else @click.prevent="editBlog">Delete or suspend</button>
 </div>
@@ -263,10 +263,11 @@ Vue.component('failing-blogs-list', {
     },
     deleteBlog(blog, reason) {
       // delete blog from server
-      let data = blog
-      data.reason = reason
       axios
-      .post('/api/v1/update/admin/delete-blog', data)
+      .post('/api/v1/update/admin/delete-blog', {
+        blog: blog.idString,
+        reason: this.reason
+      })
       .then( res => {
         this.addMessage(res.data) // then add message
         if (res.data.class === 'flash-success') {
