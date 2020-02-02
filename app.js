@@ -20,7 +20,7 @@ const engines = require('consolidate') // use consolidate with whiskers template
 // require locals
 const db = require('./lib/queries.js') // local database queries module
 const { updateUserContacts, updateUserBlogs, unsubscribeFromPocket, updateUserPermission } = require('./lib/users.js') // local database updates module
-const { approveBlog, deleteBlog, registerBlog, suspendBlog } = require('./lib/blogs.js') // local database updates module
+const { approveBlog, deleteBlog, editBlog, registerBlog, suspendBlog } = require('./lib/blogs.js') // local database updates module
 const { authorisePocket, finalisePocketAuthentication, makeOpml, sendEmail } = require('./lib/utilities.js') // local pocket functions
 const feeds = require('./lib/feeds.js')
 const announcements = require('./lib/announcements.js') // local database blogs module
@@ -581,10 +581,6 @@ function(req, res, next) {
   feedfinder.getFeed(req.body.url)
   .then( ff => {
     const args = req.body
-    // TODO: should we just add a title for the blog?
-    // TODO: would that mean we should update the title
-    // on article ingest if it has changed?
-    // OR is that part of the blog update process?
     args.user = req.user
     args.title = ff.title
     args.feed = ff.feed // add the feed to the form data object
@@ -709,6 +705,31 @@ app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
   })
 })
 
+// edit blog category or update title andnd/or feed
+app.post('/api/v1/update/user/edit-blog', 
+  (req, res, next) => {
+    feedfinder.getFeed(req.body.url)
+    .then( ff => {
+      const args = req.body // url and category
+      args.user = req.user
+      args.title = ff.title
+      args.feed = ff.feed
+      return args
+    })
+    .then(editBlog)
+    .then( () => {
+      res.json({
+        msg: {class: 'flash-success', text: 'blog updated'}
+      })
+    })
+    .catch(e => {
+      debug.log(e)
+      res.json({
+        error: {class: 'flash-error', text: 'error updating blog'}
+      })
+    })
+  })
+
 // unsubscribe from Pocket
 app.post('/api/v1/update/user/remove-pocket', 
   (req, res, next) => {
@@ -778,7 +799,7 @@ app.all('/api/v1/admin*',
       ADMIN GET
     #############
 */
-// 688
+
 app.get('/api/v1/admin/blogs-for-approval', function(req, res) {
   let query = {$where: "this.blogsForApproval && this.blogsForApproval.length > 0"}
   db.getUsers({query: query})

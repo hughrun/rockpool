@@ -132,14 +132,18 @@ input[type="email"].email-signup {
   max-width: 100%;
 }
 
-.article-search button,
-input[type="submit"].email-signup {
+button {
   margin: 1em auto 0;
   font-family: "Helsinki";
-  font-size: 1.2em;
+  font-size: 0.8em;
   border: 1px solid #ff748c;
   background: #fff;
   padding: 5px 10px;
+}
+
+.article-search button,
+input[type="submit"].email-signup {
+  font-size: 1.2em;
 }
 
 /* paged nav */
@@ -240,9 +244,9 @@ input[type="submit"].email-signup {
 	font-family: "SourceSansPro";
 	font-size: 0.8em;
 }
-.submit-button {
+/* .submit-button {
 	margin-top: 1em;
-}
+} */
 
 .blog-list {
 	list-style: none;
@@ -294,13 +298,27 @@ input[type="submit"].email-signup {
 	margin-top: 2em
 }
 
-.deleting {
+.deleting a {
 	text-decoration: line-through;
 	color: slategray;
 }
 
 .deleting .approved-blog {
 	background-color: slategray;
+}
+
+.editing,
+.editing a {
+	font-weight: bold;
+	text-decoration: none;
+}
+
+.editing .approved-blog {
+	background-color: yellow;
+}
+
+.hidden {
+	visibility: hidden;
 }
 
 /* buttons */

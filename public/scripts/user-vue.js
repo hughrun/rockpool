@@ -104,6 +104,7 @@ var userBlogs =  new Vue({
       this.userIdString = response.data.user
       this.blogs = response.data.blogs
       this.blogs.forEach( blog => {
+        blog.deleting = false
         blog.editing = false
       })
       if (response.data.blogs.length == 0) {
@@ -125,14 +126,33 @@ var userBlogs =  new Vue({
       .then( response => {
         var msg = response.data.msg || response.data.error
         this.addMessage(msg)
-        blog.editing = false
+        blog.deleting = false
         if (response.data.blogs) {
           this.blogs = response.data.blogs
           Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
         }
       })
     },
-    checking(blog) {
+    editBlog(blog, index) {
+      axios
+      .post('/api/v1/update/user/edit-blog', {
+        url: blog.url,
+        category: blog.category
+      })
+      .then( response => {
+        var msg = response.data.msg || response.data.error
+        this.addMessage(msg)
+        blog.editing = false
+        if (response.data.msg) {
+          Vue.set(this.blogs, index, blog) // on success message, simply update the blog client-side
+        }
+      })
+    },
+    checkingDeletion(blog) {
+      blog.deleting = true
+      Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
+    },
+    checkingEditing(blog) {
       blog.editing = true
       Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
     }
@@ -171,6 +191,38 @@ Vue.component('register-or-claim-blogs', {
     }
   })
 
+  // Vue.component('list-blogs', {
+  //   props: ['url', 'category'],
+  //   data () {
+  //     return {
+  //       categories: blogCategories,
+  //       legacy: legacy
+  //     }
+  //   },
+  //   template: `
+  //   <form id="registerBlog">
+  //     <label for="url">URL:</label>
+  //     <input v-model="url" type="url" name="url" size="60"><br/>
+  //     <label for="category">Category:</label>
+  //     <select v-model="category" name="category">
+  //     <option v-for="cat in categories" v-bind:value="cat">{{ cat }}</option>
+  //     </select>
+  //     <button v-on:click.prevent="validateBlog('register')">Register blog</button>
+  //     <button v-if="legacy" v-on:click.prevent="validateBlog('claim')">Claim blog</button>
+  //   </form>
+  //   `,
+  //     methods: {
+  //       validateBlog(action) {
+  //         this.$emit('validate-url', 
+  //         {
+  //           url: this.url, 
+  //           category: this.category, 
+  //           action: action
+  //         })
+  //       }
+  //     }
+  //   })
+  
 var userUnapprovedBlogs =  new Vue({
   el: '#user-unapproved-blogs',
   data () {
@@ -250,7 +302,7 @@ var userUnapprovedBlogs =  new Vue({
       .then( response => {
         this.addMessage(response.data)
         if (response.data.class === 'flash-success') {
-          Vue.set(this.uBlogs, this.uBlogs.length, {url: url, approved: false}) // add to the end of the blogs list
+          Vue.set(this.uBlogs, this.uBlogs.length, {url: url, approved: false}) // add to the end of the unapproved blogs list
         }
         this.url = null
         this.category = null

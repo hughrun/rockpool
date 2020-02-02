@@ -48,12 +48,21 @@
       <div id="user-approved-blogs">
         <message-list v-bind:messages="messages"></message-list>
         <ul class="blog-list">
-          <li v-for='blog in blogs' class="listed-blog" v-bind:class="{deleting: blog.editing}" v-bind:key="blog.id">
+          <li v-for='blog in blogs' class="listed-blog" v-bind:class="{deleting: blog.deleting, editing: blog.editing}" v-bind:key="blog.id">
             <div class="approved-blog"></div>
             <span v-if="blog.title"><a v-bind:href="blog.url">{{ blog.title }}</a></span>
             <span v-else>{{ blog.url }}</span>
-            <button v-if="blog.editing" v-on:click="deleteBlog(blog)" v-bind:id="blog.idString">Confirm deletion</button>
-            <button v-else v-on:click="checking(blog)" v-bind:id="blog.idString">Delete</button>
+            <form v-if="blog.editing" name="blog-info" method="POST">
+              <label for="category">Category:</label>
+              <select v-model="blog.category" name="category">
+                <option v-for="cat in blogCategories" v-bind:value="cat">{{ cat }}</option>
+              </select>
+              <button v-on:click.prevent="editBlog(blog, blogs.indexOf(blog))" id="update-button">Update</button>
+            </form>
+            <button v-else v-bind:class="{hidden: blog.deleting}" v-on:click="checkingEditing(blog)" v-bind:id="blog.idString">Update details</button>
+            <button v-if="blog.deleting" v-on:click="deleteBlog(blog)" v-bind:id="blog.idString">Confirm deletion</button>
+            <span v-else-if="blog.editing"></span>
+            <button v-else v-on:click="checkingDeletion(blog)" v-bind:id="blog.idString">Delete</button>
           </li>
         </ul>
       </div>

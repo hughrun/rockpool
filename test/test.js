@@ -1542,7 +1542,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
           })
-          describe('/api/v1/update/user/edit-blog (FUTURE FEATURE)', function() {
+          describe('/api/v1/update/user/edit-blog', function() {
             before('add new blog with partial data', function(done){
               // insert test blogs
               MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
@@ -1571,14 +1571,96 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 })
               })
             })
-            it('should update the blog url if changed', function(){
-                            // mock route
-                            nock('https://new.alice.blog/')
-                            .get('/')
-                            .replyWithFile(200, __dirname + '/sites/new.alice.blog.html')
+            before('make API call', function(done){
+              // mock route
+              nock('https://new.alice.blog/')
+              .get('/')
+              .replyWithFile(200, __dirname + '/sites/new.alice.blog.html')
+
+              // make API call
+              agent
+              .post('/api/v1/update/user/edit-blog')
+              .send({url: 'https://new.alice.blog', category: 'puppies'})
+              .then( res => {
+                assert.strictEqual(res.body.msg.class, 'flash-success')
+                done()
+              })
+              .catch(err => {
+                done(err)
+              })
             })
-            it('should update the blog title via feed-finder')
-            it('should update the blog category if changed')
+            it('should update the blog feed if changed', function(done){
+              return MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+                assert.strictEqual(null, err)
+                const db = client.db(dbName)
+                const findBlog = function(db, callback) {
+                  db.collection('rp_blogs').findOne({
+                      url: 'https://new.alice.blog',
+                    })
+                    .then( blog => {
+                      callback(blog)
+                    })
+                }
+                findBlog(db, function(data) {
+                  client.close()
+                  .then( () => {
+                    assert.strictEqual(data.feed, 'https://new.alice.blog/atom')
+                    done()
+                  })
+                  .catch(err => {
+                    done(err)
+                  })
+                })
+              })
+            })
+            it('should update the blog title via feed-finder', function(done){
+              return MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+                assert.strictEqual(null, err)
+                const db = client.db(dbName)
+                const findBlog = function(db, callback) {
+                  db.collection('rp_blogs').findOne({
+                      url: 'https://new.alice.blog',
+                    })
+                    .then( blog => {
+                      callback(blog)
+                    })
+                }
+                findBlog(db, function(data) {
+                  client.close()
+                  .then( () => {
+                    assert.strictEqual(data.title, "Alice's awesome new blog")
+                    done()
+                  })
+                  .catch(err => {
+                    done(err)
+                  })
+                })
+              })
+            })
+            it('should update the blog category if changed', function(done){
+              return MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+                assert.strictEqual(null, err)
+                const db = client.db(dbName)
+                const findBlog = function(db, callback) {
+                  db.collection('rp_blogs').findOne({
+                      url: 'https://new.alice.blog',
+                    })
+                    .then( blog => {
+                      callback(blog)
+                    })
+                }
+                findBlog(db, function(data) {
+                  client.close()
+                  .then( () => {
+                    assert.strictEqual(data.category, 'puppies')
+                    done()
+                  })
+                  .catch(err => {
+                    done(err)
+                  })
+                })
+              })
+            })
           })
           describe('/api/v1/update/user/remove-pocket', function() {
             it('should return success message', function(done) {
