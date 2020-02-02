@@ -16,8 +16,7 @@ Rockpool is an Express app interfacing with MongoDB to provide:
 * admin access to approve and edit blog listings ✅
 * subscription to all articles via Pocket ✅
 * automatic OPML file with all blogs ✅
-* editing of blog category by authorised owners
-* reporting of inappropriate/dodgy blogs
+* editing of blog category by authorised owners ✅
 
 This is a Work In Progress
 

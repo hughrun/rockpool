@@ -2097,10 +2097,58 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
     })
     describe('API - browse page', function(){
       describe('/api/v1/browse', function(){
-        it('should list all blogs')
-        it('should include blog title if available')
-        it('should include blog URL')
-        it('should include blog category')
+        it('should list all blogs', function(done) {
+          request
+          .get('/api/v1/browse')
+          .expect(200)
+          .then( response => {
+            assert.strictEqual(response.body.length, 10)
+            done()
+          })
+          .catch(err => {
+            done(err)
+          })
+        })
+        it('should include blog title if available', function(done) {
+          request
+          .get('/api/v1/browse')
+          .expect(200)
+          .then( response => {
+            // assert.strictEqual(response.body.length, 10)
+            let titles = response.body.map( blog => blog.title)
+            assert(titles.includes('Bob Craps On'))
+            done()
+          })
+          .catch(err => {
+            done(err)
+          })
+        })
+        it('should include blog URL', function(done){
+          request
+          .get('/api/v1/browse')
+          .expect(200)
+          .then( response => {
+            let urls = response.body.map( blog => blog.url)
+            assert(urls.every( x => x.length > 0))
+            done()
+          })
+          .catch(err => {
+            done(err)
+          })
+        })
+        it('should include blog category', function(done){
+          request
+          .get('/api/v1/browse')
+          .expect(200)
+          .then( response => {
+            let categories = response.body.map( blog => blog.category)
+            assert(categories.every( x => x.length > 0))
+            done()
+          })
+          .catch(err => {
+            done(err)
+          })
+        })
       })
     })
     describe('checkfeeds()', function() {

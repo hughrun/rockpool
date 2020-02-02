@@ -406,6 +406,19 @@ app.get('/admin', function (req, res) {
   })
 })
 
+// browse page
+app.get('/browse', function (req, res) {
+  res.render('browse', {
+    partials: {
+      head: __dirname+'/views/partials/head.html',
+      header: __dirname+'/views/partials/header.html',
+      foot: __dirname+'/views/partials/foot.html',
+      footer: __dirname+'/views/partials/footer.html'
+    },
+    user: req.user
+  })
+})
+
 /*  
     #######################
     LOGOUT AND ERROR ROUTES
@@ -452,7 +465,16 @@ app.get('/email-updated',
     #######################
 */
 
-// must have logged in user for all api routes 
+app.get('/api/v1/browse', function (req, res, next) {
+  // getBlogs() for all blogs
+  db.getBlogs({query: {}})
+  .then( data => {
+    // send the data back as json
+    res.json(data.blogs)
+  })
+})
+
+// must have logged in user for all other api routes 
 app.all('/api/v1/*', 
 passwordless.restricted(),
 (req, res, next) => {

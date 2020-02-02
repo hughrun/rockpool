@@ -1,0 +1,19 @@
+{>head}
+  {>header}
+    <link rel="stylesheet" type="text/css" href="/styles/browse.css">
+    <!-- vuejs prototyping TODO: use local file -->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <!-- axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <section id="main" class="main" >
+      <browse-list></browse-list>
+    </section>
+    <!-- express globals ("locals") -->
+    <script type="text/javascript">
+      var blogCategories = '{blogCategories}'.split(',');
+      var legacy = Boolean.valueOf({legacy})
+    </script>
+    <script src="/scripts/browse-vue.js"></script>
+  {>footer}
+{>foot}
