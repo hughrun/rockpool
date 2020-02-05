@@ -25,11 +25,16 @@ a {
 	text-decoration: dashed underline #ff748c;
 }
 
+code, pre {
+	background: rgba(211, 211, 211, 0.5);
+	padding: 0.25em;
+}
+
 .main {
 	min-height: 100vh;
 	padding: 2em;
 	margin: auto;
-	max-width: 800px;
+	max-width: 960px;
 }
 
 /* footer */
@@ -102,7 +107,6 @@ header a {
 .nav a {
 	text-decoration: none;
   color: #ff748c;
-  /* color: #8cff74; */
 }
 
 /*archive and search*/
@@ -159,6 +163,7 @@ input[type="submit"].email-signup {
 .prev {
   text-align: left;
 }
+
 /*articles*/
 
 .article-listing {
@@ -234,14 +239,52 @@ input[type="submit"].email-signup {
 
 .browse-blogs li {
 	display: grid;
-	grid-template-columns: auto min-content min-content;
+	grid-template-columns: auto 320px;
 }
 
 span[class^=class-] {
 	text-decoration: none;
 	font-style: normal;
+	padding: 0 0.5em;
+	margin: 1em;
+	line-height: 1.6em;
+}
+
+.failing span,
+.failing span a {
+	color: red;
+	text-decoration: line-through;
+	font-style: italic;
+}
+
+.suspended span,
+.suspended span a {
+	color: purple;
+	text-decoration: line-through;
+}
+
+.failing span.failing-icon {
+	color: red;
+	border: 1px solid red;
+	text-decoration: none;
+	font-style: normal;
 	padding: 0.125em 0.5em;
 	margin-left: 1em;
+}
+
+.suspended span.suspended-icon {
+	color: purple;
+	border: 1px solid purple;
+	text-decoration: none;
+	font-style: normal;
+	padding: 0.125em 0.5em;
+	margin-left: 1em;
+}
+
+span[class^='class-'] {
+	color: #3a3a3a;
+	text-decoration: none;
+	font-style: normal;
 }
 
 .class-0 {
@@ -310,51 +353,49 @@ ul.browse-blogs {
 	height: 1px;
 }
 
-.failing span,
-.failing span a {
-	color: red;
-	text-decoration: line-through;
-	font-style: italic;
-}
-
-.suspended span,
-.suspended span a {
-	color: purple;
-	text-decoration: line-through;
-}
-
-.failing span.failing-icon {
-	color: red;
-	border: 1px solid red;
-	text-decoration: none;
-	font-style: normal;
-	padding: 0.125em 0.5em;
-	margin-left: 1em;
-}
-
-.suspended span.suspended-icon {
-	color: purple;
-	border: 1px solid purple;
-	text-decoration: none;
-	font-style: normal;
-	padding: 0.125em 0.5em;
-	margin-left: 1em;
+.browse-actions {
+	text-align: right;
+	max-width: 300px;
 }
 
 .browse-button {
-	margin: auto 0.25em;
+	margin: 0;
 	border: none;
 	cursor: pointer;
+	font-family: "SourceSansPro", Verdana, Tahoma, Arial, sans-serif;
 }
 
-.claim {
+.actions-button {
 	background-color: rgba(211, 211, 211, 1);
 	color: rgba(58, 58, 58, 1);
 }
 
-.exclude {
-	background-color: rgba(144, 119, 119, 0.5);
+.browse-actions .browse-button.actions-button {
+	width: 6em;
+}
+
+.action {
+	font-weight: bold;
 	color: rgba(58, 58, 58, 1);
+	background-color: rgba(211, 211, 211, 0.5);
+	width: 100%;
+}
+
+.action:nth-child(odd) {
+	color: rgba(58, 58, 58, 1);
+	background-color: rgba(211, 211, 211, 0.5);
+	border-bottom: none;
+}
+
+.action:nth-child(even) {
+	background-color: rgba(211, 211, 211, 1);
+	color: rgba(58, 58, 58, 1);
+}
+
+.action:hover {
+	color: rgba(58, 58, 58, 1);
+	background-color: rgba(255, 115, 140, 0.5);
+	width: 300px;
 }
 
 /* ##############
@@ -362,6 +403,10 @@ ul.browse-blogs {
 	user dashboard 
 
  ############## */
+
+.user-info {
+	margin-bottom: 1em;
+}
 
 .user-form-vals {
 	display: grid;
@@ -377,8 +422,7 @@ ul.browse-blogs {
 
 .blog-list {
 	list-style: none;
-	font-family: 'Courier New', Courier, monospace;
-	font-size: 18px;
+	font-size: 1em;
 }
 
 .listed-blog {
@@ -434,14 +478,22 @@ ul.browse-blogs {
 	background-color: slategray;
 }
 
-.editing,
-.editing a {
-	font-weight: bold;
+#pocket {
+	display: inline;
+}
+
+.blog-editing-form {
+	margin-left: 2em;
+	display: inline;
+}
+
+.editing {
+	background-color: rgba(255, 115, 140, 0.25);
 	text-decoration: none;
 }
 
 .editing .approved-blog {
-	background-color: yellow;
+	background-color: rgba(211, 211, 211, 1);
 }
 
 .hidden {

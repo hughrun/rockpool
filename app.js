@@ -28,7 +28,7 @@ const announcements = require('./lib/announcements.js') // local database blogs 
 // managing users
 const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
-const { ObjectId } = require('mongodb') // for mongo IDs
+const { ObjectId, equals } = require('mongodb') // for mongo IDs
 const MongoStore = require('passwordless-mongostore-bcryptjs') // for creating and storing passwordless tokens
 var cookieParser = require('cookie-parser') // cookies
 var sessionStore = new session.MemoryStore() // cookie storage
@@ -407,17 +407,17 @@ app.get('/admin', function (req, res) {
 })
 
 // browse page
-app.get('/browse', function (req, res) {
-  res.render('browse', {
-    partials: {
-      head: __dirname+'/views/partials/head.html',
-      header: __dirname+'/views/partials/header.html',
-      foot: __dirname+'/views/partials/foot.html',
-      footer: __dirname+'/views/partials/footer.html'
-    },
-    user: req.user
+app.get('/browse', function (req, res, next) {
+    res.render('browse', {
+      partials: {
+        head: __dirname+'/views/partials/head.html',
+        header: __dirname+'/views/partials/header.html',
+        foot: __dirname+'/views/partials/foot.html',
+        footer: __dirname+'/views/partials/footer.html'
+      },
+      user: req.user
+    })
   })
-})
 
 /*  
     #######################
@@ -467,10 +467,43 @@ app.get('/email-updated',
 
 app.get('/api/v1/browse', function (req, res, next) {
   // getBlogs() for all blogs
-  db.getBlogs({query: {}})
+  db.getBlogs({query: {
+    approved: true
+  }})
   .then( data => {
     // send the data back as json
-    res.json(data.blogs)
+    // res.json(data.blogs)
+    if (req.user) {
+      data.query = {email: req.user}
+      db.getUsers(data)
+      .then( response => {
+        for (let blog of data.blogs) {
+          let match = response.users[0].blogs.some( x => {
+            return blog._id.equals(x)
+          })
+          if (match) {
+            blog.owned = true
+          }
+        }
+        for (let blog of data.blogs) {
+          let match = response.users[0].blogsForApproval.some( x => {
+            return blog._id.equals(x)
+          })
+          if (match) {
+            blog.claimed = true
+          }
+        }
+        res.json({
+            blogs: data.blogs, 
+            user: response.users[0]
+          })
+      })
+    } else {
+      res.json({
+        blogs: data.blogs,
+        user: null
+      })
+    }
   })
 })
 
@@ -644,7 +677,7 @@ function(req, res, next) {
 app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
   const args = req.body
   args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
-  args.query = { "url" : args.url}
+  args.query = { "_id" : ObjectId(args.idString)}
   args.action = "register"
   args.user = req.user
   db.getBlogs(args)
@@ -679,7 +712,8 @@ app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
         subject: `New blog claimed on ${settings.app_name}`,
       }
       sendEmail(message) // send email to admins
-      res.send({class: 'flash-success', text: `Your ${args.url} claim is now awaiting admin approval`})
+      // res.send({class: 'flash-success', text: `Your ${args.url} claim is now awaiting admin approval`})
+      res.send('success')
   }).catch( e => {
     res.send({class: 'flash-error', text: `Something went wrong: ${e}`})
   })
