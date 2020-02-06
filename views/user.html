@@ -8,7 +8,7 @@
       <div id="user-info">
         <message-list v-bind:messages="messages"></message-list>
         <div v-if="user.admin">
-          <button type="button" onclick="location.href='/admin'">Admin</button>
+          <button class="browse-button actions-button" type="button" onclick="location.href='/admin'">Admin</button>
         </div>
         <h3 class="form-label">Your Info</h3>
         <form v-if="editing" name="user-info" method="POST">
@@ -24,24 +24,23 @@
             <label for="mastodon">Mastodon:</label>
             <input id="mastodon" name="mastodon" v-model="user.mastodon">
           </div>
-          <button v-on:click.prevent="updateUser" id="update-button">Update</button>
+          <button class="browse-button actions-button" v-on:click.prevent="updateUser" id="update-button">Update</button>
         </form>
         <div v-else>
-          <div id="email"><span class="form-label">Email: </span>{{ user.email }}</div>
-          <div id="twitter"><span class="form-label">Twitter: </span>{{ user.twitter }}</div>
-          <div id="mastodon"><span class="form-label">Mastodon: </span>{{ user.mastodon }}</div>
-          <button v-on:click="editing = true">Edit</button>
-        </div>
-        <div>
-            <h3 class="form-label">Pocket</h3>
-              <form id="pocket">
-                <template v-if="user.pocket">
-                    <p>You are subscribed to receive articles straight to your <strong>{{ user.pocket.username }}</strong> Pocket list. Nice one!</p>
-                    <button v-on:click="cancelPocket" type="button">Cancel Pocket Subscription</button>
-                </template>
-                <button v-else type="button" onclick="location.href='/user/pocket'">Subscribe via Pocket</button>
-              </form>
+          <div class="user-info">
+            <div id="email"><span class="form-label">Email: </span>{{ user.email }}</div>
+            <div id="twitter"><span class="form-label">Twitter: </span>{{ user.twitter }}</div>
+            <div id="mastodon"><span class="form-label">Mastodon: </span>{{ user.mastodon }}</div>
           </div>
+          <button class="browse-button actions-button" v-on:click="editing = true">Edit</button>
+          <form id="pocket">
+            <template v-if="user.pocket">
+                <p>You are subscribed to receive articles straight to your <strong>{{ user.pocket.username }}</strong> Pocket list. Nice one!</p>
+                <button class="browse-button actions-button" v-on:click="cancelPocket" type="button">Cancel Pocket Subscription</button>
+            </template>
+            <button class="browse-button actions-button" v-else type="button" onclick="location.href='/user/pocket'">Subscribe via Pocket</button>
+          </form>
+        </div>
       </div>
       <!-- FIXME: this should be a vue component with subcomponents -->
       <h3 class="form-label">Your blogs</h3>
@@ -52,17 +51,18 @@
             <div class="approved-blog"></div>
             <span v-if="blog.title"><a v-bind:href="blog.url">{{ blog.title }}</a></span>
             <span v-else>{{ blog.url }}</span>
-            <form v-if="blog.editing" name="blog-info" method="POST">
+            <form class="blog-editing-form" v-if="blog.editing" name="blog-info" method="POST">
               <label for="category">Category:</label>
               <select v-model="blog.category" name="category">
                 <option v-for="cat in blogCategories" v-bind:value="cat">{{ cat }}</option>
               </select>
-              <button v-on:click.prevent="editBlog(blog, blogs.indexOf(blog))" id="update-button">Update</button>
+              <button class="browse-button actions-button" v-on:click.prevent="editBlog(blog, blogs.indexOf(blog))" id="update-button">Confirm update</button>
+              <button class="browse-button actions-button" v-on:click.prevent="cancelEditing(blog, blogs.indexOf(blog))">Cancel</button>
             </form>
-            <button v-else v-bind:class="{hidden: blog.deleting}" v-on:click="checkingEditing(blog)" v-bind:id="blog.idString">Update details</button>
-            <button v-if="blog.deleting" v-on:click="deleteBlog(blog)" v-bind:id="blog.idString">Confirm deletion</button>
+            <button class="browse-button actions-button" v-else v-bind:class="{hidden: blog.deleting}" v-on:click="checkingEditing(blog)" v-bind:id="blog.idString">Update</button>
+            <button class="browse-button actions-button" v-if="blog.deleting" v-on:click="deleteBlog(blog)" v-bind:id="blog.idString">Confirm deletion</button>
             <span v-else-if="blog.editing"></span>
-            <button v-else v-on:click="checkingDeletion(blog)" v-bind:id="blog.idString">Delete</button>
+            <button class="browse-button actions-button" v-else v-on:click="checkingDeletion(blog)" v-bind:id="blog.idString">Delete</button>
           </li>
         </ul>
       </div>

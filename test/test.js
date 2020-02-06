@@ -1687,6 +1687,10 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
           })
+          describe('/api/v1/update/user/filter-pocket', function() {
+            it('should add _id to pocket.excluded_blogs when exclude is true')
+            it('should remove _id from pocket.excluded_blogs when exclude is false')
+          })
         })
         describe('/api/v1/update/admin/*', function() {
           describe('/api/v1/update/admin/approve-blog', function() {

@@ -466,7 +466,6 @@ app.get('/email-updated',
 */
 
 app.get('/api/v1/browse', function (req, res, next) {
-  // getBlogs() for all blogs
   db.getBlogs({query: {
     approved: true
   }})
@@ -494,13 +493,15 @@ app.get('/api/v1/browse', function (req, res, next) {
           }
         }
         res.json({
-            blogs: data.blogs, 
+            blogs: data.blogs,
+            legacy: settings.legacy_db,
             user: response.users[0]
           })
       })
     } else {
       res.json({
         blogs: data.blogs,
+        legacy: settings.legacy_db,
         user: null
       })
     }
@@ -712,7 +713,6 @@ app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
         subject: `New blog claimed on ${settings.app_name}`,
       }
       sendEmail(message) // send email to admins
-      // res.send({class: 'flash-success', text: `Your ${args.url} claim is now awaiting admin approval`})
       res.send('success')
   }).catch( e => {
     res.send({class: 'flash-error', text: `Something went wrong: ${e}`})

@@ -26,6 +26,7 @@ A **blog** is any web resource with a valid RSS or Atom feed. The generally expe
 | _id   | `ObjectId` - assigned automatically by Mongo   |
 | url   | `String` - a valid URL pointing to the 'homepage' of the resource - expected to point to an HTML file |
 | feed  | `String` - a valid URL pointing to an RSS or Atom feed in the form of an XML file |
+| title | `String` - title of the blog. This is automatically discovered by checking the RSS feed |
 | category | `String` - which category has been assigned to the blog by the owner, using a list provided by the administrator of the particular Rockpool instance |
 | twHandle (_deprecated_) | `String` - a Twitter handle including the '@' symbol. This field only appears in legacy data that has been migrated from _CommunityTweets_, and is used in cases where there is no registered owner for a blog. |
 | approved | `Boolean` - indicates whether the blog has been approved by an administrator |

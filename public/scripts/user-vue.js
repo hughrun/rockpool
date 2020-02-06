@@ -148,6 +148,10 @@ var userBlogs =  new Vue({
         }
       })
     },
+    cancelEditing(blog, index) {
+      blog.editing = false
+      Vue.set(this.blogs, index, blog)
+    },
     checkingDeletion(blog) {
       blog.deleting = true
       Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
@@ -176,7 +180,6 @@ Vue.component('register-or-claim-blogs', {
     <option v-for="cat in categories" v-bind:value="cat">{{ cat }}</option>
     </select>
     <button v-on:click.prevent="validateBlog('register')">Register blog</button>
-    <button v-if="legacy" v-on:click.prevent="validateBlog('claim')">Claim blog</button>
   </form>
   `,
     methods: {

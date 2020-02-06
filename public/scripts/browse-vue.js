@@ -24,27 +24,81 @@ Vue.component('message-list', {
   }
 })
 
+Vue.component('blog-actions', {
+  props: ['active', 'blog', 'user', 'legacy'],
+  template: `
+  <div class="browse-actions">
+  <button v-if="!active" class="browse-button actions-button" v-on:click="active = true">Actions</button>
+  <button v-if="active" class="browse-button actions-button" v-on:click="active = false">Cancel</button>
+  <div v-if="active" key="blog.idString">
+    <button v-if="legacy" v-on:click="claimBlog(blog)" class="browse-button claim-button action">
+      Claim ownership of this blog
+    </button>
+    <button v-if="user && user.pocket" v-on:click="excludeFromPocket(blog)" class="browse-button pocket-button action">
+      Exclude this blog from Pocket
+    </button>
+  </div>
+</div>
+  `,
+  data() {
+    return {
+      active: this.active
+    }
+  },
+  methods: {
+    excludeFromPocket(blog) {
+      // TODO:
+      console.log(blog)
+    },
+    includeInPocket(blog) {
+
+    },
+    claimBlog(blog) {
+      axios
+      .post('/api/v1/update/user/claim-blog', blog)
+      .then( response => {
+        if (response.data == 'success') {
+          Vue.set(blog, 'claimed', true)
+        } else {
+          // TODO: do something on failure
+          // a flash message?
+        }
+        this.blog = blog
+        this.active = false
+      })
+      .catch(err => {
+        console.log(err)
+        this.addMessage({class: 'flash-error', text: err.message})
+      })
+    }
+  }
+})
+
 Vue.component('browse-list', {
   data () {
     return {
       messages: [],
       blogs: [],
-      categories: blogCategories
+      user: null,
+      categories: blogCategories,
+      active: false,
+      legacy: false,
+      actionsAvailable: false
+      
     }
   },
   mounted () {
     axios
     .get('/api/v1/browse')
     .then( res => {
-      for (let blog of res.data) {
+      for (let blog of res.data.blogs) {
         blog.class = 'class-' + blogCategories.indexOf(blog.category)
       }
-      this.blogs = res.data
+      this.blogs = res.data.blogs
+      this.legacy = res.data.legacy
+      this.user = res.data.user
+      this.actionsAvailable = this.user && (this.legacy || this.user.pocket)
     })
-  },
-  methods: {
-    claimBlog(blog) {},
-    togglePocket(blog) {}
   },
   template: `
     <section>
@@ -56,13 +110,21 @@ Vue.component('browse-list', {
             <div>
               <span v-if="blog.title"><a v-bind:href="blog.url">{{ blog.title }}</a></span>
               <span v-else><a v-bind:href="blog.url">{{ blog.url }}</a></span>
+              <span v-if="blog.owned" class="approved-blog"></span>
+              <span v-if="blog.claimed" class="unapproved-blog"></span>
               <span v-bind:class="blog.class">{{ blog.category }}</span>
               <span v-if="blog.failing" class="failing-icon">failing</span>
               <span v-if="blog.suspended" class="suspended-icon">supended</span>
             </div>
-            <button class="browse-button claim">claim</button>
-            <button class="browse-button exclude">exclude</button>
+            <blog-actions 
+              v-if="actionsAvailable" 
+              v-bind:active="active" 
+              v-bind:blog="blog"
+              v-bind:legacy="legacy"
+              v-bind:user="user">
+            </blog-actions>
           </li>
+          <hr />
         </ul>
       </div>
       <div v-else>
