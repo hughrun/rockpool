@@ -30,7 +30,7 @@ const clipboardy = require('clipboardy')
 const settings = require('../settings.json')
 
 // Mongo
-const { MongoClient, ObjectId} = require('mongodb')
+const { MongoClient, ObjectId, equals} = require('mongodb')
 const url = `${settings.test.mongo_user}:${settings.test.mongo_password}@${settings.test.mongo_url}:${settings.test.mongo_port}`
 const dbName = settings.test.mongo_db
 
@@ -1379,7 +1379,10 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             it('should return an error message if the blog is already owned', function(done) {
               agent
               .post('/api/v1/update/user/claim-blog')
-              .send({url: 'https://alice.blog'})
+              .send({
+                url: 'https://alice.blog',
+                idString: '761924060db4a4b2c3b7fcc5'
+              })
               .expect(200)
               .then( res => {
                 assert.strictEqual(res.body.text, 'Something went wrong: Error: Another user owns or has claimed https://alice.blog')
@@ -1392,7 +1395,10 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             it('should return an error message if the blog is already claimed', function(done) {
               agent
               .post('/api/v1/update/user/claim-blog')
-              .send({url: 'https://bobs-blog.com'})
+              .send({
+                url: 'https://bobs-blog.com',
+                idString: '2a182f1d81c32da8adb56777'
+              })
               .expect(200)
               .then( res => {
                 assert.strictEqual(res.body.text, 'Something went wrong: Error: Another user owns or has claimed https://bobs-blog.com')
@@ -1405,10 +1411,13 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             it('should return success message', function(done) {
               agent
               .post('/api/v1/update/user/claim-blog')
-              .send({url: 'https://another.legacy.blog'})
+              .send({
+                url: 'https://another.legacy.blog',
+                idString: '5d60be89d6e95e2d3bd1a69d'
+              })
               .expect(200)
               .then( res => {
-                assert.strictEqual(res.body.text, 'Your https://another.legacy.blog claim is now awaiting admin approval')
+                assert.strictEqual(res.body.status, 'ok')
                 done()
               })
               .catch(e => {
@@ -1604,7 +1613,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 findBlog(db, function(data) {
                   client.close()
                   .then( () => {
-                    assert.strictEqual(data.feed, 'https://new.alice.blog/atom')
+                    assert.strictEqual(data.feed, 'https://new.alice.blog/rss')
                     done()
                   })
                   .catch(err => {
@@ -1688,8 +1697,59 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
           })
           describe('/api/v1/update/user/filter-pocket', function() {
-            it('should add _id to pocket.excluded_blogs when exclude is true')
-            it('should remove _id from pocket.excluded_blogs when exclude is false')
+            it('should add _id to pocket.excluded when exclude is true', function(done) {
+              agent
+              .post('/api/v1/update/user/filter-pocket')
+              .send({
+                blog: '5d5932f5d6e95e2d3bd1a69c',
+                exclude: true
+              })
+              .expect(200)
+              .then( res => {
+                assert.strictEqual(res.body.class, 'flash-success')
+                queries.getUsers({
+                  query: {email: 'alice@new.email'} // remember we had to log in again so this is the 'agent' email
+                }) 
+                .then( args => {
+                  let alice = args.users[0]
+                  let included = (item) => item.equals(ObjectId('5d5932f5d6e95e2d3bd1a69c'))
+                  assert(alice.pocket.excluded.some(included))
+                  done()
+                })
+                .catch(err => {
+                  done(err)
+                })
+              })
+              .catch(err => {
+                done(err)
+              })
+            })
+            it('should remove _id from pocket.excluded when exclude is false', function(done){
+              agent
+              .post('/api/v1/update/user/filter-pocket')
+              .send({
+                blog: '5d5932f5d6e95e2d3bd1a69c',
+                exclude: false
+              })
+              .expect(200)
+              .then( res => {
+                assert.strictEqual(res.body.class, 'flash-success')
+                queries.getUsers({
+                  query: {email: 'alice@new.email'} // remember we had to log in again so this is the 'agent' email
+                }) 
+                .then( args => {
+                  let alice = args.users[0]
+                  assert.strictEqual(alice.pocket.excluded.includes(ObjectId('5d5932f5d6e95e2d3bd1a69c')), false)
+                  done()
+                })
+                .catch(err => {
+                  done(err)
+                })
+              })
+              .catch(err => {
+                done(err)
+              })
+            })
           })
         })
         describe('/api/v1/update/admin/*', function() {
@@ -2106,7 +2166,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           .get('/api/v1/browse')
           .expect(200)
           .then( response => {
-            assert.strictEqual(response.body.length, 10)
+            assert.strictEqual(response.body.blogs.length, 8) // 8 approved blogs in DB, 10 in total
             done()
           })
           .catch(err => {
@@ -2118,9 +2178,8 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           .get('/api/v1/browse')
           .expect(200)
           .then( response => {
-            // assert.strictEqual(response.body.length, 10)
-            let titles = response.body.map( blog => blog.title)
-            assert(titles.includes('Bob Craps On'))
+            let titles = response.body.blogs.map( blog => blog.title)
+            assert(titles.includes("Alice's awesome new blog"))
             done()
           })
           .catch(err => {
@@ -2132,7 +2191,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           .get('/api/v1/browse')
           .expect(200)
           .then( response => {
-            let urls = response.body.map( blog => blog.url)
+            let urls = response.body.blogs.map( blog => blog.url)
             assert(urls.every( x => x.length > 0))
             done()
           })
@@ -2145,7 +2204,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           .get('/api/v1/browse')
           .expect(200)
           .then( response => {
-            let categories = response.body.map( blog => blog.category)
+            let categories = response.body.blogs.map( blog => blog.category)
             assert(categories.every( x => x.length > 0))
             done()
           })
@@ -2200,6 +2259,35 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           }
         }) // script to create RSS file with dates relative to now
       })
+      before('approve bob.craps.on', function(){
+        MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const findDocuments = function(db, callback) {
+              const blogs = db.collection('rp_blogs')
+              let now = new Date()
+              let lastWeek = new Date(now - 6.048e+8)
+              blogs.updateOne(
+                {url: 'https://www.bob.craps.on'},
+                {$set: 
+                  {
+                    approved: true,
+                    suspensionEndDate: lastWeek
+                  }
+                }
+                )
+              .then( docs => {
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            findDocuments(db, function() {
+              client.close()
+            })
+        })
+      })
       before('set up mocks for blog feeds before testing them', function(done) {
 
         nock('https://a.failing.blog')
@@ -2214,10 +2302,10 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         .get('/feed')
         .replyWithFile(200, __dirname + '/sites/legacyTwoRss.xml')
 
-        nock('https://bobs-blog.com')
-        .get('/atom') // this should probably be an Atom feed
+        nock('https://www.bob.craps.on')
+        .get('/bob.xml')
         .replyWithFile(200, __dirname + '/sites/bobRss.xml')
-        
+
         nock('https://bobbie.blog')
         .get('/rss')
         .replyWithFile(200, __dirname + '/sites/bobbieRss.xml')
@@ -2312,8 +2400,55 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
           })
         })
       })
+      before('set pocket token and exclude a blog for Bob', function(done) {
+        return MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
+          assert.strictEqual(null, err);
+          const db = client.db(dbName);
+            const updateBob = function(db, callback) {
+              const posts = db.collection('rp_users')
+              posts.updateOne({
+                email: 'bob@example.com'
+              },
+              {
+                $set: {
+                  pocket: {
+                    username: 'bob@example.com',
+                    token: '5678defg-5678-defg-5678-defg56',
+                    exludedBlogs: [ ObjectId('5d5932f5d6e95e2d3bd1a69c') ]
+                  }
+                }
+              })
+              .then( args => {
+                callback()
+              })
+              .catch(err => {
+                done(err)
+              })
+            }
+            return updateBob(db, function() {
+              client.close()
+              .then( () => {
+                done()
+              })
+              .catch(err => {
+                done(err)
+              })
+              
+            })
+        })
+      })
       it('should run every X minutes in line with settings[env].minutes_between_checking_feeds')
-      it('should eventually resolve', function(done) {
+      it('should send posts to Pocket unless blog is excluded', function(done) {
+        pocketApiAdd
+        .post('/v3/add')
+        .times(4) // only 4 times because legacy.blog is excluded
+        .reply(function(uri, requestBody) {
+          let requestObj = JSON.parse(requestBody)
+          // legacy.blog is excluded, as per above
+          assert.notStrictEqual(requestObj.url, 'https://legacy.blog/4')
+          return 200
+        })
+
         feeds.checkFeeds()
         .then( res => {
           assert.strictEqual(res, true)
@@ -2458,7 +2593,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
         })
       })
-      // this (above) accounts for multiple suspensions because it progressively becomes more recent
+      // NOTE: this (above) accounts for multiple suspensions because it progressively becomes more recent
       it('should queue announcements for articles after they are added', function(done){
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
           assert.strictEqual(null, err);
@@ -2490,7 +2625,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               const posts = db.collection('rp_announcements')
               posts.countDocuments()
               .then( doc => {
-                assert.equal(doc < 13, true) 
+                assert.strictEqual(doc, 12) 
                 // 1 post on each of twitter and masto announcing approved blog
                 // 5 posts to announce on each of twitter and mastodon
                 done()
@@ -2796,39 +2931,16 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       it('should not throw if there are no registered Pocket accounts', function() {
         assert.doesNotThrow(feeds.pushToPockets)
       })
-      describe('with registered Pocket user', function() {
-        before('make Bob a pocket user', function() {
-          return MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
-            assert.strictEqual(null, err);
-            const db = client.db(dbName);
-              const updateBob = function(db, callback) {
-                const posts = db.collection('rp_users')
-                posts.updateOne({
-                  email: 'bob@example.com'
-                },
-                {
-                  $set: {
-                    pocket: {
-                      username: 'bob@example.com',
-                      token: '5678defg-5678-defg-5678-defg56'
-                    }
-                  }
-                })
-              }
-              return updateBob(db, function() {
-                client.close()
-              })
-          })
+      it('should send Pocket API call including blogpost url as string', function() {
+        return feeds.pushToPockets('https://bobbie.blog/2')
+        .then( () => {
+          // we only set up one nock route (i.e. not persisting) and it has been used, 
+          // therefore the call to Pocket was made
+          assert.ok(pocketApiAdd.isDone())
         })
-        it('should send Pocket API call to add item to each registered account', function() {
-          return feeds.pushToPockets()
-          .then( () => {
-            assert.ok(pocketApiAdd.isDone()) // we only set up one nock route (i.e. not persisting) and it has been used, therefore the call to Pocket was made
-          })
-        })
-        it('should NOT sent articles when blog ID is in pocket.excluded_blogs')
       })
     })
+
     describe('checkArticleAnnouncements', function() {
       before('run checkArticleAnnouncements', function(){
         return announcements.checkArticleAnnouncements()

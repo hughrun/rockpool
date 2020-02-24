@@ -37,6 +37,7 @@ Vue.component('blog-actions', {
     <button v-if="user && user.pocket" v-on:click="excludeFromPocket(blog)" class="browse-button pocket-button action">
       Exclude this blog from Pocket
     </button>
+    {{user.pocket.excluded}}
   </div>
 </div>
   `,
@@ -47,17 +48,47 @@ Vue.component('blog-actions', {
   },
   methods: {
     excludeFromPocket(blog) {
-      // TODO:
-      console.log(blog)
+      // blog is blog IdString
+      axios
+      .post('/api/v1/update/user/filter-pocket', {blog: blog, exclude: true})
+      .then( response => {
+        if (response.data.status == 'ok') {
+          Vue.set(blog, 'excluded', true)
+        } else {
+          // TODO: do something on failure
+          // a flash message?
+        }
+        this.blog = blog
+        this.active = false
+      })
+      .catch(err => {
+        console.log(err)
+        this.addMessage({class: 'flash-error', text: err.message})
+      })
     },
     includeInPocket(blog) {
-
+      axios
+      .post('/api/v1/update/user/filter-pocket', {blog: blog, exclude: false})
+      .then( response => {
+        if (response.data.status == 'ok') {
+          Vue.set(blog, 'excluded', false)
+        } else {
+          // TODO: do something on failure
+          // a flash message?
+        }
+        this.blog = blog
+        this.active = false
+      })
+      .catch(err => {
+        console.log(err)
+        this.addMessage({class: 'flash-error', text: err.message})
+      })
     },
     claimBlog(blog) {
       axios
       .post('/api/v1/update/user/claim-blog', blog)
       .then( response => {
-        if (response.data == 'success') {
+        if (response.data.status == 'ok') {
           Vue.set(blog, 'claimed', true)
         } else {
           // TODO: do something on failure

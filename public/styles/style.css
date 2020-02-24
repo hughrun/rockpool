@@ -259,7 +259,7 @@ span[class^=class-] {
 
 .suspended span,
 .suspended span a {
-	color: purple;
+	color: rgba(159, 159, 159, 1);
 	text-decoration: line-through;
 }
 
@@ -273,8 +273,8 @@ span[class^=class-] {
 }
 
 .suspended span.suspended-icon {
-	color: purple;
-	border: 1px solid purple;
+	color: rgba(159, 159, 159, 1);
+	border: 1px solid rgba(159, 159, 159, 1);
 	text-decoration: none;
 	font-style: normal;
 	padding: 0.125em 0.5em;

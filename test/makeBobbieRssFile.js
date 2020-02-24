@@ -8,8 +8,7 @@ let date2 = new Date(now - 2.592e+10) // 300 days ago
 let today = date1.toUTCString()
 let lastYear = date2.toUTCString()
 
-let rssfile = `
-<?xml version="1.0" encoding="UTF-8" ?>
+let rssfile = `<?xml version="1.0" encoding="UTF-8" ?>
 <rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
   <channel>
     <title>

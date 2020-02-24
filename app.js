@@ -19,7 +19,7 @@ const engines = require('consolidate') // use consolidate with whiskers template
 
 // require locals
 const db = require('./lib/queries.js') // local database queries module
-const { updateUserContacts, updateUserBlogs, unsubscribeFromPocket, updateUserPermission } = require('./lib/users.js') // local database updates module
+const { updateUserContacts, updateUserBlogs, updateUserPocketFilters, unsubscribeFromPocket, updateUserPermission } = require('./lib/users.js') // local database updates module
 const { approveBlog, deleteBlog, editBlog, registerBlog, suspendBlog } = require('./lib/blogs.js') // local database updates module
 const { authorisePocket, finalisePocketAuthentication, makeOpml, sendEmail } = require('./lib/utilities.js') // local pocket functions
 const feeds = require('./lib/feeds.js')
@@ -470,8 +470,6 @@ app.get('/api/v1/browse', function (req, res, next) {
     approved: true
   }})
   .then( data => {
-    // send the data back as json
-    // res.json(data.blogs)
     if (req.user) {
       data.query = {email: req.user}
       db.getUsers(data)
@@ -677,7 +675,7 @@ function(req, res, next) {
 // claim blog
 app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
   const args = req.body
-  args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
+  //args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
   args.query = { "_id" : ObjectId(args.idString)}
   args.action = "register"
   args.user = req.user
@@ -713,7 +711,7 @@ app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
         subject: `New blog claimed on ${settings.app_name}`,
       }
       sendEmail(message) // send email to admins
-      res.send('success')
+      res.send({status: 'ok'})
   }).catch( e => {
     res.send({class: 'flash-error', text: `Something went wrong: ${e}`})
   })
@@ -782,6 +780,29 @@ app.post('/api/v1/update/user/edit-blog',
       debug.log(e)
       res.json({
         error: {class: 'flash-error', text: 'error updating blog'}
+      })
+    })
+  })
+
+// exclude or include (un-exclude) a blog from pocket
+app.post('/api/v1/update/user/filter-pocket', 
+  (req, res, next) => {
+    let args = req.body // blog (idString) and exclude (true/false)
+    args.user = req.user
+    updateUserPocketFilters(args)
+    .then( () => {
+      res.send({
+          class: 'flash-success',
+          text: 'exclusion list updated'
+      })
+    })
+    .catch(err => {
+      debug.log('error updating exclusion list', err)
+      res.send({
+        msg: {
+          class: 'flash-error',
+          text: err.message
+        }
       })
     })
   })
