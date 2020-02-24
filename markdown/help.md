@@ -27,4 +27,6 @@ If you write a blog post that is 'off topic' and don't want it to be included in
 
 ## Excluding one of more blogs from Pocket subscription
 
-TODO
+On the `browse` page you can exclude or include (unexclude) each blog. Make sure you are logged in first, and have registered your Pocket account. You will then be able to click on 'Actions' to the right of each blog, and then click the button to Exclude or Include.
+
+If you 'exclude' a blog, when new posts are published they will **not** be added to your Pocket list.
