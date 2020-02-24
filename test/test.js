@@ -1706,7 +1706,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
               .expect(200)
               .then( res => {
-                assert.strictEqual(res.body.class, 'flash-success')
+                assert.strictEqual(res.body.result, 'ok')
                 queries.getUsers({
                   query: {email: 'alice@new.email'} // remember we had to log in again so this is the 'agent' email
                 }) 
@@ -1733,7 +1733,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
               .expect(200)
               .then( res => {
-                assert.strictEqual(res.body.class, 'flash-success')
+                assert.strictEqual(res.body.result, 'ok')
                 queries.getUsers({
                   query: {email: 'alice@new.email'} // remember we had to log in again so this is the 'agent' email
                 }) 

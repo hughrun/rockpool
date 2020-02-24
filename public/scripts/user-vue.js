@@ -193,38 +193,6 @@ Vue.component('register-or-claim-blogs', {
       }
     }
   })
-
-  // Vue.component('list-blogs', {
-  //   props: ['url', 'category'],
-  //   data () {
-  //     return {
-  //       categories: blogCategories,
-  //       legacy: legacy
-  //     }
-  //   },
-  //   template: `
-  //   <form id="registerBlog">
-  //     <label for="url">URL:</label>
-  //     <input v-model="url" type="url" name="url" size="60"><br/>
-  //     <label for="category">Category:</label>
-  //     <select v-model="category" name="category">
-  //     <option v-for="cat in categories" v-bind:value="cat">{{ cat }}</option>
-  //     </select>
-  //     <button v-on:click.prevent="validateBlog('register')">Register blog</button>
-  //     <button v-if="legacy" v-on:click.prevent="validateBlog('claim')">Claim blog</button>
-  //   </form>
-  //   `,
-  //     methods: {
-  //       validateBlog(action) {
-  //         this.$emit('validate-url', 
-  //         {
-  //           url: this.url, 
-  //           category: this.category, 
-  //           action: action
-  //         })
-  //       }
-  //     }
-  //   })
   
 var userUnapprovedBlogs =  new Vue({
   el: '#user-unapproved-blogs',

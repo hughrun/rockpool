@@ -281,6 +281,15 @@ span[class^=class-] {
 	margin-left: 1em;
 }
 
+.excluded span.excluded-icon {
+	color: rgba(159, 159, 159, 1);
+	border: 1px solid rgba(159, 159, 159, 1);
+	text-decoration: none;
+	font-style: normal;
+	padding: 0.125em 0.5em;
+	margin-left: 1em;
+}
+
 span[class^='class-'] {
 	color: #3a3a3a;
 	text-decoration: none;
@@ -390,6 +399,10 @@ ul.browse-blogs {
 .action:nth-child(even) {
 	background-color: rgba(211, 211, 211, 1);
 	color: rgba(58, 58, 58, 1);
+}
+
+.action.excluded {
+	color: rgba(255, 115, 140, 1);
 }
 
 .action:hover {

@@ -792,17 +792,13 @@ app.post('/api/v1/update/user/filter-pocket',
     updateUserPocketFilters(args)
     .then( () => {
       res.send({
-          class: 'flash-success',
-          text: 'exclusion list updated'
+        result: 'ok'
       })
     })
     .catch(err => {
       debug.log('error updating exclusion list', err)
       res.send({
-        msg: {
-          class: 'flash-error',
-          text: err.message
-        }
+        error: err.message
       })
     })
   })
