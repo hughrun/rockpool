@@ -1,3 +1,5 @@
+/* FONTS */
+
 @font-face {
 	font-family: "SourceSansPro";
 	src: url("../assets/fonts/source-sans-pro/SourceSansPro-Regular.otf") format("opentype");
@@ -7,6 +9,8 @@
 	font-family: "Helsinki";
 	src: url("../assets/fonts/helsinki/helsinki.ttf") format("opentype");
 }
+
+/* ELEMENTS */
 
 body {
 	font-family: "SourceSansPro", Verdana, Tahoma, Arial, sans-serif;
@@ -25,16 +29,110 @@ a {
 	text-decoration: dashed underline #ff748c;
 }
 
+button {
+	margin: 0;
+	border: none;
+	border: 1px solid #3a3a3a;
+	padding: 5px 10px;
+	cursor: pointer;
+	font-size: 0.8em;
+	font-family: "SourceSansPro", Verdana, Tahoma, Arial, sans-serif;
+}
+
 code, pre {
 	background: rgba(211, 211, 211, 0.5);
 	padding: 0.25em;
 }
+
+/* CLASSES */
 
 .main {
 	min-height: 100vh;
 	padding: 2em;
 	margin: auto;
 	max-width: 960px;
+}
+
+ /* buttons */
+
+ .actions-button {
+	background-color: rgba(211, 211, 211, 1);
+	color: rgba(58, 58, 58, 1);
+}
+
+ .approve-button {
+	/* border: 1px solid #8cff74; */
+	margin: 0.25em auto;
+}
+
+.cancel-button {
+	border: none;
+}
+
+.confirm-button {
+	border: 2px solid blue;
+}
+
+.delete-button {
+	margin-top: 2em
+}
+
+.failing-actions-button {
+	margin-top: 1em;
+	border: 1px solid #3a3a3a
+}
+
+.search-button {
+  margin: 1em auto 0;
+  font-family: "Helsinki";
+  border: 1px solid #ff748c;
+  background: #fff;
+  padding: 5px 10px;
+}
+
+.browse-actions .actions-button {
+	width: 6em;
+}
+
+.article-search button,
+input[type="submit"].email-signup {
+  font-size: 1.2em;
+}
+
+
+.browse-actions {
+	text-align: right;
+	max-width: 300px;
+}
+
+.action {
+	border: none;
+	font-weight: bold;
+	color: rgba(58, 58, 58, 1);
+	background-color: rgba(211, 211, 211, 0.5);
+	width: 100%;
+}
+
+.action:nth-child(odd) {
+	color: rgba(58, 58, 58, 1);
+	background-color: rgba(211, 211, 211, 0.5);
+	border-bottom: none;
+}
+
+.action:nth-child(even) {
+	background-color: rgba(211, 211, 211, 1);
+	color: rgba(58, 58, 58, 1);
+}
+
+.action.excluded,
+.reject-button {
+	color: rgba(255, 115, 140, 1);
+}
+
+.action:hover {
+	color: rgba(58, 58, 58, 1);
+	background-color: rgba(255, 115, 140, 0.5);
+	width: 300px;
 }
 
 /* footer */
@@ -134,20 +232,6 @@ input[type="email"].email-signup {
   font-size: 2em;
   text-align: center;
   max-width: 100%;
-}
-
-button {
-  margin: 1em auto 0;
-  font-family: "Helsinki";
-  font-size: 0.8em;
-  border: 1px solid #ff748c;
-  background: #fff;
-  padding: 5px 10px;
-}
-
-.article-search button,
-input[type="submit"].email-signup {
-  font-size: 1.2em;
 }
 
 /* paged nav */
@@ -362,55 +446,6 @@ ul.browse-blogs {
 	height: 1px;
 }
 
-.browse-actions {
-	text-align: right;
-	max-width: 300px;
-}
-
-.browse-button {
-	margin: 0;
-	border: none;
-	cursor: pointer;
-	font-family: "SourceSansPro", Verdana, Tahoma, Arial, sans-serif;
-}
-
-.actions-button {
-	background-color: rgba(211, 211, 211, 1);
-	color: rgba(58, 58, 58, 1);
-}
-
-.browse-actions .browse-button.actions-button {
-	width: 6em;
-}
-
-.action {
-	font-weight: bold;
-	color: rgba(58, 58, 58, 1);
-	background-color: rgba(211, 211, 211, 0.5);
-	width: 100%;
-}
-
-.action:nth-child(odd) {
-	color: rgba(58, 58, 58, 1);
-	background-color: rgba(211, 211, 211, 0.5);
-	border-bottom: none;
-}
-
-.action:nth-child(even) {
-	background-color: rgba(211, 211, 211, 1);
-	color: rgba(58, 58, 58, 1);
-}
-
-.action.excluded {
-	color: rgba(255, 115, 140, 1);
-}
-
-.action:hover {
-	color: rgba(58, 58, 58, 1);
-	background-color: rgba(255, 115, 140, 0.5);
-	width: 300px;
-}
-
 /* ##############
 
 	user dashboard 
@@ -424,6 +459,10 @@ ul.browse-blogs {
 .user-form-vals {
 	display: grid;
 	grid-template-columns: max-content minmax(8em, 16em);
+}
+
+.pocket-info {
+	margin-top: 1em;
 }
 
 .profile-value {
@@ -458,7 +497,7 @@ ul.browse-blogs {
 	height: 1em;
 	background: lightsalmon;
 	border-radius: 50%;
-	margin-right: 1em;
+	margin: auto 1em;
 	vertical-align: text-bottom;
 }
 
@@ -478,10 +517,6 @@ ul.browse-blogs {
 	width: 24px;
 }
 
-.delete-button {
-	margin-top: 2em
-}
-
 .deleting a {
 	text-decoration: line-through;
 	color: slategray;
@@ -491,9 +526,9 @@ ul.browse-blogs {
 	background-color: slategray;
 }
 
-#pocket {
+/* #pocket {
 	display: inline;
-}
+} */
 
 .blog-editing-form {
 	margin-left: 2em;
@@ -511,20 +546,6 @@ ul.browse-blogs {
 
 .hidden {
 	visibility: hidden;
-}
-
-/* buttons */
-
-.approve-button {
-	border: 2px solid green;
-}
-
-.reject-button {
-	border: 2px solid red;
-}
-
-.confirm-button {
-	border: 2px solid blue;
 }
 
 /* flash messages */
@@ -571,5 +592,5 @@ ul.browse-blogs {
  }
 
  .feed-link {
-	color: #8f8f8f;
+	color: #ff748c;
  }

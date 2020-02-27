@@ -55,7 +55,10 @@ var userInfo =  new Vue({
       .then( response => {
         this.editing = false
         if (response.data.user) {
-          this.user = response.data.user
+          let res = response.data.user
+          this.user.email = res.email
+          this.user.twitter = res.twitter
+          this.user.mastodon = res.mastodon
         } else if (response.data.error) {
           this.addMessage(res.data.error)
         }

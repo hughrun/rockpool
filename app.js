@@ -474,20 +474,24 @@ app.get('/api/v1/browse', function (req, res, next) {
       data.query = {email: req.user}
       db.getUsers(data)
       .then( response => {
-        for (let blog of data.blogs) {
-          let match = response.users[0].blogs.some( x => {
-            return blog._id.equals(x)
-          })
-          if (match) {
-            blog.owned = true
+        if (response.users[0].blogs) {
+          for (let blog of data.blogs) {
+            let match = response.users[0].blogs.some( x => {
+              return blog._id.equals(x)
+            })
+            if (match) {
+              blog.owned = true
+            }
           }
         }
         for (let blog of data.blogs) {
-          let match = response.users[0].blogsForApproval.some( x => {
-            return blog._id.equals(x)
-          })
-          if (match) {
-            blog.claimed = true
+          if (response.users[0].blogsForApproval) {
+            let match = response.users[0].blogsForApproval.some( x => {
+              return blog._id.equals(x)
+            })
+            if (match) {
+              blog.claimed = true
+            }
           }
         }
         res.json({

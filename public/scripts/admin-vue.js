@@ -232,7 +232,7 @@ Vue.component('failing-blog', {
   <button class="delete-button" @click.prevent="deleteBlog(blog, reason)">Delete</button>
   <button class="delete-button" @click.prevent="suspendBlog(blog, reason)">Suspend</button>
   </div>
-  <button v-else @click.prevent="editBlog">Delete or suspend</button>
+  <button v-else @click.prevent="editBlog" class="failing-actions-button">Delete or suspend</button>
 </div>
   `
 })

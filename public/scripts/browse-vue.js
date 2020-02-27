@@ -29,7 +29,7 @@ Vue.component('blog-actions', {
   template: `
   <div class="browse-actions">
   <button v-if="!active" class="browse-button actions-button" v-on:click="active = true">Actions</button>
-  <button v-if="active" class="browse-button actions-button" v-on:click="active = false">Cancel</button>
+  <button v-if="active" class="browse-button actions-button cancel-button" v-on:click="active = false">Cancel</button>
   <div v-if="active" key="blog.idString">
     <button v-if="legacy" v-on:click="claimBlog(blog)" class="browse-button claim-button action">
       Claim ownership of this blog
@@ -121,7 +121,7 @@ Vue.component('browse-list', {
     .then( res => {
       for (let blog of res.data.blogs) {
         blog.class = 'class-' + blogCategories.indexOf(blog.category)
-        if (res.data.user && res.data.user.pocket.excluded) {
+        if (res.data.user && res.data.user.pocket && res.data.user.pocket.excluded) {
           for (let excluded of res.data.user.pocket.excluded) {
             if (blog.idString === excluded) {
               blog.excluded = true
