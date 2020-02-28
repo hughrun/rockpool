@@ -1,12 +1,11 @@
 {>head}
 	{>header}
     <section class="main">
-    <p>Sign in or sign up</p>
-    <form action="/sendtoken" method="POST">
+    <form class="login-form" action="/sendtoken" method="POST">
       <input type="hidden" name="delivery" value={delivery}>
-      <label for="user">Enter your email</label><br>
+      <label for="user">Enter your email to sign in or sign up</label><br/>
       <input class="email-signup" name="user" type="email" required><br>
-      <input class="email-signup" type="submit" value="Let me in!">
+      <input class="search-button" type="submit" value="Let me in!">
     </form>
     </section>
   {>footer}

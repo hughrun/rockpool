@@ -37,7 +37,7 @@ Vue.component('reject-reason', {
   <div>
   <label for="reject-reason">Reason for rejecting:</label><br/>
   <textarea name="reject-reason" v-model="reason" cols="40" rows="6" required></textarea>
-  <button class="confirm-button" v-on:click.prevent="confirmRejection">Confirm rejection</button>
+  <button class="" v-on:click.prevent="confirmRejection">Confirm rejection</button>
   </div>
   `,
   methods: {
@@ -87,8 +87,8 @@ Vue.component('blogs-for-approval', {
           <reject-reason v-bind:blog="blog" v-bind:email="email" @reject-blog="rejectBlog" @add-message="addMessage"></reject-reason>
         </div>
         <span v-else>
-          <button  v-if="blog.approving" class="confirm-button" v-on:click.prevent="confirmApproval(blog)">Confirm Approval</button>
-          <button v-else class="confirm-button" class="approve-button" v-on:click.prevent="approve(blog)">Approve</button>
+          <button  v-if="blog.approving" class="" v-on:click.prevent="confirmApproval(blog)">Confirm Approval</button>
+          <button v-else class="" class="approve-button" v-on:click.prevent="approve(blog)">Approve</button>
           <button class="reject-button"  v-on:click.prevent="reject(blog)" type="button">Reject</button>
         </span>
       </form>
@@ -229,10 +229,10 @@ Vue.component('failing-blog', {
   <div v-if="editing">
   <label>Reason for suspending/deleting:</label><br/>
   <textarea v-model="reason" cols="40" rows="6" required></textarea>
-  <button class="delete-button" @click.prevent="deleteBlog(blog, reason)">Delete</button>
-  <button class="delete-button" @click.prevent="suspendBlog(blog, reason)">Suspend</button>
+  <button class="reject-button" @click.prevent="deleteBlog(blog, reason)">Delete</button>
+  <button class="" @click.prevent="suspendBlog(blog, reason)">Suspend</button>
   </div>
-  <button v-else @click.prevent="editBlog" class="failing-actions-button">Delete or suspend</button>
+  <button v-else @click.prevent="editBlog" class="failing-suspended-button">Delete or suspend</button>
 </div>
   `
 })
@@ -357,10 +357,10 @@ Vue.component('suspended-blog', {
   <div v-if="editing">
   <label>Reason for suspending/deleting:</label><br/>
   <textarea v-model="reason" cols="40" rows="6" required></textarea>
-    <button class="delete-button" @click.prevent="deleteBlog(blog, reason)">Confirm Deletion</button>
+    <button class="failing-suspended-button" @click.prevent="deleteBlog(blog, reason)">Confirm Deletion</button>
   </div>
   <button v-else @click.prevent="editBlog">Delete</button>
-  <button class="delete-button" @click.prevent="unsuspendBlog(blog)">Lift suspension</button>
+  <button class="failing-suspended-button" @click.prevent="unsuspendBlog(blog)">Lift suspension</button>
 </div>
   `
 })
@@ -450,7 +450,7 @@ Vue.component('suspend-blog', {
     <message-list v-bind:messages="messages"></message-list>
     <form class="claimed-blogs">
       <label>URL of blog to suspend:</label><br/>
-      <input v-model="url" type="url"><br/>
+      <input v-model="url" type="url" size="40"><br/>
       <label>Reason for suspending:</label><br/>
       <textarea v-model="reason" cols="40" rows="6" required></textarea><br/>
       <button @click.prevent="suspendBlog">Suspend</button>
@@ -558,7 +558,7 @@ Vue.component('make-admin', {
     <p>Only make trusted users an administrator - they will have the power to remove your own admin rights!</p>
     <form>
       <label class="form-label" for="user">User email:</label>
-      <input v-model="user" type="email">
+      <input v-model="user" type="email" size="40">
       <button class="add-button" @click.prevent="assignAdmin(user)">Make user admin</button>
     </form>
   </div>
