@@ -3,7 +3,12 @@ Vue.component('message-list', {
   template: `
 <div v-if="messages" id="user-messages">
   <div v-for="msg in messages" class="blog-list">
-    <div v-bind:class="msg.class">{{ msg.text }}</div>
+  <li v-bind:class="msg.class">
+    <span class="message-text">{{ msg.text }}</span>
+    <span class="flash-close" v-on:click="removeMessage(msg)">
+    X
+    </span>
+  </li>
   </div>
 </div>
   `,
@@ -14,8 +19,7 @@ Vue.component('message-list', {
   },
   methods: {
     removeMessage(msg) {
-      // fired when click on X to get rid of it
-      // reloading the page will also remove any messages that aren't in the DB
+      this.$emit('remove-message', msg)
     }
   },
   mounted () {
@@ -84,7 +88,12 @@ Vue.component('blogs-for-approval', {
         <a v-if="blog.title" v-bind:href="blog.url" v-bind:class="{ deleting: blog.rejecting }">{{ blog.title }}</a>
         <a v-else v-bind:href="blog.url" v-bind:class="{ deleting: blog.rejecting }">{{ blog.url }}</a>
         <div v-if="blog.rejecting">
-          <reject-reason v-bind:blog="blog" v-bind:email="email" @reject-blog="rejectBlog" @add-message="addMessage"></reject-reason>
+          <reject-reason 
+            v-bind:blog="blog" 
+            v-bind:email="email" 
+            @reject-blog="rejectBlog" 
+            @add-message="addMessage"
+          ></reject-reason>
         </div>
         <span v-else>
           <button  v-if="blog.approving" class="" v-on:click.prevent="confirmApproval(blog)">Confirm Approval</button>
@@ -159,7 +168,6 @@ Vue.component('users-with-approvals', {
   template: `
   <section v-if="approvals">
   <h2>Awaiting Approval</h2>
-  <message-list v-bind:messages="messages"></message-list>
   <div v-for="user in approvals" class="claimed-blogs">
     <div><strong>Email:</strong> <a v-bind:href="'mailto:' + user.email">{{ user.email }}</a></div>
     <div><strong>Twitter:</strong> <a v-bind:href="'https://twitter.com/' + user.twitter">{{ user.twitter }}</a></div>
@@ -167,16 +175,17 @@ Vue.component('users-with-approvals', {
     <div v-if:legacy><strong>Claiming or Awaiting Approval:</strong></div>
     <div v-else><strong>Awaiting Approval:</strong></div>
     <blogs-for-approval 
-    v-bind:blogs="user.claims" 
-    v-bind:email="user.email" 
-    @add-message="addMessage"></blogs-for-approval>
+      v-bind:blogs="user.claims" 
+      v-bind:email="user.email" 
+      @add-message="addMessage" 
+    ></blogs-for-approval>
   </div>
   <div v-else>There are no blogs awaiting approval.</div>
   </section>
   `,
   methods: {
     addMessage(msg) {
-      this.messages.push(msg)
+      this.$emit('add-message', msg)
     }
   }
 })
@@ -191,12 +200,15 @@ Vue.component('failing-blog', {
     }
   },
   methods: {
+    addMessage(msg) {
+      this.$emit('add-message', msg)
+    },
     editBlog() {
       this.editing = true
     },
     deleteBlog(blog, reason) {
       if (!reason) {
-        this.messages.push({
+        this.addMessage({
           class: 'flash-error',
           text: `You must provide a reason for deleting this blog`
         })
@@ -208,7 +220,7 @@ Vue.component('failing-blog', {
     },
     suspendBlog(blog, reason) {
       if (!reason) {
-        this.messages.push({
+        this.addMessage({
           class: 'flash-error',
           text: `You must provide a reason for suspending this blog`
         })
@@ -225,7 +237,6 @@ Vue.component('failing-blog', {
     <br/>
     <a v-bind:href="blog.url">{{ blog.url }}</a> | <a class="feed-link" v-bind:href="blog.feed">feed</a>
   </div>
-  <message-list v-bind:messages="messages"></message-list>
   <div v-if="editing">
   <label>Reason for suspending/deleting:</label><br/>
   <textarea v-model="reason" cols="40" rows="6" required></textarea>
@@ -260,14 +271,15 @@ Vue.component('failing-blogs-list', {
   },
   methods: {
     addMessage(msg) {
-      this.messages.push(msg)
+      this.$emit('add-message', msg)
     },
     deleteBlog(blog, reason) {
       // delete blog from server
       axios
       .post('/api/v1/update/admin/delete-blog', {
         blog: blog.idString,
-        reason: this.reason
+        url: blog.url,
+        reason: reason
       })
       .then( res => {
         this.addMessage(res.data) // then add message
@@ -305,17 +317,17 @@ Vue.component('failing-blogs-list', {
       <p>
       Note that this may be a temporary glitch: always do your homework before deleting a blog.
       </p>
-      <message-list v-bind:messages="messages"></message-list>
       <form v-for="blog in failing" class="claimed-blogs">
         <failing-blog 
         v-bind:blog="blog"
         @delete-blog="deleteBlog"
-        @suspend-blog="suspendBlog"></failing-blog>
+        @suspend-blog="suspendBlog"
+        @add-message="addMessage"></failing-blog>
       </form>
     </section>
     <div v-else>You have no failing feeds to attend to.</div>
-    <suspended-blogs v-bind:suspended="suspended"></suspended-blogs>
-    <suspend-blog @suspend-blog="suspendBlog"></suspend-blog>
+    <suspended-blogs @add-message="addMessage" v-bind:suspended="suspended"></suspended-blogs>
+    <suspend-blog @add-message="addMessage" @suspend-blog="suspendBlog"></suspend-blog>
   </section>
   `
 })
@@ -364,6 +376,7 @@ Vue.component('suspended-blog', {
 </div>
   `
 })
+
 Vue.component('suspended-blogs', {
   props: ['suspended'],
   data () {
@@ -373,7 +386,7 @@ Vue.component('suspended-blogs', {
   },
   methods: {
     addMessage(msg) {
-      this.messages.push(msg)
+      this.$emit('add-message', msg)
     },
     deleteBlog(blog,reason) {
       axios
@@ -405,7 +418,6 @@ Vue.component('suspended-blogs', {
   template: `
   <div>
     <h3>Suspended Blogs</h3>
-    <message-list v-bind:messages="messages"></message-list>
     <form v-for="blog in suspended" class="claimed-blogs">
       <suspended-blog 
       v-bind:blog="blog"
@@ -426,14 +438,17 @@ Vue.component('suspend-blog', {
     }
   },
   methods: {
+    addMessage(msg) {
+      this.$emit('add-message', msg)
+    },
     suspendBlog() {
       if (!this.reason) {
-        this.messages.push({
+        this.addMessage({
           class: 'flash-error',
           text: `You must provide a reason for suspending this blog`
         })
       } else if (!this.url) {
-        this.messages.push({
+        this.addMessage({
           class: 'flash-error',
           text: `You must provide the URL of the blog to suspend!`
         })
@@ -447,7 +462,6 @@ Vue.component('suspend-blog', {
   template: `
   <div>
     <h3>Suspend Blog</h3>
-    <message-list v-bind:messages="messages"></message-list>
     <form class="claimed-blogs">
       <label>URL of blog to suspend:</label><br/>
       <input v-model="url" type="url" size="40"><br/>
@@ -486,7 +500,6 @@ Vue.component('admin-info', {
 Vue.component('admins-list', {
   data () {
     return {
-      messages: [],
       admins: []
     }
   },
@@ -498,11 +511,14 @@ Vue.component('admins-list', {
     })
   },
   methods: {
+    addMessage(msg) {
+      this.$emit('add-message', msg)
+    },
     removeAdmin(admin) {
       axios
       .post('/api/v1/update/admin/remove-admin', {user: admin.email})
       .then( res => {
-        this.messages.push(res.data)
+        this.addMessage(res.data)
         if (res.data.class === 'flash-success') {
           Vue.delete(this.admins, this.admins.indexOf(admin))
         }
@@ -512,7 +528,7 @@ Vue.component('admins-list', {
       axios
       .post('/api/v1/update/admin/make-admin', {user: admin.email})
       .then( res => {
-        this.messages.push(res.data)
+        this.addMessage(res.data)
         if (res.data.class === 'flash-success') {
           Vue.set(this.admins, this.admins.length, admin)
         }
@@ -522,10 +538,9 @@ Vue.component('admins-list', {
   template: `
     <section>
       <h2>Administrators</h2>
-      <message-list v-bind:messages="messages"></message-list>
       <div v-if="admins.length">
         <h3>Remove admin rights</h3>
-        <div v-for="admin in admins" class="claimed-blogs">
+        <div v-for="admin in admins" class="admins-list">
           <admin-info 
           v-bind:admin="admin"
           @remove-admin="removeAdmin"></admin-info>
@@ -553,13 +568,13 @@ Vue.component('make-admin', {
     }
   },
   template: `
-  <div class="claimed-blogs">
+  <div class="assign-admin">
     <h3>Assign admin rights</h3>
     <p>Only make trusted users an administrator - they will have the power to remove your own admin rights!</p>
     <form>
       <label class="form-label" for="user">User email:</label>
       <input v-model="user" type="email" size="40">
-      <button class="add-button" @click.prevent="assignAdmin(user)">Make user admin</button>
+      <button class="add-button" @click.prevent="assignAdmin(user)">Assign admin</button>
     </form>
   </div>
   `
@@ -568,6 +583,17 @@ Vue.component('make-admin', {
 new Vue({
   el: '#main',
   data () {
-    return {}
+    return {
+      messages: []
+    }
+  },
+  methods: {
+    addMessage(msg) {
+      this.messages.push(msg)
+    },
+    removeMessage(msg) {
+      // fired when click on X to get rid of it
+      Vue.delete(this.messages, this.messages.indexOf(msg))
+    }
   }
 })

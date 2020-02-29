@@ -5,10 +5,11 @@
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
-    <section id="main" class="main" >
-      <users-with-approvals></users-with-approvals>
-      <failing-blogs-list></failing-blogs-list>
-      <admins-list></admins-list>
+    <section id="main" class="main">
+      <message-list v-bind:messages="messages" @remove-message="removeMessage"></message-list>
+      <users-with-approvals @add-message="addMessage"></users-with-approvals>
+      <failing-blogs-list @add-message="addMessage"></failing-blogs-list>
+      <admins-list @add-message="addMessage"></admins-list>
     <!-- express globals ("locals") -->
     <script type="text/javascript">
       var blogCategories = '{blogCategories}'.split(',');
