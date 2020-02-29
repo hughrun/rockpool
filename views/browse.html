@@ -1,15 +1,14 @@
 {>head}
   {>header}
     <link rel="stylesheet" type="text/css" href="/styles/browse.css">
-    <!-- vuejs prototyping FIXME: use local file -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/vue"></script> -->
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- vuejs -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-
     <section id="main" class="main" >
       <browse-list v-bind:categories="categories"></browse-list>
     </section>
+    <!-- vuejs components -->
     <script src="/scripts/browse-vue.js"></script>
   {>footer}
 {>foot}
