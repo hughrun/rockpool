@@ -43,11 +43,6 @@ button {
 	font-family: "SourceSansPro", Verdana, Tahoma, Arial, sans-serif;
 }
 
-button:hover {
-	color: rgba(58, 58, 58, 1);
-	background-color: rgba(255, 115, 140, 0.5);
-}
-
 code, pre {
 	background: rgba(211, 211, 211, 0.5);
 	padding: 0.25em;
@@ -135,7 +130,6 @@ code, pre {
 	color: rgba(58, 58, 58, 1);
 }
 
-.action.excluded,
 .reject-button,
 .delete-button {
 	color: rgba(255, 115, 140, 1);
@@ -146,6 +140,17 @@ code, pre {
 .admins-list div button,
 .assign-admin button {
 	float: right;
+}
+
+.action.excluded {
+	color: rgba(255, 115, 140, 1);
+	background-color: rgba(211, 211, 211, 0.25);
+}
+
+button:hover,
+.action:hover {
+	color: rgba(58, 58, 58, 1);
+	background-color: rgba(255, 115, 140, 0.5);
 }
 
 /* ##############

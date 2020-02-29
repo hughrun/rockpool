@@ -34,10 +34,10 @@ Vue.component('blog-actions', {
     <button v-if="legacy" v-on:click="claimBlog(blog)" class="browse-button claim-button action">
       Claim ownership of this blog
     </button>
-    <button v-if="user && user.pocket && blog.excluded" v-on:click="includeInPocket(blog)" class="browse-button pocket-button action excluded">
+    <button v-if="user && user.pocket && blog.excluded" v-on:click="includeInPocket(blog)" class="browse-button action excluded">
       Include this blog in Pocket
     </button>
-    <button v-else-if="user && user.pocket" v-on:click="excludeFromPocket(blog)" class="browse-button pocket-button action">
+    <button v-else-if="user && user.pocket" v-on:click="excludeFromPocket(blog)" class="browse-button action">
       Exclude this blog from Pocket
     </button>
   </div>
