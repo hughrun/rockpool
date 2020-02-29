@@ -29,7 +29,7 @@ Vue.component('message-list', {
 })
 
 Vue.component('user-info', {
-  props: ['user', 'legacy', 'messages'],
+  props: ['user', 'messages'],
   data() {
     return {
       editing: false,
@@ -206,7 +206,7 @@ Vue.component('user-approved-blogs', {
       <form class="blog-editing-form" v-if="blog.editing" name="blog-info" method="POST">
         <label for="category">Category:</label>
         <select v-model="blog.category" name="category">
-          <option v-for="cat in blogCategories" v-bind:value="cat">{{ cat }}</option>
+          <option v-for="cat in categories" v-bind:value="cat">{{ cat }}</option>
         </select>
         <button class="" v-on:click.prevent="editBlog(blog, blogs.indexOf(blog))" id="update-button">Confirm update</button>
         <button class="" v-on:click.prevent="cancelEditing(blog, blogs.indexOf(blog))">Cancel</button>
@@ -222,11 +222,10 @@ Vue.component('user-approved-blogs', {
 })
 
 Vue.component('register-blog', {
-  props: ['messages', 'ublogs'],
+  props: ['messages', 'ublogs', 'categories'],
   data () {
     return {
       messages: this.messages,
-      categories: blogCategories,
       registering: false,
       url: null,
       category: null,
@@ -334,14 +333,13 @@ new Vue({
   el: '#main',
   data () {
     return {
-      legacy: true,
+      categories: [],
       messages: [],
       user: null,
       ublogs: []
     }
   },
   mounted () {
-    // TODO: here we should grab into about whether the system is legacy?
     axios
     .get('/api/v1/user/info')
     .then(response => {
@@ -356,9 +354,15 @@ new Vue({
     .get('/api/v1/user/unapproved-blogs')
     .then(response => {
       this.ublogs = response.data
-      // TODO: $emit a uBlogs update?
     })
     .catch( err => this.messages.push({class: 'flash-error', text: err}))
+
+    axios
+    .get('/api/v1/categories')
+    .then( res => {
+      this.categories = res.data.categories
+    })
+
   },
   methods: {
     updateUblogs(args) {

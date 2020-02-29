@@ -147,7 +147,6 @@ Vue.component('blogs-for-approval', {
 })
 
 Vue.component('users-with-approvals', {
-  // props: ['approvals'],
   mounted() {
     axios
     .get('/api/v1/admin/blogs-for-approval')
@@ -157,30 +156,39 @@ Vue.component('users-with-approvals', {
     .catch( e => {
       console.log(e)
     })
+
+    axios
+    .get('/api/v1/legacy')
+    .then( res => {
+      this.legacy = res.data.legacy
+    })
+
   },
   data() {
     return {
       messages: [],
-      legacy: legacy,
+      legacy: false,
       approvals: null
     }
   },
   template: `
-  <section v-if="approvals">
-  <h2>Awaiting Approval</h2>
-  <div v-for="user in approvals" class="claimed-blogs">
-    <div><strong>Email:</strong> <a v-bind:href="'mailto:' + user.email">{{ user.email }}</a></div>
-    <div><strong>Twitter:</strong> <a v-bind:href="'https://twitter.com/' + user.twitter">{{ user.twitter }}</a></div>
-    <div><strong>Mastodon:</strong> {{ user.mastodon }}</div>
-    <div v-if:legacy><strong>Claiming or Awaiting Approval:</strong></div>
-    <div v-else><strong>Awaiting Approval:</strong></div>
-    <blogs-for-approval 
-      v-bind:blogs="user.claims" 
-      v-bind:email="user.email" 
-      @add-message="addMessage" 
-    ></blogs-for-approval>
-  </div>
-  <div v-else>There are no blogs awaiting approval.</div>
+  <section>
+    <div v-if="approvals">
+      <h2>Awaiting Approval</h2>
+      <div v-for="user in approvals" class="claimed-blogs">
+        <div><strong>Email:</strong> <a v-bind:href="'mailto:' + user.email">{{ user.email }}</a></div>
+        <div><strong>Twitter:</strong> <a v-bind:href="'https://twitter.com/' + user.twitter">{{ user.twitter }}</a></div>
+        <div><strong>Mastodon:</strong> {{ user.mastodon }}</div>
+        <div v-if="legacy"><strong>Claiming or Awaiting Approval:</strong></div>
+        <div v-else><strong>Awaiting Approval:</strong></div>
+        <blogs-for-approval 
+          v-bind:blogs="user.claims" 
+          v-bind:email="user.email" 
+          @add-message="addMessage" 
+        ></blogs-for-approval>
+      </div>
+    </div>
+    <div v-else>There are no blogs awaiting approval.</div>
   </section>
   `,
   methods: {

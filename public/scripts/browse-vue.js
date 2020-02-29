@@ -103,12 +103,13 @@ Vue.component('blog-actions', {
 })
 
 Vue.component('browse-list', {
+  props: ['categories'],
   data () {
     return {
       messages: [],
       blogs: [],
+      categories: this.categories,
       user: null,
-      categories: blogCategories,
       active: false,
       legacy: false,
       actionsAvailable: false
@@ -120,7 +121,7 @@ Vue.component('browse-list', {
     .get('/api/v1/browse')
     .then( res => {
       for (let blog of res.data.blogs) {
-        blog.class = 'class-' + blogCategories.indexOf(blog.category)
+        blog.class = 'class-' + this.categories.indexOf(blog.category)
         if (res.data.user && res.data.user.pocket && res.data.user.pocket.excluded) {
           for (let excluded of res.data.user.pocket.excluded) {
             if (blog.idString === excluded) {
@@ -179,6 +180,15 @@ Vue.component('browse-list', {
 new Vue({
   el: '#main',
   data () {
-    return {}
+    return {
+      categories: null
+    }
+  },
+  mounted () {
+    axios
+    .get('/api/v1/categories')
+    .then( res => {
+      this.categories = res.data.categories
+    })
   }
 })

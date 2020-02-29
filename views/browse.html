@@ -7,14 +7,8 @@
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
     <section id="main" class="main" >
-      <browse-list></browse-list>
+      <browse-list v-bind:categories="categories"></browse-list>
     </section>
-    <!-- express globals ("locals") -->
-    <!-- FIXME: do either of these actually need to be on this page? -->
-    <script type="text/javascript">
-    // FIXME: this should be send as an arg in the browse API call
-      var blogCategories = '{blogCategories}'.split(',');
-    </script>
     <script src="/scripts/browse-vue.js"></script>
   {>footer}
 {>foot}

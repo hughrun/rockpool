@@ -510,6 +510,14 @@ app.get('/api/v1/browse', function (req, res, next) {
   })
 })
 
+app.get('/api/v1/categories', function (req, res, next) {
+  res.json({categories: settings.blog_categories})
+})
+
+app.get('/api/v1/legacy', function (req, res, next) {
+  res.json({legacy: settings.legacy_db})
+})
+
 // must have logged in user for all other api routes 
 app.all('/api/v1/*', 
 passwordless.restricted(),
