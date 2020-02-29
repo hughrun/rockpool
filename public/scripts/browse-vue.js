@@ -3,19 +3,21 @@ Vue.component('message-list', {
   template: `
 <div v-if="messages" id="user-messages">
   <div v-for="msg in messages" class="blog-list">
-    <div v-bind:class="msg.class">{{ msg.text }}</div>
+  <li v-bind:class="msg.class">
+    <span class="message-text">{{ msg.text }}</span>
+    <span class="flash-close" v-on:click="removeMessage(msg)">
+    X
+    </span>
+  </li>
   </div>
 </div>
   `,
   data() {
-    return {
-      messages: this.messages
-    }
+    return {}
   },
   methods: {
     removeMessage(msg) {
-      // fired when click on X to get rid of it
-      // reloading the page will also remove any messages that aren't in the DB
+      this.$emit('remove-message', msg)
     }
   },
   mounted () {
@@ -25,27 +27,10 @@ Vue.component('message-list', {
 })
 
 Vue.component('blog-actions', {
-  props: ['active', 'blog', 'user', 'legacy', 'messages'],
-  template: `
-  <div class="browse-actions">
-  <button v-if="!active" class="browse-button actions-button" v-on:click="active = true">Actions</button>
-  <button v-if="active" class="browse-button actions-button cancel-button" v-on:click="active = false">Cancel</button>
-  <div v-if="active" key="blog.idString">
-    <button v-if="legacy" v-on:click="claimBlog(blog)" class="browse-button claim-button action">
-      Claim ownership of this blog
-    </button>
-    <button v-if="user && user.pocket && blog.excluded" v-on:click="includeInPocket(blog)" class="browse-button action excluded">
-      Include this blog in Pocket
-    </button>
-    <button v-else-if="user && user.pocket" v-on:click="excludeFromPocket(blog)" class="browse-button action">
-      Exclude this blog from Pocket
-    </button>
-  </div>
-</div>
-  `,
+  props: ['blog', 'user', 'legacy', 'messages'],
   data() {
     return {
-      active: this.active
+      active: false
     }
   },
   methods: {
@@ -99,7 +84,24 @@ Vue.component('blog-actions', {
         this.$emit('add-message', {class: 'flash-error', text: err.message})
       })
     }
-  }
+  },
+  template: `
+  <div class="browse-actions">
+  <button v-if="!active" class="browse-button actions-button" v-on:click="active = true">Actions</button>
+  <button v-if="active" class="browse-button actions-button cancel-button" v-on:click="active = false">Cancel</button>
+  <div v-if="active" key="blog.idString">
+    <button v-if="legacy" v-on:click="claimBlog(blog)" class="browse-button claim-button action">
+      Claim ownership of this blog
+    </button>
+    <button v-if="user && user.pocket && blog.excluded" v-on:click="includeInPocket(blog)" class="browse-button action excluded">
+      Include this blog in Pocket
+    </button>
+    <button v-else-if="user && user.pocket" v-on:click="excludeFromPocket(blog)" class="browse-button action">
+      Exclude this blog from Pocket
+    </button>
+  </div>
+</div>
+  `,
 })
 
 Vue.component('browse-list', {
@@ -108,9 +110,7 @@ Vue.component('browse-list', {
     return {
       messages: [],
       blogs: [],
-      categories: this.categories,
       user: null,
-      active: false,
       legacy: false,
       actionsAvailable: false
       
@@ -139,11 +139,15 @@ Vue.component('browse-list', {
   methods: {
     addMessage(msg) {
       this.messages.push(msg)
+    },
+    removeMessage(msg) {
+      // fired when click on X to get rid of it
+      Vue.delete(this.messages, this.messages.indexOf(msg))
     }
   },
   template: `
     <section>
-      <message-list v-bind:messages="messages"></message-list>
+      <message-list v-bind:messages="messages" @remove-message="removeMessage"></message-list>
       <h2>Browse all blogs</h2>
       <div v-if="blogs.length">
         <ul v-for="blog in blogs" class="browse-blogs">
@@ -161,7 +165,6 @@ Vue.component('browse-list', {
             <blog-actions 
               v-if="actionsAvailable"
               @add-message="addMessage"
-              v-bind:active="active" 
               v-bind:blog="blog"
               v-bind:legacy="legacy"
               v-bind:user="user">

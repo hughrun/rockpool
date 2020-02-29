@@ -13,9 +13,7 @@ Vue.component('message-list', {
 </div>
   `,
   data() {
-    return {
-      messages: this.messages
-    }
+    return {}
   },
   methods: {
     removeMessage(msg) {
@@ -32,8 +30,7 @@ Vue.component('user-info', {
   props: ['user', 'messages'],
   data() {
     return {
-      editing: false,
-      user: this.user
+      editing: false
     }
   },
   methods: {
@@ -123,13 +120,12 @@ Vue.component('user-info', {
 })
 
 Vue.component('user-approved-blogs', {
-  props: ['messages'],
+  props: ['messages', 'categories'],
   data () {
     return {
       userIdString: null,
       blogs : [],
-      editing: false,
-      messages: []
+      editing: false
     }
   },
   mounted () {
@@ -225,11 +221,9 @@ Vue.component('register-blog', {
   props: ['messages', 'ublogs', 'categories'],
   data () {
     return {
-      messages: this.messages,
       registering: false,
       url: null,
-      category: null,
-      ublogs: this.ublogs
+      category: null
     }
   },
   methods: {
@@ -302,7 +296,6 @@ Vue.component('user-unapproved-blogs', {
   props: ['messages', 'ublogs'],
   data () {
     return {
-      ublogs : this.ublogs,
       category: null,
       url: null
     }

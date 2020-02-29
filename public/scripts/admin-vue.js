@@ -13,9 +13,7 @@ Vue.component('message-list', {
 </div>
   `,
   data() {
-    return {
-      messages: this.messages
-    }
+    return {}
   },
   methods: {
     removeMessage(msg) {
@@ -32,9 +30,7 @@ Vue.component('reject-reason', {
   props: ['blog', 'email'],
   data () {
     return {
-      reason: null,
-      email: null,
-      blog: null,
+      reason: null
     }
   },
   template: `
@@ -139,7 +135,6 @@ Vue.component('blogs-for-approval', {
       Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
     },
     rejectBlog(blog) {
-      // TODO: here we should check length of this.blogs and if 1, $emit a remove-approval up the chain
       Vue.delete(this.blogs, this.blogs.indexOf(blog))
       this.$emit('add-message', {class: 'flash-success', text: `${blog.url} rejected`})
     }
@@ -166,7 +161,6 @@ Vue.component('users-with-approvals', {
   },
   data() {
     return {
-      messages: [],
       legacy: false,
       approvals: null
     }
@@ -203,8 +197,7 @@ Vue.component('failing-blog', {
   data () {
     return {
       editing: false,
-      reason: null,
-      messages: []
+      reason: null
     }
   },
   methods: {
@@ -259,7 +252,6 @@ Vue.component('failing-blog', {
 Vue.component('failing-blogs-list', {
   data () {
     return {
-      messages: [],
       failing: [],
       suspended: []
     }
@@ -388,9 +380,7 @@ Vue.component('suspended-blog', {
 Vue.component('suspended-blogs', {
   props: ['suspended'],
   data () {
-    return {
-      messages: []
-    }
+    return {}
   },
   methods: {
     addMessage(msg) {
@@ -440,7 +430,6 @@ Vue.component('suspended-blogs', {
 Vue.component('suspend-blog', {
   data () {
     return {
-      messages: [],
       url: null,
       reason: null
     }

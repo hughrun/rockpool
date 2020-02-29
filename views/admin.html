@@ -1,7 +1,8 @@
 {>head}
   {>header}
     <!-- vuejs prototyping TODO: use local file -->
-    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <section id="main" class="main">
@@ -9,6 +10,7 @@
       <users-with-approvals @add-message="addMessage"></users-with-approvals>
       <failing-blogs-list @add-message="addMessage"></failing-blogs-list>
       <admins-list @add-message="addMessage"></admins-list>
+    </section>
     <script src="/scripts/admin-vue.js"></script>
   {>footer}
 {>foot}
