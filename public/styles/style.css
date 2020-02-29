@@ -1,4 +1,6 @@
-/* FONTS */
+/* ########################################
+									FONTS
+ ########################################## */
 
 @font-face {
 	font-family: "SourceSansPro";
@@ -10,7 +12,9 @@
 	src: url("../assets/fonts/helsinki/helsinki.ttf") format("opentype");
 }
 
-/* ELEMENTS */
+/* ########################################
+									ELEMENTS
+ ########################################## */
 
 body {
 	font-family: "SourceSansPro", Verdana, Tahoma, Arial, sans-serif;
@@ -49,7 +53,9 @@ code, pre {
 	padding: 0.25em;
 }
 
-/* CLASSES */
+/* ########################################
+									CLASSES
+ ########################################## */
 
 .main {
 	min-height: 100vh;
@@ -58,7 +64,13 @@ code, pre {
 	max-width: 960px;
 }
 
- /* buttons */
+.hidden {
+	visibility: hidden;
+}
+
+/* ##############
+		buttons
+ ############## */
 
  .actions-button {
 	background-color: rgba(211, 211, 211, 1);
@@ -86,6 +98,10 @@ code, pre {
   padding: 5px 10px;
 }
 
+.update-button {
+	margin-top: 0.5em;
+}
+
 .browse-actions .actions-button {
 	width: 6em;
 }
@@ -94,7 +110,6 @@ code, pre {
 .login-form input {
   font-size: 1.2em;
 }
-
 
 .browse-actions {
 	text-align: right;
@@ -128,7 +143,55 @@ code, pre {
 	background-color: #fff;
 }
 
-/* footer */
+.admins-list div button,
+.assign-admin button {
+	float: right;
+}
+
+/* ##############
+
+	flash messages
+
+ ############## */
+
+ .flash-success {
+	padding: 0.5em;
+	border-radius: 5px;
+	color: #000;
+	background: lightgreen;
+	text-align: center;
+	margin-bottom: 0.5em;
+}
+
+.flash-error {
+	padding: 0.5em;
+	border-radius: 5px;
+	color: #000;
+	background: lightcoral;
+	text-align: center;
+	margin-bottom: 0.5em;
+}
+
+.flash-warning {
+	padding: 0.5em;
+	border-radius: 5px;
+	color: #000;
+	background: lightyellow;
+	text-align: center;
+	margin-bottom: 0.5em;
+}
+
+.flash-close {
+	color: gray;
+	float: right;
+	text-decoration: none;
+	margin-right: 0.5em;
+	cursor: pointer;
+}
+
+/* ##############
+		footer
+ ############## */
 
 .footer {
 	text-align: center;
@@ -200,7 +263,9 @@ header a {
   color: #ff748c;
 }
 
-/*archive and search*/
+/* ###################
+		archive and search
+ ##################### */
 
 .archive-and-search {
 	border: 2px solid 	rgba(58,58,58,0.3);
@@ -227,7 +292,10 @@ input[type="email"].email-signup {
   max-width: 100%;
 }
 
-/* paged nav */
+/* ##############
+		paged nav
+ ############## */
+
 .paged {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -241,7 +309,9 @@ input[type="email"].email-signup {
   text-align: left;
 }
 
-/*articles*/
+/* ##############
+		articles
+ ############## */
 
 .article-listing {
 	background: rgba(58,58,58,0.1);
@@ -282,7 +352,9 @@ input[type="email"].email-signup {
   font-weight: bold;
 }
 
-/*tags*/
+/* ##############
+		tags
+ ############## */
 
 #top-tags {
   text-align: center;
@@ -309,9 +381,7 @@ input[type="email"].email-signup {
 }
 
 /* ##############
-
 	blogs browse 
-
  ############## */
 
 .browse-blogs li {
@@ -439,11 +509,9 @@ ul.browse-blogs {
 	height: 1px;
 }
 
-/* ##############
-
-	user dashboard 
-
- ############## */
+/* #################
+		user dashboard 
+ ################### */
 
 .user-info {
 	margin-bottom: 1em;
@@ -498,7 +566,10 @@ ul.browse-blogs {
 	font-style: italic;
 	color: #8f8f8f;
 }
-.claimed-blogs {
+
+.claimed-blogs,
+.admins-list,
+.assign-admin {
 	border: 1px solid #3a3a3a;
 	border-radius: 5px;
 	margin-top: 1em;
@@ -519,10 +590,6 @@ ul.browse-blogs {
 	background-color: slategray;
 }
 
-/* #pocket {
-	display: inline;
-} */
-
 .blog-editing-form {
 	margin-left: 2em;
 	display: inline;
@@ -537,44 +604,19 @@ ul.browse-blogs {
 	background-color: rgba(211, 211, 211, 1);
 }
 
-.hidden {
-	visibility: hidden;
+.register-blog-button {
+	margin-top: 1em;
 }
 
-/* flash messages */
-
-.flash-success {
-	padding: 0.5em;
-	border-radius: 5px;
-	color: #000;
-	background: lightgreen;
-	text-align: center;
-	margin-bottom: 0.5em;
+.register-blog input,
+.register-blog select {
+	font-size: 1.25em;
+	margin-top: 0.5em;
 }
 
-.flash-error {
-	padding: 0.5em;
-	border-radius: 5px;
-	color: #000;
-	background: lightcoral;
-	text-align: center;
-	margin-bottom: 0.5em;
-}
-
-.flash-warning {
-	padding: 0.5em;
-	border-radius: 5px;
-	color: #000;
-	background: lightyellow;
-	text-align: center;
-	margin-bottom: 0.5em;
-}
-
-/* ##############
-
-	admin dashboard 
-
- ############## */
+/* #################
+		admin dashboard 
+ ################### */
 
  .form-label {
 	 font-weight: bold;
