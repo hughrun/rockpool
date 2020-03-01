@@ -127,6 +127,7 @@ app.locals.blogClub = settings.blog_club_name
 app.locals.blogClubUrl = settings.blog_club_url
 app.locals.blogCategories = settings.blog_categories
 app.locals.legacy = settings.legacy_db
+app.locals.showCredits = settings.show_credits
 
 /*  ######################################
     ###              routes            ###
@@ -1208,6 +1209,9 @@ app.use(function (req, res, next) {
   res.status(404).render("404")
 })
 
+// TODO: need to run RSS checks and announcements on timer somewhere
+// (not necessarily in this file)
+
 // listen on server
 // TODO: the port number could be an NPM `config` setting
 app.listen(3000, function() {
@@ -1224,6 +1228,3 @@ app.listen(3000, function() {
 if (env == 'test') {
   module.exports = app;
 }
-
-// TODO: need to run RSS checks and announcements on timer somewhere
-// (not necessarily in this file)

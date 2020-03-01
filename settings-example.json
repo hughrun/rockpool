@@ -1,78 +1,79 @@
 {
   "app_name" : "Rockpool",
   "app_tagline": "A web app for communities of practice.",
-  "app_description": "Support a community and store what you need from the ocean of information. Successor to CommunityTweets",
+  "app_description": "Support a community and store what you need from the ocean of information.",
   "org_name" : "My Community",
   "org_url" : "https://example.com",
   "blog_club_name" : "Blog Club",
   "blog_club_url" : "https://example.com/blog-club",
-  "blog_club_tag" : "pets blog club",
-  "blog_club_hashtag" : "#PetsBlogClub",
-  "blog_categories" : ["dogs", "cats", "budgies"],
-  "excluded_tags" : ["notrockpool"],
+  "blog_club_tag" : "glam blog club",
+  "blog_club_hashtag" : "#RockpoolBlogClub",
+  "blog_categories" : ["cats", "dogs", "budgies"],
+  "excluded_tags" : ["notrockpool", "notpets", "notrockpoolblogs"],
   "filtered_tags" : ["uncategorized", "uncategorised", "post", "page"],
   "legacy_db" : false,
   "tag_transforms" : {
-    "petsblogclub" : "pets blog club",
-    "#petsblogclub" : "pets blog club",
+    "rockpoolblogclub" : "rockpool blog club",
+    "#rpblogclub" : "rockpool blog club",
     "blogjune" : "blog june",
     "#blogjune" : "blog june"
   },
+  "show_credits": true,
   "production" : {
-  "admin_user" : "admin@example.com",
-  "app_url" : "http://example.com",
-  "mongo_url" : "mongodb://localhost",
-  "mongo_port" : "27017",
-  "mongo_user" : "rockpool",
-  "mongo_password:" : "",
-  "express_session_secret" : "",
-  "cookie_parser_secret" : "",
-  "mongo_db" : "rockpool",
-  "deliver_tokens_by" : "email",
-  "email" : {
-    "user": "postmaster@example.com",
-    "password": "",
-    "host": "smtp.mailgun.org",
-    "from": "admin@example.com"
-  },
-  "pocket_consumer_key" : "",
-  "twitter" : {
-    "use_twitter" : false,
-    "hours_between_tweets" : 6,
-    "number_of_tweets_per_article" : 3,
-    "consumer_key" : "key",
-    "consumer_secret": "secret",
-    "access_token": "token",
-    "access_token_secret": "secret"
-  },
-  "mastodon" : {
-    "use_mastodon" : false,
-    "number_of_toots_per_article" : 2,
-    "hours_between_toots" : 12,
-    "domain_name" : "ausglam.space",
-    "access_token" : "1234"
-  },
-  "announce_articles_newer_than_hours" : 48,
-  "minutes_between_announcements" : 10
-},
-  "development" : {
     "admin_user" : "admin@example.com",
-    "app_url" : "http://example.com",
+    "app_url" : "https://rockpool.example.com",
     "mongo_url" : "mongodb://localhost",
     "mongo_port" : "27017",
     "mongo_user" : "rockpool",
-    "mongo_password:" : "",
-    "express_session_secret" : "",
-    "cookie_parser_secret" : "",
+    "mongo_password:" : "my_great_password",
+    "express_session_secret" : "dole finicky mortality manicotti lecturer",
+    "cookie_parser_secret" : "treble fastness going unpainted ongoing",
     "mongo_db" : "rockpool",
-    "deliver_tokens_by" : "email",
+    "deliver_tokens_by" : "clipboard",
     "email" : {
-      "user": "postmaster@example.com",
-      "password": "",
+      "user": "postmaster@mg.example.com",
+      "password": "my_awesome_password",
       "host": "smtp.mailgun.org",
-      "from": "admin@example.com"
+      "from": "hello@example.com"
     },
-    "pocket_consumer_key" : "",
+    "pocket_consumer_key" : "1234-abcd1234abcd1234abcd1234",
+    "twitter" : {
+      "use_twitter" : false,
+      "hours_between_tweets" : 6,
+      "number_of_tweets_per_article" : 3,
+      "consumer_key" : "key",
+      "consumer_secret": "secret",
+      "access_token": "token",
+      "access_token_secret": "secret"
+    },
+    "mastodon" : {
+      "use_mastodon" : false,
+      "number_of_toots_per_article" : 2,
+      "hours_between_toots" : 12,
+      "domain_name" : "ausglam.space",
+      "access_token" : "1234"
+    },
+    "announce_articles_newer_than_hours" : 48,
+    "minutes_between_announcements" : 10
+  },
+  "development" : {
+    "admin_user" : "admin@example.com",
+    "app_url" : "http:localhost:3000",
+    "mongo_url" : "mongodb://localhost",
+    "mongo_port" : "27017",
+    "mongo_user" : "rockpool",
+    "mongo_password:" : "my_great_password",
+    "express_session_secret" : "dole finicky mortality manicotti lecturer",
+    "cookie_parser_secret" : "treble fastness going unpainted ongoing",
+    "mongo_db" : "rockpool",
+    "deliver_tokens_by" : "clipboard",
+    "email" : {
+      "user": "postmaster@mg.example.com",
+      "password": "my_awesome_password",
+      "host": "smtp.mailgun.org",
+      "from": "hello@example.com"
+    },
+    "pocket_consumer_key" : "1234-abcd1234abcd1234abcd1234",
     "twitter" : {
       "use_twitter" : false,
       "hours_between_tweets" : 6,
@@ -93,23 +94,22 @@
     "minutes_between_announcements" : 10
   },
   "test" : {
-    "admin_user" : "admin@example.com",
-    "app_url" : "http://example.com",
+    "app_url" : "http:localhost:3000",
     "mongo_url" : "mongodb://localhost",
     "mongo_port" : "27017",
     "mongo_user" : "rockpool",
-    "mongo_password:" : "",
-    "express_session_secret" : "",
-    "cookie_parser_secret" : "",
-    "mongo_db" : "rockpool",
-    "deliver_tokens_by" : "email",
+    "mongo_password:" : "my_great_password",
+    "express_session_secret" : "dole finicky mortality manicotti lecturer",
+    "cookie_parser_secret" : "treble fastness going unpainted ongoing",
+    "mongo_db" : "rockpool_test",
+    "deliver_tokens_by" : "clipboard",
     "email" : {
-      "user": "postmaster@example.com",
-      "password": "",
+      "user": "postmaster@mg.example.com",
+      "password": "my_awesome_password",
       "host": "smtp.mailgun.org",
-      "from": "admin@example.com"
+      "from": "hello@example.com"
     },
-    "pocket_consumer_key" : "",
+    "pocket_consumer_key" : "1234-abcd1234abcd1234abcd1234",
     "twitter" : {
       "use_twitter" : true,
       "hours_between_tweets" : 6,
@@ -127,6 +127,7 @@
       "access_token" : "1234"
     },
     "announce_articles_newer_than_hours" : 48,
-    "minutes_between_announcements" : 10
+    "minutes_between_announcements" : 10,
+    "blog_categories" : ["galleries", "libraries", "archives", "museums", "digital humanities", "GLAM"]
   }
 }
