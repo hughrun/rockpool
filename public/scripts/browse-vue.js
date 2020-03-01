@@ -104,6 +104,26 @@ Vue.component('blog-actions', {
   `,
 })
 
+Vue.component('blog-listing', {
+  props: ['blog', 'categories'],
+  computed: {
+    blogClass () {
+      return 'class-' + this.categories.indexOf(this.blog.category)
+    }
+  },
+  template: `<div>
+  <span v-if="this.blog.title"><a v-bind:href="this.blog.url">{{ blog.title }}</a></span>
+  <span v-else><a v-bind:href="this.blog.url">{{ blog.url }}</a></span>
+  <span v-if="this.blog.owned" class="approved-blog"></span>
+  <span v-if="this.blog.claimed" class="unapproved-blog"></span>
+  <span v-bind:class="blogClass">{{ this.blog.category }}</span>
+  <span v-if="this.blog.failing" class="failing-icon">failing</span>
+  <span v-if="this.blog.suspended" class="suspended-icon">supended</span>
+  <span v-if="this.blog.excluded" class="excluded-icon">excluded</span>
+  </div>
+  `
+})
+
 Vue.component('browse-list', {
   props: ['categories'],
   data () {
@@ -121,7 +141,6 @@ Vue.component('browse-list', {
     .get('/api/v1/browse')
     .then( res => {
       for (let blog of res.data.blogs) {
-        blog.class = 'class-' + this.categories.indexOf(blog.category)
         if (res.data.user && res.data.user.pocket && res.data.user.pocket.excluded) {
           for (let excluded of res.data.user.pocket.excluded) {
             if (blog.idString === excluded) {
@@ -152,16 +171,10 @@ Vue.component('browse-list', {
       <div v-if="blogs.length">
         <ul v-for="blog in blogs" class="browse-blogs">
           <li v-bind:class="{failing:blog.failing, suspended:blog.suspended, excluded:blog.excluded}">
-            <div>
-              <span v-if="blog.title"><a v-bind:href="blog.url">{{ blog.title }}</a></span>
-              <span v-else><a v-bind:href="blog.url">{{ blog.url }}</a></span>
-              <span v-if="blog.owned" class="approved-blog"></span>
-              <span v-if="blog.claimed" class="unapproved-blog"></span>
-              <span v-bind:class="blog.class">{{ blog.category }}</span>
-              <span v-if="blog.failing" class="failing-icon">failing</span>
-              <span v-if="blog.suspended" class="suspended-icon">supended</span>
-              <span v-if="blog.excluded" class="excluded-icon">excluded</span>
-            </div>
+            <blog-listing 
+              v-bind:blog="blog"
+              v-bind:categories="categories"
+            ></blog-listing>
             <blog-actions 
               v-if="actionsAvailable"
               @add-message="addMessage"
