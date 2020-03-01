@@ -29,7 +29,7 @@
     "express_session_secret" : "dole finicky mortality manicotti lecturer",
     "cookie_parser_secret" : "treble fastness going unpainted ongoing",
     "mongo_db" : "rockpool",
-    "deliver_tokens_by" : "clipboard",
+    "deliver_tokens_by" : "email",
     "email" : {
       "user": "postmaster@mg.example.com",
       "password": "my_awesome_password",
@@ -48,8 +48,8 @@
     },
     "mastodon" : {
       "use_mastodon" : false,
-      "number_of_toots_per_article" : 2,
       "hours_between_toots" : 12,
+      "number_of_toots_per_article" : 2,
       "domain_name" : "ausglam.space",
       "access_token" : "1234"
     },
