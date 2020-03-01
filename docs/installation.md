@@ -56,7 +56,7 @@ Copy `settings-example.json` to a file called `settings.json`. This is where all
 | `legacy_db` | Indicates whether the database has been migrated from a `CommunityTweets` application. Should nearly always be set to `false`. | `required` |
 | `tag_transforms` | An object of key:value pairs where any tags on the left (the key) will be changed to the tag on the right (the value) before being ingested into the database. You can use this to normalise tags within the app despite not having any control over how users tag their articles. If you're interested, my blog has [more information about how this works and the philosophy behind it](https://www.hughrundle.net/better-out-than-in/). | `required`, but may be an empty object. |
 | `show_credits` | Indicates whether to show "Made by Hugh Rundle for newCardigan" in the footer | `required` |
-| **production** | There are a number of values within the `production` object setting usernames, passwords, keys and so on. | `required` |
+| **`production`** | There are a number of values within the `production` object setting usernames, passwords, keys and so on. | `required` |
 | `admin_user` | The email address of the first administrator. This allows you to set someone (you, probably) as a default administrator when they log in: effectively they are pre-registered | `required` |
 | `app_url` | The URL of your app. This is used in administration emails | `required` |
 | `mongo_url` | The URL of your mongodb instance. In most cases this should be `"mongodb://localhost"` | `required` |
@@ -85,8 +85,8 @@ Copy `settings-example.json` to a file called `settings.json`. This is where all
 | `mastodon.access_token` | Mastodon access token for your app. | `required` if using Mastodon |
 | `announce_articles_newer_than_hours` | Any blog posts older than this number of hours will be ingested to the database but not announced via Twitter or Mastodon. | `required` |
 | `minutes_between_announcements` | The number of minutes between announcements on Twitter and Mastodon. Generally you will want a bit of a gap between them, but the more posts your community is publishing, the smaller this number will need to be, otherwise you may end up with a backlog. | `required` |
-| **development** | There are a number of values within the `development` object setting usernames, passwords, keys and so on. | `required` if doing development work |
-| **test** | There are a number of values within the `test` object. Some values are unique to `test`. Do not change any values in `test` as you may break the test suite. | `required` if running tests |
+| **`development`** | There are a number of values within the `development` object setting usernames, passwords, keys and so on. | `required` if doing development work |
+| **`test`** | There are a number of values within the `test` object. Some values are unique to `test`. Do not change any values in `test` as you may break the test suite. | `required` if running tests |
 
 ## Migrating from a legacy database
 

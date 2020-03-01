@@ -4,21 +4,9 @@ Support a community and store what you need from the ocean of information.
 
 Successor to and complete rewrite of [CommunityTweets](https://github.com/hughrun/CommunityTweets).
 
-Rockpool is an Express app interfacing with MongoDB to provide:
+Rockpool is an Express app interfacing with MongoDB. It ingests metadata about articles from RSS feeds ("blog posts") and optionally tweets and/or toots links to those post when they are published. Users can register and manage their accounts via passwordless login, and connect the feed to their Pocket accounts for automatic ingest to their Pocket list, or download an OPML file to import into an RSS reader.
 
-* harvesting of article metadata via RSS and storage in MongoDB ✅
-* web interface to discover articles via search or tag browse ✅
-* announcements of new articles via Twitter and/or Mastodon ✅
-* passwordless login ✅
-* self-registration of blogs by owners ✅
-* claiming of blogs by owners (for legacy DB) ✅
-* deletion of blog listings by authorised owners ✅
-* admin access to approve and edit blog listings ✅
-* subscription to all articles via Pocket ✅
-* automatic OPML file with all blogs ✅
-* editing of blog category by authorised owners ✅
-
-This is a Work In Progress
+Not quite ready for production, but nearly there.
 
 ## Documentation
 
