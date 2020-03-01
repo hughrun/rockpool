@@ -40,7 +40,7 @@ TODO: **MORE ON SECURING MONGO HERE**
 Copy `settings-example.json` to a file called `settings.json`. This is where all your custom values will go, including database login info etc. Keep it secret, keep it safe.
 
 | setting | description   | required? |
-| ---:  |   :---        |   :--- |
+| -:  |   :---        |   -:- |
 | `app_name` | The name of your app. Will appear in the header and the title of each page, as well as in emails and a few other places | `required` |
 | `app_tagline` | Appears in the header | `optional`
 | `app_description` | Appears in the header | `optional` |
@@ -70,7 +70,7 @@ Copy `settings-example.json` to a file called `settings.json`. This is where all
 | `email` | Rockpool requires an SMTP email account to send system emails, using [emailjs](https://github.com/eleith/emailjs). You can use a personal Outlook or Hotmail etc account, but I recommend a service like [Mailgun](https://www.mailgun.com/) which will be free unless your app becomes enormously popular. | `required` in production and development |
 | `pocket_consumer_key` | You need to [register your app with Pocket](https://getpocket.com/developer/docs/authentication) (see setup instuctions). This is your `consumer_key` from Pocket. | `required` |
 | `twitter` | An object for all information relating to Twitter. | `required` |
-| `twitter.use_twitter` | Boolean indicating whether you are using Twitter with your app. If set to `false` you do not need to enter any other values in `twitter`. | required |
+| `twitter.use_twitter` | Boolean indicating whether you are using Twitter with your app. If set to `false` you do not need to enter any other values in `twitter`. | `required` |
 | `twitter.hours_between_tweets` | number indicating the number of hours between tweeting the same article. | `required` if using Twitter |
 | `twitter.number_of_tweets_per_article` | how many times to tweet the same article | `required` if using Twitter |
 | `twitter.consumer_key` | Twitter [consumer key](https://developer.twitter.com/en/docs/basics/authentication/oauth-1-0a) | `required` if using Twitter |
@@ -78,14 +78,14 @@ Copy `settings-example.json` to a file called `settings.json`. This is where all
 | `twitter.access_token` | Twitter [access_token](https://developer.twitter.com/en/docs/basics/authentication/oauth-1-0a) | `required` if using Twitter |
 | `twitter.access_token_secret` | Twitter [access_token_secret](https://developer.twitter.com/en/docs/basics/authentication/oauth-1-0a) | `required` if using Twitter |
 | `mastodon` | An object for all information relating to Mastodon. | `required` |
-| `mastodon.use_mastodon` | Boolean indicating whether you are using Mastodon with your app. If set to `false` you do not need to enter any other values in `mastodon`. | required |
+| `mastodon.use_mastodon` | Boolean indicating whether you are using Mastodon with your app. If set to `false` you do not need to enter any other values in `mastodon`. | `required` |
 | `mastodon.hours_between_toots` | number indicating the number of hours between tooting the same article. | `required` if using Mastodon |
 | `mastodon.number_of_toots_per_article` | how many times to toot the same article | `required` if using Mastodon |
 | `mastodon.domain_name` | Domain name of the Mastodon server your app's account is part of. | `required` if using Twitter |
 | `mastodon.access_token` | Mastodon access token for your app. | `required` if using Mastodon |
 | `announce_articles_newer_than_hours` | Any blog posts older than this number of hours will be ingested to the database but not announced via Twitter or Mastodon. | `required` |
 | `minutes_between_announcements` | The number of minutes between announcements on Twitter and Mastodon. Generally you will want a bit of a gap between them, but the more posts your community is publishing, the smaller this number will need to be, otherwise you may end up with a backlog. | `required` |
-| **development** | There are a number of values within the `development` object setting usernames, passwords, keys and so on. | required if doing development work |
+| **development** | There are a number of values within the `development` object setting usernames, passwords, keys and so on. | `required` if doing development work |
 | **test** | There are a number of values within the `test` object. Some values are unique to `test`. Do not change any values in `test` as you may break the test suite. | `required` if running tests |
 
 ## Migrating from a legacy database
