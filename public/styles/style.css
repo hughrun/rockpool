@@ -404,7 +404,8 @@ input[type="email"].email-signup {
 .browse-blogs li {
 	max-width: 100vw;
 	display: grid;
-	grid-template-columns: auto 20%;
+	grid-template-columns: auto minmax(20%, 320px);
+	/* grid-template-columns: auto 20%; */
 }
 
 .blog-listing-url a {
@@ -531,6 +532,10 @@ ul.browse-blogs {
 		user dashboard 
  ################### */
 
+#user-info input {
+	font-size: 1.2em;
+}
+
 .user-info {
 	margin-bottom: 1em;
 }
@@ -652,7 +657,7 @@ ul.browse-blogs {
  /* #################
 		smaller screens 
  ################### */
-@media only screen and (min-device-width : 320px) and (max-device-width : 480px) {
+@media only screen and (max-device-width : 480px) {
 
 	.main {
 		padding: 1em;
@@ -742,7 +747,6 @@ ul.browse-blogs {
 	}
 
 	.approved-blogs {
-		/* background-color: rgba(159, 159, 159, 0.1); */
 		border: 1px solid lightgreen;
 		padding: 1em;
 	}

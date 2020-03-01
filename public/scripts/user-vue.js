@@ -75,7 +75,7 @@ Vue.component('user-info', {
       <button class="" type="button" onclick="location.href='/admin'">Admin</button>
     </div>
     <h3 class="form-label">Your Info</h3>
-    <form v-if="editing" name="user-info" method="POST">
+    <form v-if="editing" name="user-info" id="user-info" method="POST">
       <div>
         <label for="email">Email:</label>
         <input id="email" name="email" v-model="user.email">
