@@ -193,8 +193,7 @@ Vue.component('user-approved-blogs', {
     }
   },
   template: `
-  <section>
-  <ul class="blog-list">
+  <ul class="blog-list approved-blogs">
     <li v-for='blog in blogs' class="listed-blog" v-bind:class="{deleting: blog.deleting, editing: blog.editing}" v-bind:key="blog.id">
       <div class="approved-blog"></div>
       <span v-if="blog.title"><a v-bind:href="blog.url">{{ blog.title }}</a></span>
@@ -213,7 +212,6 @@ Vue.component('user-approved-blogs', {
       <button class="" v-else v-on:click="checkingDeletion(blog)" v-bind:id="blog.idString">Delete</button>
     </li>
   </ul>
-  </section>  
 `
 })
 
@@ -309,8 +307,7 @@ Vue.component('user-unapproved-blogs', {
     }
   },
   template: `
-  <section>
-  <ul class="blog-list" >
+  <ul class="blog-list unapproved-blogs" >
     <li v-for='blog in ublogs' v-bind:key="blog.idString" class="listed-blog">
       <div class="unapproved-blog"></div>
       <span v-if="blog.title"><a v-bind:href="blog.url">{{ blog.title }}</a></span>
@@ -318,7 +315,6 @@ Vue.component('user-unapproved-blogs', {
       <span class="awaiting-approval"> - awaiting approval</span>
     </li>
   </ul>
-  </section>
   `
 })
 

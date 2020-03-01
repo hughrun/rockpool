@@ -16,11 +16,17 @@
 									ELEMENTS
  ########################################## */
 
+html {
+	max-width: 100vw;
+	margin: 0;
+}
+
 body {
 	font-family: "SourceSansPro", Verdana, Tahoma, Arial, sans-serif;
 	color: #3a3a3a;
   margin: 0;
-  font-size: 1.2em;
+	font-size: 1.2em;
+	max-width: 100vw;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -46,6 +52,11 @@ button {
 code, pre {
 	background: rgba(211, 211, 211, 0.5);
 	padding: 0.25em;
+}
+
+input,
+textarea {
+	max-width: 100%;
 }
 
 /* ########################################
@@ -245,6 +256,7 @@ button:hover,
 
 .subscription {
 	text-align: center;
+	margin-top: 1em;
 }
 
 header {
@@ -390,16 +402,14 @@ input[type="email"].email-signup {
  ############## */
 
 .browse-blogs li {
+	max-width: 100vw;
 	display: grid;
-	grid-template-columns: auto 320px;
+	grid-template-columns: auto 20%;
 }
 
-span[class^=class-] {
-	text-decoration: none;
-	font-style: normal;
-	padding: 0 0.5em;
-	margin: 1em;
-	line-height: 1.6em;
+.blog-listing-url a {
+	word-wrap: break-word;
+	overflow-wrap: anywhere;
 }
 
 .failing span,
@@ -415,7 +425,7 @@ span[class^=class-] {
 	text-decoration: line-through;
 }
 
-.failing span.failing-icon {
+span.failing-icon {
 	color: red;
 	border: 1px solid red;
 	text-decoration: none;
@@ -424,7 +434,7 @@ span[class^=class-] {
 	margin-left: 1em;
 }
 
-.suspended span.suspended-icon {
+span.suspended-icon {
 	color: rgba(159, 159, 159, 1);
 	border: 1px solid rgba(159, 159, 159, 1);
 	text-decoration: none;
@@ -442,10 +452,13 @@ span[class^=class-] {
 	margin-left: 1em;
 }
 
-span[class^='class-'] {
+span[class^=class-] {
 	color: #3a3a3a;
 	text-decoration: none;
 	font-style: normal;
+	padding: 0 0.5em;
+	margin: 1em;
+	line-height: 1.6em;
 }
 
 .class-0 {
@@ -617,6 +630,7 @@ ul.browse-blogs {
 .register-blog select {
 	font-size: 1.25em;
 	margin-top: 0.5em;
+	max-width: 100%;
 }
 
 /* #################
@@ -634,3 +648,161 @@ ul.browse-blogs {
  .feed-link {
 	color: #ff748c;
  }
+
+ /* #################
+		smaller screens 
+ ################### */
+@media only screen and (min-device-width : 320px) and (max-device-width : 480px) {
+
+	.main {
+		padding: 1em;
+		max-width: 100vw;
+		overflow-wrap: break-word;
+	}
+	
+	.flash-success {
+		overflow-wrap: normal;
+	}
+
+	/* HOME (/) and SEARCH (/search) */
+
+	.article-search input[type="text"] {
+		margin: auto;
+		max-width: 90%;
+	}
+
+	.article-listing {
+		margin: auto;
+	}
+
+	/* BROWSE (/browse) */
+
+	.browse-actions {
+		text-align: left;
+		max-width: 50vw;
+		margin-top: 1em;
+	}
+
+	.browse-blogs {
+		margin: 0 -1em;
+		padding: 1em;
+	}
+
+	.browse-blogs:nth-child(2n+1) {
+		background-color: rgba(159, 159, 159, 0.1);
+	}
+
+	.browse-blogs hr {
+		width: 0;
+	}
+
+	.browse-blogs ul,
+	.browse-blogs li {
+		grid-template-columns: auto; 
+		list-style-type: none;
+		list-style-position: inside;
+		margin:0;
+		padding:0; 
+	}
+
+	.browse-blogs span {
+		display: block;
+		width: fit-content;
+		margin: 0.5em 0;
+		text-align: center;
+	}
+
+	span[class^="class-"] {
+		text-align: center;
+	}
+
+	.excluded span.excluded-icon {
+		margin-left: 0
+	}
+
+	.browse-actions {
+		width: 100%;
+		max-width: 100%;
+	}
+
+	/* SUBSCRIBE (/subscribe) */
+
+	.subscribe {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+	}
+
+	/* ACCOUNT (/user) */
+
+	.blog-list,
+	.blog-list ul {
+		list-style-position: inside;
+		margin: 0;
+		padding: 0;
+	}
+
+	.approved-blogs {
+		/* background-color: rgba(159, 159, 159, 0.1); */
+		border: 1px solid lightgreen;
+		padding: 1em;
+	}
+
+	.unapproved-blogs {
+		border: 1px solid lightcoral;
+		padding: 1em;
+		margin: 1em 0;
+	}
+
+	.approved-blogs span {
+		display: block;
+		margin-bottom: 0.5em;
+	}
+
+	.approved-blog,
+	.unapproved-blog {
+		display: none;
+	}
+
+	.listed-blog.editing {
+		margin: -1em;
+		padding: 1em;
+	}
+
+	.listed-blog:nth-child(1n+2) {
+		border-top: 1px solid #3a3a3a;
+		padding-top: 1em;
+		margin-top: 1em;
+	}
+
+	.listed-blog {
+		text-align: center;
+	}
+
+	.blog-editing-form {
+		width: 100%;
+		margin: auto;
+		text-align: center;
+	}
+
+	.blog-editing-form select {
+		margin-bottom: 1em;
+	}
+
+	/* ADMIN (/admin) */
+
+	.claimed-blogs form {
+		margin-top: 1em;
+	}
+
+	.claimed-blogs span {
+		display: block;
+	}
+
+	.admins-list div button,
+	.assign-admin button,
+	.claimed-blogs button {
+	margin-top: 1em;
+	float: none;
+}
+
+}

@@ -112,8 +112,8 @@ Vue.component('blog-listing', {
     }
   },
   template: `<div>
-  <span v-if="this.blog.title"><a v-bind:href="this.blog.url">{{ blog.title }}</a></span>
-  <span v-else><a v-bind:href="this.blog.url">{{ blog.url }}</a></span>
+  <span v-if="this.blog.title" class="blog-listing-url"><a v-bind:href="this.blog.url">{{ blog.title }}</a></span>
+  <span v-else class="blog-listing-url"><a v-bind:href="this.blog.url">{{ blog.url }}</a></span>
   <span v-if="this.blog.owned" class="approved-blog"></span>
   <span v-if="this.blog.claimed" class="unapproved-blog"></span>
   <span v-bind:class="blogClass">{{ this.blog.category }}</span>
