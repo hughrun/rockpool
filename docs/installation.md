@@ -39,7 +39,7 @@ TODO: **MORE ON SECURING MONGO HERE**
 
 Copy `settings-example.json` to a file called `settings.json`. This is where all your custom values will go, including database login info etc. Keep it secret, keep it safe.
 
-| setting | description   |
+| setting | description   | required? |
 | ---:  |   :---        |   :--- |
 | `app_name` | The name of your app. Will appear in the header and the title of each page, as well as in emails and a few other places | `required` |
 | `app_tagline` | Appears in the header | `optional`
