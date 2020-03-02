@@ -818,7 +818,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
     })
     before('complete log in', function(done) {
       var loginLink = clipboardy.readSync()
-      var link = loginLink.slice(19)
+      var link = loginLink.slice(19) // slice off https://example.com
       agent
       .get(link)
       .then( () => {

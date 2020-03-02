@@ -31,6 +31,9 @@ const passwordless = require('passwordless') // passwordless for ...passwordless
 const { ObjectId, equals } = require('mongodb') // for mongo IDs
 const MongoStore = require('passwordless-mongostore-bcryptjs') // for creating and storing passwordless tokens
 var cookieParser = require('cookie-parser') // cookies
+// FIXME: this is where we replace sessionStore with MongoStore 
+// Also fix 'sess' below, and bring it up here
+// Finally at app.use.session(sess) make the required adjustment
 var sessionStore = new session.MemoryStore() // cookie storage
 
 // dealing with form data
@@ -1209,11 +1212,16 @@ app.use(function (req, res, next) {
   res.status(404).render("404")
 })
 
-// TODO: need to run RSS checks and announcements on timer somewhere
-// (not necessarily in this file)
+// Trigger the app to periodically check RSS feeds and send announcements
+let checkFeedsTime = settings[env].minutes_between_checking_feeds * 60000; // time between checking feeds
+let announceTime = settings[env].minutes_between_announcements * 60000; // time between announcements
+let checkAnnouncementsTime =  settings[env].minutes_between_checking_announcements * 60000; // time between queuing announcements
+
+const checkFeedsTrigger = setInterval(feeds.checkFeeds, checkFeedsTime);
+const checkAnnouncementsTrigger = setInterval(announcements.checkArticleAnnouncements, checkAnnouncementsTime);
+const announceTrigger = setInterval(announcements.announce, announceTime);
 
 // listen on server
-// TODO: the port number could be an NPM `config` setting
 app.listen(3000, function() {
   if (env !== 'test') {
     console.log('    *****************************************************************************')
