@@ -87,10 +87,11 @@ Vue.component('blog-actions', {
   },
   template: `
   <div class="browse-actions">
-  <button v-if="!active" class="browse-button actions-button" v-on:click="active = true">Actions</button>
-  <button v-if="active" class="browse-button actions-button cancel-button" v-on:click="active = false">Cancel</button>
+  <div v-if="!user.pocket && blog.owned"></div>
+  <button v-else-if="!active" class="browse-button actions-button" v-on:click="active = true">Actions</button>
+  <button v-else="active" class="browse-button actions-button cancel-button" v-on:click="active = false">Cancel</button>
   <div v-if="active" key="blog.idString">
-    <button v-if="legacy" v-on:click="claimBlog(blog)" class="browse-button claim-button action">
+    <button v-if="legacy && !blog.owned" v-on:click="claimBlog(blog)" class="browse-button claim-button action">
       Claim ownership of this blog
     </button>
     <button v-if="user && user.pocket && blog.excluded" v-on:click="includeInPocket(blog)" class="browse-button action excluded">

@@ -46,9 +46,9 @@ Vue.component('user-info', {
       axios.post('/api/v1/update/user/info', params)
       .then( response => {
         this.editing = false
+        this.user.email = res.email
         if (response.data.user) {
           let res = response.data.user
-          this.user.email = res.email
           this.user.twitter = res.twitter
           this.user.mastodon = res.mastodon
         } else if (response.data.error) {

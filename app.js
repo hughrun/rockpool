@@ -61,11 +61,11 @@ const sess = {
     maxAge: 6048e5 // expire cookies after a week
   }
 }
-
-if (env === 'production') { // in production force https
-  app.set('trust proxy', 1) // trust first proxy
-  sess.cookie.secure = true // serve secure cookies
-}
+// FIXME: this should be uncommented for a live site
+// if (env === 'production') { // in production force https
+//   app.set('trust proxy', 1) // trust first proxy
+//   sess.cookie.secure = true // serve secure cookies
+// }
 
 // MongoDB TokenStore for passwordless login tokens
 const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collection for tokens
@@ -547,6 +547,7 @@ app.get('/api/v1/user/info', function(req, res) {
         data.pocket = doc.users[0].pocket || false
         data.admin = doc.users[0].permission === 'admin'
       } else {
+        data.email = req.user // send back the user email so they don't have to re-type it
         data.error = {class: 'flash-warning', text: "You don't have an account yet! Click 'edit' to create your user profile."}
       }
       res.json(data)
