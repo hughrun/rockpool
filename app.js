@@ -729,8 +729,8 @@ app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
       }
       sendEmail(message) // send email to admins
       res.send({status: 'ok'})
-  }).catch( e => {
-    res.send({class: 'flash-error', text: `Something went wrong: ${e}`})
+  }).catch( err => {
+    res.send({ error: { message: err } })
   })
 })
 
