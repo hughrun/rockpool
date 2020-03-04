@@ -28,18 +28,30 @@ const announcements = require('./lib/announcements.js') // local database blogs 
 // managing users
 const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
-const { ObjectId, equals } = require('mongodb') // for mongo IDs
-const MongoStore = require('passwordless-mongostore-bcryptjs') // for creating and storing passwordless tokens
-var cookieParser = require('cookie-parser') // cookies
+const { ObjectId } = require('mongodb') // for mongo IDs
+const TokenStore = require('passwordless-mongostore-bcryptjs') // for creating and storing passwordless tokens
 // FIXME: this is where we replace sessionStore with MongoStore 
-// Also fix 'sess' below, and bring it up here
-// Finally at app.use.session(sess) make the required adjustment
-var sessionStore = new session.MemoryStore() // cookie storage
+const MongoStore = require('connect-mongo')(session); // session storage
+// set up session params
+const mongoUrl = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}/${settings[env].mongo_db}_sessions`
+const sessionOptions = {
+  resave: false,
+  saveUninitialized: true,
+  store: new MongoStore( { url: mongoUrl }), 
+  secret: settings[env].session_secret,
+  cookie: {
+    maxAge: 6048e5 // expire cookies after a week
+  }
+}
+// FIXME: this should be uncommented for a live site
+// if (env === 'production') { // in production force https
+//   app.set('trust proxy', 1) // trust first proxy
+//   sess.cookie.secure = true // serve secure cookies
+// }
 
 // dealing with form data
 const bodyParser = require('body-parser') // bodyparser for form data
 const { body, validationResult } = require('express-validator/check') // validate
-const { sanitizeBody } = require('express-validator/filter') // sanitise TODO: this is never called
 
 // other stuff
 const flash = require('express-flash') // flash messages
@@ -51,25 +63,10 @@ const fs = require('fs') // node file system
     ######################################
 */
 
-// set up session params
-const sess = {
-  resave: false,
-  saveUninitialized: true,
-  store: sessionStore,
-  secret: settings[env].express_session_secret,
-  cookie: {
-    maxAge: 6048e5 // expire cookies after a week
-  }
-}
-// FIXME: this should be uncommented for a live site
-// if (env === 'production') { // in production force https
-//   app.set('trust proxy', 1) // trust first proxy
-//   sess.cookie.secure = true // serve secure cookies
-// }
 
 // MongoDB TokenStore for passwordless login tokens
 const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collection for tokens
-passwordless.init(new MongoStore(pathToMongoDb, { useNewUrlParser: true })) // initiate store
+passwordless.init(new TokenStore(pathToMongoDb, { useNewUrlParser: true })) // initiate store
 
 // Set up an email delivery service for passwordless logins
 passwordless.addDelivery('email',
@@ -112,8 +109,7 @@ app.set('view engine', 'html')
 // routing middleware
 app.use(bodyParser.urlencoded({ extended: false })) // use bodyParser with form data
 app.use(bodyParser.json()) // use bodyParser with JSON
-app.use(cookieParser(settings[env].cookie_parser_secret))
-app.use(session(sess)) // use sessions
+app.use(session(sessionOptions)) // use sessions
 app.use(passwordless.sessionSupport()) // makes session persistent
 app.use(passwordless.acceptToken({ successRedirect: '/user'})) // checks token and redirects
 app.use(express.static(__dirname + '/public')) // serve static files from 'public' directory
@@ -478,7 +474,7 @@ app.get('/api/v1/browse', function (req, res, next) {
       data.query = {email: req.user}
       db.getUsers(data)
       .then( response => {
-        if (response.users[0].blogs) {
+        if (response.users[0] && response.users[0].blogs) {
           for (let blog of data.blogs) {
             let match = response.users[0].blogs.some( x => {
               return blog._id.equals(x)
