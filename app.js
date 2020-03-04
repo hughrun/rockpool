@@ -30,10 +30,9 @@ const session = require('express-session') // sessions so people can log in
 const passwordless = require('passwordless') // passwordless for ...passwordless logins
 const { ObjectId } = require('mongodb') // for mongo IDs
 const TokenStore = require('passwordless-mongostore-bcryptjs') // for creating and storing passwordless tokens
-// FIXME: this is where we replace sessionStore with MongoStore 
 const MongoStore = require('connect-mongo')(session); // session storage
 // set up session params
-const mongoUrl = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}/${settings[env].mongo_db}_sessions`
+const mongoUrl = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}/${settings[env].mongo_db}`
 const sessionOptions = {
   resave: false,
   saveUninitialized: true,
@@ -62,7 +61,6 @@ const fs = require('fs') // node file system
     ### initiate and configure modules ###
     ######################################
 */
-
 
 // MongoDB TokenStore for passwordless login tokens
 const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collection for tokens
@@ -330,7 +328,7 @@ app.get('/user',
 // pocket routes
 
 app.get('/user/pocket', 
-  (req, res, next) => {
+  (req, res) => {
     var args = {}
     args.user = req.user 
     db.getUserDetails(args)
@@ -347,7 +345,7 @@ app.get('/user/pocket',
 })
 
 app.get('/user/pocket-redirect', 
-  (req, res, next) => {
+  (req, res) => {
     // user has now authorised us to authenticate to pocket and get an access token
     const args = {}
     args.code = req.session.pocketCode
@@ -407,7 +405,7 @@ app.get('/admin', function (req, res) {
 })
 
 // browse page
-app.get('/browse', function (req, res, next) {
+app.get('/browse', function (req, res) {
     res.render('browse', {
       partials: {
         head: __dirname+'/views/partials/head.html',
@@ -688,7 +686,6 @@ function(req, res, next) {
 // claim blog
 app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
   const args = req.body
-  //args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
   args.query = { "_id" : ObjectId(args.idString)}
   args.action = "register"
   args.user = req.user
@@ -726,7 +723,7 @@ app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
       sendEmail(message) // send email to admins
       res.send({status: 'ok'})
   }).catch( err => {
-    res.send({ error: { message: err } })
+    res.send({ error: { message: `${err}` } })
   })
 })
 
