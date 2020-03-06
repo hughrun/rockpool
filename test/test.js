@@ -817,8 +817,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       })
     })
     before('complete log in', function(done) {
-      var loginLink = clipboardy.readSync()
-      var link = loginLink.slice(19) // slice off https://example.com
+      let loginLink = clipboardy.readSync()
+      let len = settings.test.app_url.length
+      let link = loginLink.slice(len)
       agent
       .get(link)
       .then( () => {
@@ -1297,8 +1298,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
             })
             before('complete log in', function(done) {
-              var loginLink = clipboardy.readSync()
-              var link = loginLink.slice(19)
+              let loginLink = clipboardy.readSync()
+              let len = settings.test.app_url.length
+              let link = loginLink.slice(len)
               agent
               .get(link)
               .then( () => {
@@ -1385,7 +1387,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
               .expect(200)
               .then( res => {
-                assert.strictEqual(res.body.text, 'Something went wrong: Error: Another user owns or has claimed https://alice.blog')
+                assert.strictEqual(res.body.error.message, 'Error: Another user owns or has claimed https://alice.blog')
                 done()
               })
               .catch(e => {
@@ -1401,7 +1403,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
               })
               .expect(200)
               .then( res => {
-                assert.strictEqual(res.body.text, 'Something went wrong: Error: Another user owns or has claimed https://bobs-blog.com')
+                assert.strictEqual(res.body.error.message, 'Error: Another user owns or has claimed https://bobs-blog.com')
                 done()
               })
               .catch(e => {
@@ -2097,8 +2099,9 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
         })
       })
       before('complete log in', function(done) {
-        var loginLink = clipboardy.readSync()
-        var link = loginLink.slice(19)
+        let loginLink = clipboardy.readSync()
+        let len = settings.test.app_url.length
+        let link = loginLink.slice(len)
         nonAdminAgent
         .get(link)
         .then( () => {
@@ -2437,7 +2440,6 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
         })
       })
-      it('should run every X minutes in line with settings[env].minutes_between_checking_feeds')
       it('should send posts to Pocket unless blog is excluded', function(done) {
         pocketApiAdd
         .post('/v3/add')
@@ -2945,7 +2947,6 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       before('run checkArticleAnnouncements', function(){
         return announcements.checkArticleAnnouncements()
       })
-      it('should run every X minutes')
       describe('if tweeted.times is fewer than number_of_tweets_per_article', function(){
         it('should queue a tweet if tweeted.date is older than hours_between_announcements', function(done){
           MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
@@ -3133,7 +3134,6 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
         })
       })
-      it('should run every X minutes in line with settings[env].minutes_between_announcements')
       it('should send the next announcement if there are any in the queue', function(done){
         MongoClient.connect(url, { useNewUrlParser: true }, function(err, client) {
           assert.strictEqual(null, err);
