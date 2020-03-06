@@ -1,32 +1,15 @@
 {
+  "admin_user" : "user@example.com",
+  "announce_articles_newer_than_hours" : 48,
+  "app_description": "Support a community and store what you need from the ocean of information.",
   "app_name" : "Rockpool",
   "app_tagline": "A web app for communities of practice.",
-  "app_description": "Support a community and store what you need from the ocean of information.",
-  "org_name" : "My Community",
-  "org_url" : "https://example.com",
-  "blog_club_name" : "Blog Club",
-  "blog_club_url" : "https://example.com/blog-club",
-  "blog_club_tag" : "glam blog club",
-  "blog_club_hashtag" : "#RockpoolBlogClub",
-  "blog_categories" : ["cats", "dogs", "budgies"],
-  "excluded_tags" : ["notrockpool", "notpets", "notrockpoolblogs"],
-  "filtered_tags" : ["uncategorized", "uncategorised", "post", "page"],
-  "legacy_db" : false,
-  "tag_transforms" : {
-    "rockpoolblogclub" : "rockpool blog club",
-    "#rpblogclub" : "rockpool blog club",
-    "blogjune" : "blog june",
-    "#blogjune" : "blog june"
-  },
-  "show_credits" : true,
-  "admin_user" : "user@example.com",
   "app_url" : "https://rockpool.example.com",
-  "mongo_url" : "mongodb://localhost",
-  "mongo_port" : "27017",
-  "mongo_user" : "rockpool",
-  "mongo_password" : "my_great_password",
-  "session_secret" : "dole finicky mortality manicotti lecturer",
-  "mongo_db" : "rockpool",
+  "blog_categories" : ["cats", "dogs", "budgies"],
+  "blog_club_hashtag" : "#RockpoolBlogClub",
+  "blog_club_name" : "Blog Club",
+  "blog_club_tag" : "glam blog club",
+  "blog_club_url" : "https://example.com/blog-club",
   "deliver_tokens_by" : "email",
   "email" : {
     "user": "postmaster@mg.example.com",
@@ -34,7 +17,35 @@
     "host": "smtp.mailgun.org",
     "from": "hello@example.com"
   },
-  "pocket_consumer_key" : "1234-abcd1234abcd1234abcd1234",
+  "excluded_tags" : ["notrockpool", "notpets", "notrockpoolblogs"],
+  "filtered_tags" : ["uncategorized", "uncategorised", "post", "page"],
+  "legacy_db" : false,
+  "mastodon" : {
+    "use_mastodon" : false,
+    "hours_between_toots" : 12,
+    "number_of_toots_per_article" : 2,
+    "domain_name" : "ausglam.space",
+    "access_token" : "1234"
+  },
+  "minutes_between_announcements" : 5,
+  "minutes_between_checking_announcements" : 20,
+  "minutes_between_checking_feeds" : 60,
+  "mongo_db" : "rockpool",
+  "mongo_password" : "my_great_password",
+  "mongo_port" : "27017",
+  "mongo_url" : "mongodb://localhost",
+  "mongo_user" : "rockpool",
+  "org_name" : "My Community",
+  "org_url" : "https://example.com",
+  "pocket_consumer_key" : "1234-abcd",
+  "session_secret" : "secret squirrel",
+  "show_credits" : true,
+  "tag_transforms" : {
+    "rockpoolblogclub" : "rockpool blog club",
+    "#rpblogclub" : "rockpool blog club",
+    "blogjune" : "blog june",
+    "#blogjune" : "blog june"
+  },
   "twitter" : {
     "use_twitter" : false,
     "hours_between_tweets" : 6,
@@ -43,16 +54,5 @@
     "consumer_secret": "secret",
     "access_token": "token",
     "access_token_secret": "secret"
-  },
-  "mastodon" : {
-    "use_mastodon" : false,
-    "hours_between_toots" : 12,
-    "number_of_toots_per_article" : 2,
-    "domain_name" : "ausglam.space",
-    "access_token" : "1234"
-  },
-  "minutes_between_checking_feeds" : 60,
-  "announce_articles_newer_than_hours" : 48,
-  "minutes_between_checking_announcements" : 20,
-  "minutes_between_announcements" : 5
+  }
 }

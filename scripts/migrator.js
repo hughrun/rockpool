@@ -137,6 +137,9 @@ const prepareBlogs = function() {
           if (!entry.twHandle) {
             delete entry.twHandle // if twHandle is empty then delete it
           }
+          if (entry.type === 'DH') {
+            entry.type = 'digital humanities'
+          }
           return entry // return the amended record
         }).toArray(function(err, docs) {
           assert.equal(null, err)

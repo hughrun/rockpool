@@ -1223,7 +1223,7 @@ app.listen(3000, function() {
     console.log('    *****************************************************************************')
     console.log('     👂  Rockpool is listening on port 3000')
     console.log(`     👟  You are running in ${process.env.NODE_ENV.toUpperCase()} mode`)
-    console.log(`     🗃  Connected to database at ${settings[process.env.NODE_ENV].mongo_url}`)
+    console.log(`     🗃  Connected to database at ${settings.mongo_url}`)
     console.log('    *****************************************************************************')
   }
 })
