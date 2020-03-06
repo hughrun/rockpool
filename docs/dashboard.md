@@ -4,7 +4,7 @@ The user dashboard allows users to:
 
 * update their email address
 * provide and edit Twitter and Mastodon usernames
-* claim (legacy DB only), register, or remove a blog
+* register or delete their blog/s
 * subscribe/unsubscribe to new blog articles using their Pocket account
 * access the admin interface if they are an admin
 
@@ -18,13 +18,11 @@ To log in, go to the login page (`/letmein`), enter a valide email address, and 
 
 Users initially can provide a Twitter handle and Mastodon handle. These will be used when tweeting or tooting their latest posts, e.g. _"Introducing Rockpool - by @hughrundle [link]"_. The email field cannot be blank (otherwise they will never be able to log in again!) but the other two can be. If a user changes their email address they will automatically be logged out so that there is no confusion about which email is the correct one.
 
-## Registering or claiming a blog
+## Registering a blog
 
-To register a blog, enter the blog URL, select a category from the drop down list, and click **Register new blog**. Available categories are listed in the `blog_categories` array in `settings.json`.
+To register a blog, click the `Register a new blog` button. Enter the blog URL, select a category from the drop down list, and click **Register new blog**. Available categories are listed in the `blog_categories` array in `settings.json`. Note that unlike previous versions of _Aus GLAM Blogs_, it is the main URL of the blog you enter here, not the URL of the RSS feed.
 
-To claim a blog, enter the blog URL in the text box and click **Claim listed blog**. This option is only available when the `legacy_db` setting is set to `true`.
-
-Whilst awaiting approval, your blog will be listed under _Your Blogs_ as awaiting approval.
+Until it is approved by an admin, your blog will be listed under _Your Blogs_ as awaiting approval.
 
 ## Editing and deleting a blog
 

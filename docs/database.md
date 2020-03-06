@@ -75,6 +75,16 @@ Announcements are queued for new blog posts and blogs newly added to the databas
 | type  | `enum` - must be one of the values in `['tweet', 'toot']` |
 | message | `String` - the text of the announcement |
 
+## sessions
+
+Rockpool uses MongoDB to store `express-session` data.
+
+| field | description   |
+| ---:  |   :---        |
+| _id   | `ObjectId` - assigned automatically by Mongo   |
+| expires | `Datetime` - when the session expires - will be 7 days from when the user logged in |
+| session | `Object` - A JSON object outlining cookie details for the session |
+
 ---
 [Home](/README.md)  
 [Database structure](database.md)  
