@@ -26,3 +26,18 @@ All code with new features **must** include relevant new tests against those fea
 This project is tested using [mocha](https://github.com/mochajs/mocha).
 
 If you're not sure how to write tests in mocha, have a chat with [Hugh](https://github.com/hughrun) about it amd he'll give you a hand or might even write them for you.
+
+Rockpool uses a single `settings.json` file for all environments, following the [Twelve-factor app principles for configs](https://12factor.net/config). This becomes important when running tests because there are currently four specific config values that must be correct for the tests to work:
+
+1. `blog_categories` must be set to `["galleries", "libraries", "archives", "museums", "digital humanities", "GLAM"]`
+2. `use_twitter` must be set to `true`
+3. `use_mastodon` must be set to `true`
+4. `deliver_tokens_by` must be set to `clipboard`
+
+All other values in your `settings.json` file can be set to any sensible value and tests should still work. To run tests should be as simple as running this command from the root of your project directory:
+
+```
+npm run test
+```
+
+The current test suite is not really world's best practice so if you're a mocha wizard feel free to send a pull request with improvements to the existing test suite.

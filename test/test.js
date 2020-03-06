@@ -31,8 +31,8 @@ const settings = require('../settings.json')
 
 // Mongo
 const { MongoClient, ObjectId, equals} = require('mongodb')
-const url = `${settings.test.mongo_user}:${settings.test.mongo_password}@${settings.test.mongo_url}:${settings.test.mongo_port}`
-const dbName = settings.test.mongo_db
+const url = `${settings.mongo_user}:${settings.mongo_password}@${settings.mongo_url}:${settings.mongo_port}`
+const dbName = settings.mongo_db
 
 // TESTS
 describe('Test suite for Rockpool: a web app for communities of practice', function() {
@@ -818,7 +818,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
     })
     before('complete log in', function(done) {
       let loginLink = clipboardy.readSync()
-      let len = settings.test.app_url.length
+      let len = settings.app_url.length
       let link = loginLink.slice(len)
       agent
       .get(link)
@@ -1299,7 +1299,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
             })
             before('complete log in', function(done) {
               let loginLink = clipboardy.readSync()
-              let len = settings.test.app_url.length
+              let len = settings.app_url.length
               let link = loginLink.slice(len)
               agent
               .get(link)
@@ -1814,7 +1814,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                     const posts = db.collection('rp_announcements')
                     posts.countDocuments()
                     .then( count => {
-                      assert.equal(count == 2, true) // one tweet and one toot
+                      assert.strictEqual(count, 2) // one tweet and one toot
                       done()
                       callback()
                     })
@@ -2100,7 +2100,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
       })
       before('complete log in', function(done) {
         let loginLink = clipboardy.readSync()
-        let len = settings.test.app_url.length
+        let len = settings.app_url.length
         let link = loginLink.slice(len)
         nonAdminAgent
         .get(link)
@@ -2677,7 +2677,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 type: 'tweet'
               })
               .then( doc => {
-                if (settings.test.twitter.use_twitter) {
+                if (settings.twitter.use_twitter) {
                   assert.equal(doc > 0, true)
                 } else {
                   assert.equal(doc > 0, false)
@@ -2706,7 +2706,7 @@ describe('Test suite for Rockpool: a web app for communities of practice', funct
                 type: 'toot'
               })
               .then( doc => {
-                if (settings.test.mastodon.use_mastodon) {
+                if (settings.mastodon.use_mastodon) {
                   assert.equal(doc > 0, true)
                 } else {
                   assert.equal(doc > 0, false)

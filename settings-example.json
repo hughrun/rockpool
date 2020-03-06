@@ -18,113 +18,41 @@
     "blogjune" : "blog june",
     "#blogjune" : "blog june"
   },
-  "show_credits": true,
-  "production" : {
-    "admin_user" : "admin@example.com",
-    "app_url" : "https://rockpool.example.com",
-    "mongo_url" : "mongodb://localhost",
-    "mongo_port" : "27017",
-    "mongo_user" : "rockpool",
-    "mongo_password:" : "my_great_password",
-    "session_secret" : "dole finicky mortality manicotti lecturer",
-    "mongo_db" : "rockpool",
-    "deliver_tokens_by" : "email",
-    "email" : {
-      "user": "postmaster@mg.example.com",
-      "password": "my_awesome_password",
-      "host": "smtp.mailgun.org",
-      "from": "hello@example.com"
-    },
-    "pocket_consumer_key" : "1234-abcd1234abcd1234abcd1234",
-    "twitter" : {
-      "use_twitter" : false,
-      "hours_between_tweets" : 6,
-      "number_of_tweets_per_article" : 3,
-      "consumer_key" : "key",
-      "consumer_secret": "secret",
-      "access_token": "token",
-      "access_token_secret": "secret"
-    },
-    "mastodon" : {
-      "use_mastodon" : false,
-      "hours_between_toots" : 12,
-      "number_of_toots_per_article" : 2,
-      "domain_name" : "ausglam.space",
-      "access_token" : "1234"
-    },
-    "announce_articles_newer_than_hours" : 48,
-    "minutes_between_announcements" : 10
+  "show_credits" : true,
+  "admin_user" : "user@example.com",
+  "app_url" : "https://rockpool.example.com",
+  "mongo_url" : "mongodb://localhost",
+  "mongo_port" : "27017",
+  "mongo_user" : "rockpool",
+  "mongo_password" : "my_great_password",
+  "session_secret" : "dole finicky mortality manicotti lecturer",
+  "mongo_db" : "rockpool",
+  "deliver_tokens_by" : "email",
+  "email" : {
+    "user": "postmaster@mg.example.com",
+    "password": "my_awesome_password",
+    "host": "smtp.mailgun.org",
+    "from": "hello@example.com"
   },
-  "development" : {
-    "admin_user" : "admin@example.com",
-    "app_url" : "http:localhost:3000",
-    "mongo_url" : "mongodb://localhost",
-    "mongo_port" : "27017",
-    "mongo_user" : "rockpool",
-    "mongo_password:" : "my_great_password",
-    "session_secret" : "dole finicky mortality manicotti lecturer",
-    "mongo_db" : "rockpool",
-    "deliver_tokens_by" : "clipboard",
-    "email" : {
-      "user": "postmaster@mg.example.com",
-      "password": "my_awesome_password",
-      "host": "smtp.mailgun.org",
-      "from": "hello@example.com"
-    },
-    "pocket_consumer_key" : "1234-abcd1234abcd1234abcd1234",
-    "twitter" : {
-      "use_twitter" : false,
-      "hours_between_tweets" : 6,
-      "number_of_tweets_per_article" : 3,
-      "consumer_key" : "key",
-      "consumer_secret": "secret",
-      "access_token": "token",
-      "access_token_secret": "secret"
-    },
-    "mastodon" : {
-      "use_mastodon" : false,
-      "number_of_toots_per_article" : 2,
-      "hours_between_toots" : 12,
-      "domain_name" : "ausglam.space",
-      "access_token" : "1234"
-    },
-    "announce_articles_newer_than_hours" : 48,
-    "minutes_between_announcements" : 10
+  "pocket_consumer_key" : "1234-abcd1234abcd1234abcd1234",
+  "twitter" : {
+    "use_twitter" : false,
+    "hours_between_tweets" : 6,
+    "number_of_tweets_per_article" : 3,
+    "consumer_key" : "key",
+    "consumer_secret": "secret",
+    "access_token": "token",
+    "access_token_secret": "secret"
   },
-  "test" : {
-    "app_url" : "https://example.com",
-    "mongo_url" : "mongodb://localhost",
-    "mongo_port" : "27017",
-    "mongo_user" : "rockpool",
-    "mongo_password:" : "my_great_password",
-    "session_secret" : "dole finicky mortality manicotti lecturer",
-    "mongo_db" : "rockpool_test",
-    "deliver_tokens_by" : "clipboard",
-    "email" : {
-      "user": "postmaster@mg.example.com",
-      "password": "my_awesome_password",
-      "host": "smtp.mailgun.org",
-      "from": "hello@example.com"
-    },
-    "pocket_consumer_key" : "1234-abcd1234abcd1234abcd1234",
-    "twitter" : {
-      "use_twitter" : true,
-      "hours_between_tweets" : 6,
-      "number_of_tweets_per_article" : 3,
-      "consumer_key" : "key",
-      "consumer_secret": "secret",
-      "access_token": "token",
-      "access_token_secret": "secret"
-    },
-    "mastodon" : {
-      "use_mastodon" : true,
-      "number_of_toots_per_article" : 2,
-      "hours_between_toots" : 12,
-      "domain_name" : "ausglam.space",
-      "access_token" : "1234"
-    },
-    "announce_articles_newer_than_hours" : 48,
-    "minutes_between_announcements" : 10,
-    "blog_categories" : ["galleries", "libraries", "archives", "museums", "digital humanities", "GLAM"]
-  }
+  "mastodon" : {
+    "use_mastodon" : false,
+    "hours_between_toots" : 12,
+    "number_of_toots_per_article" : 2,
+    "domain_name" : "ausglam.space",
+    "access_token" : "1234"
+  },
+  "minutes_between_checking_feeds" : 60,
+  "announce_articles_newer_than_hours" : 48,
+  "minutes_between_checking_announcements" : 20,
+  "minutes_between_announcements" : 5
 }

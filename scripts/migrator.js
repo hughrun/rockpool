@@ -8,8 +8,8 @@ const debug = require('debug') // debug for development
 // Mongo
 const { MongoClient } = require('mongodb')
 const assert = require('assert')
-const url = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}`
-const dbName = settings[env].mongo_db
+const url = `${settings.mongo_user}:${settings.mongo_password}@${settings.mongo_url}:${settings.mongo_port}`
+const dbName = settings.mongo_db
 
 // USERS
 // Only migrate if emails[0].verified is true

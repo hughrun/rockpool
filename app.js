@@ -32,12 +32,12 @@ const { ObjectId } = require('mongodb') // for mongo IDs
 const TokenStore = require('passwordless-mongostore-bcryptjs') // for creating and storing passwordless tokens
 const MongoStore = require('connect-mongo')(session); // session storage
 // set up session params
-const mongoUrl = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}/${settings[env].mongo_db}`
+const mongoUrl = `${settings.mongo_user}:${settings.mongo_password}@${settings.mongo_url}:${settings.mongo_port}/${settings.mongo_db}`
 const sessionOptions = {
   resave: false,
   saveUninitialized: true,
   store: new MongoStore( { url: mongoUrl }), 
-  secret: settings[env].session_secret,
+  secret: settings.session_secret,
   cookie: {
     maxAge: 6048e5 // expire cookies after a week
   }
@@ -63,18 +63,18 @@ const fs = require('fs') // node file system
 */
 
 // MongoDB TokenStore for passwordless login tokens
-const pathToMongoDb = `${settings[env].mongo_url}/email-tokens` // mongo collection for tokens
+const pathToMongoDb = `${settings.mongo_url}/email-tokens` // mongo collection for tokens
 passwordless.init(new TokenStore(pathToMongoDb, { useNewUrlParser: true })) // initiate store
 
 // Set up an email delivery service for passwordless logins
 passwordless.addDelivery('email',
 	function(tokenToSend, uidToSend, recipient, callback, req) {
     var message =  {
-			text: 'Hello!\nAccess your account here: ' + settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend),
+			text: 'Hello!\nAccess your account here: ' + settings.app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend),
 			to: recipient,
       subject: 'Log in to ' + settings.app_name,
       attachment: [
-        {data: `<html><p>Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please <a href="${settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)}">log in in</a> now.</p><p>If it wasn't you, simply delete this email.</p></html>`, alternative: true}
+        {data: `<html><p>Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please <a href="${settings.app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)}">log in in</a> now.</p><p>If it wasn't you, simply delete this email.</p></html>`, alternative: true}
       ]
     }
     sendEmail(message)
@@ -86,7 +86,7 @@ passwordless.addDelivery('email',
 // passwordless for dev (bypass email and send the token to the clipboard instead)
 passwordless.addDelivery('clipboard',
   function(tokenToSend, uidToSend, recipient, callback, req) {
-    var address = settings[env].app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)
+    var address = settings.app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)
     clipboardy.writeSync(address)
     if (env === 'development') {
       debug.log("Login link copied to clipboard")
@@ -258,7 +258,7 @@ app.get('/letmein', function(req, res) {
         footer: __dirname+'/views/partials/footer.html'
       },
       user: req.session.passwordless,
-      delivery: settings[env].deliver_tokens_by // allows bypassing email when in development
+      delivery: settings.deliver_tokens_by // allows bypassing email when in development
     })
   }
 })
@@ -335,7 +335,7 @@ app.get('/user/pocket',
     .then(authorisePocket)
     .then( args => {
       req.session.pocketCode = args.code
-      res.redirect(`https://getpocket.com/auth/authorize?request_token=${args.code}&redirect_uri=${settings[env].app_url}/user/pocket-redirect`)
+      res.redirect(`https://getpocket.com/auth/authorize?request_token=${args.code}&redirect_uri=${settings.app_url}/user/pocket-redirect`)
     })
     .catch( err => {
       debug.log(err)
@@ -349,7 +349,7 @@ app.get('/user/pocket-redirect',
     // user has now authorised us to authenticate to pocket and get an access token
     const args = {}
     args.code = req.session.pocketCode
-    args.key = settings[env].pocket_consumer_key
+    args.key = settings.pocket_consumer_key
     args.user = req.user
     finalisePocketAuthentication(args)
       .then( () => {
@@ -664,7 +664,7 @@ function(req, res, next) {
       .then(updateUserBlogs) // add blog _id to user's blogsForApproval array
       .then( args => {
         message = {
-          text: `User ${req.user} has registered ${args.url} with ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to accept or reject the registration.`,
+          text: `User ${req.user} has registered ${args.url} with ${settings.app_name}.\n\nLog in at ${settings.app_url}/letmein to accept or reject the registration.`,
           to: 'admins',
           subject: `New blog registered for ${settings.app_name}`,
         }
@@ -716,7 +716,7 @@ app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
     .then(updateUserBlogs)
     .then( args => {
       message = {
-        text: `User ${req.user} has claimed ${args.url} on ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to accept or reject the registration.`,
+        text: `User ${req.user} has claimed ${args.url} on ${settings.app_name}.\n\nLog in at ${settings.app_url}/letmein to accept or reject the registration.`,
         to: 'admins',
         subject: `New blog claimed on ${settings.app_name}`,
       }
@@ -1171,7 +1171,7 @@ app.post('/api/v1/update/admin/make-admin', function(req, res) {
   updateUserPermission(args)
   .then( () => {
     message = {
-      text: `${req.user} has made you an administrator on ${settings.app_name}.\n\nLog in at ${settings[env].app_url}/letmein to use this new power, (but only for good).`,
+      text: `${req.user} has made you an administrator on ${settings.app_name}.\n\nLog in at ${settings.app_url}/letmein to use this new power, (but only for good).`,
       to: args.user,
       subject: `You are now an admin on ${settings.app_name}`,
     }
@@ -1206,14 +1206,16 @@ app.use(function (req, res, next) {
   res.status(404).render("404")
 })
 
+if (process.env.NODE_ENV !== "test") {
 // Trigger the app to periodically check RSS feeds and send announcements
-let checkFeedsTime = settings[env].minutes_between_checking_feeds * 60000; // time between checking feeds
-let announceTime = settings[env].minutes_between_announcements * 60000; // time between announcements
-let checkAnnouncementsTime =  settings[env].minutes_between_checking_announcements * 60000; // time between queuing announcements
+let checkFeedsTime = settings.minutes_between_checking_feeds * 60000; // time between checking feeds
+let announceTime = settings.minutes_between_announcements * 60000; // time between announcements
+let checkAnnouncementsTime =  settings.minutes_between_checking_announcements * 60000; // time between queuing announcements
 
 const checkFeedsTrigger = setInterval(feeds.checkFeeds, checkFeedsTime);
 const checkAnnouncementsTrigger = setInterval(announcements.checkArticleAnnouncements, checkAnnouncementsTime);
 const announceTrigger = setInterval(announcements.announce, announceTime);
+}
 
 // listen on server
 app.listen(3000, function() {

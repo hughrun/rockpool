@@ -10,8 +10,8 @@ const showdown = require('showdown')
 // Mongo
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
-const url = `${settings[env].mongo_user}:${settings[env].mongo_password}@${settings[env].mongo_url}:${settings[env].mongo_port}`
-const dbName = settings[env].mongo_db
+const url = `${settings.mongo_user}:${settings.mongo_password}@${settings.mongo_url}:${settings.mongo_port}`
+const dbName = settings.mongo_db
 
 // create admin user
 const createAdmin = new Promise( function (resolve, reject) {
@@ -23,7 +23,7 @@ const createAdmin = new Promise( function (resolve, reject) {
     const create = function(db, callback) {
       if (env != 'test') { // creating an admin user here causes issues with the test suite
         db.collection('rp_users').updateOne({
-          email: settings[env].admin_user,
+          email: settings.admin_user,
         },
         {
           $set: {permission: 'admin'}
