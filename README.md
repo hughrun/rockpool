@@ -15,6 +15,7 @@ Not quite ready for production, but nearly there.
 3. [Searching](docs/search.md)
 4. [User dashboard](docs/dashboard.md)
 5. [Admin dashboard](docs/admin.md)
+6. [Browse page](docs/browse.md)
 
 ## Contributing
 

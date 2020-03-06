@@ -108,3 +108,4 @@ NODE_ENV=production npm run setup
 [Search](search.md)  
 [User dashboard](dashboard.md)  
 [Admin dashboard](admin.md)  
+[Browse page](browse.md)  

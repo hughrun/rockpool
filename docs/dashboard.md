@@ -43,3 +43,4 @@ To unsubscribe, simply click the **Cancel Pocket subscription** button in the us
 [Search](search.md)  
 [User dashboard](dashboard.md)  
 [Admin dashboard](admin.md)  
+[Browse page](browse.md)  

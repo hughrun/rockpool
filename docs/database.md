@@ -91,4 +91,5 @@ Rockpool uses MongoDB to store `express-session` data.
 [Installation](installation.md)  
 [Search](search.md)  
 [User dashboard](dashboard.md)  
-[Admin dashboard](admin.md)
+[Admin dashboard](admin.md)  
+[Browse page](browse.md)  

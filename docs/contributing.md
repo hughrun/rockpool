@@ -41,3 +41,4 @@ npm run test
 ```
 
 The current test suite is not really world's best practice so if you're a mocha wizard feel free to send a pull request with improvements to the existing test suite.
+
