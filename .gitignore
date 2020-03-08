@@ -10,3 +10,4 @@ test/sites/LegacyOneRss.xml
 test/sites/LegacyTwoRss.xml
 test/sites/bobbieRss.xml
 *.bak
+*.pem

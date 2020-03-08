@@ -1,0 +1,39 @@
+version: "3"
+services:
+
+  app:
+    build: .
+    container_name: rockpool_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+    networks: 
+      - backend
+      
+  mongo:
+    image: mongo:4.0.16
+    container_name: mongodb
+    restart: unless-stopped
+    environment: 
+      MONGO_INITDB_ROOT_USERNAME: rockpool_admin
+      MONGO_INITDB_ROOT_PASSWORD: secret_admin_password
+      MONGO_INITDB_DATABASE: rockpool_docker
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - mongodata:/data/db
+    networks: 
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  mongodata:
+    driver: local
+  caddydata:
+    driver: local

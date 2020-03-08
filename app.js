@@ -68,7 +68,7 @@ awaitDb.then( function() {
       maxAge: 6048e5 // expire cookies after a week
     }
   }
-  // FIXME: this should be uncommented for a live site
+
   // if (env === 'production') { // in production force https
   //   app.set('trust proxy', 1) // trust first proxy
   //   sess.cookie.secure = true // serve secure cookies
