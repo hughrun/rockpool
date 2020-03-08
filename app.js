@@ -69,10 +69,10 @@ awaitDb.then( function() {
     }
   }
 
-  // if (env === 'production') { // in production force https
-  //   app.set('trust proxy', 1) // trust first proxy
-  //   sess.cookie.secure = true // serve secure cookies
-  // }
+  if (env === 'production') { // in production force https
+    app.set('trust proxy', 1) // trust first proxy
+    sess.cookie.secure = true // serve secure cookies
+  }
 
   // dealing with form data
   const bodyParser = require('body-parser') // bodyparser for form data

@@ -1,8 +1,6 @@
 notes/
 feeds/
 public/assets/*.svg
-public/assets/*.svg_old
-public/assets/fonts/*
 public/files/feeds.opml
 !public/assets/**/.gitkeep
 test/sites/bobRss.xml

@@ -1,17 +1,22 @@
 # Installation Instructions
 
-**THESE INSTRUCTIONS ARE INCOMPLETE AND LIABLE TO CHANGE AT ANY MOMENT.**
-
 To install `rockpool`, you should follow these steps in order:
 
-1. Register an app with [Pocket](), and optionally with [Twitter](https://developer.twitter.com/en/docs/basics/getting-started) and [Mastodon](https://docs.joinmastodon.org/)
+1. Register an app with [Pocket](https://getpocket.com), and optionally with [Twitter](https://developer.twitter.com/en/docs/basics/getting-started) and [Mastodon](https://docs.joinmastodon.org/)
 2. Ensure you have the SMTP details for an admin email account. The recommended way to do this is via [Mailgun](https://www.mailgun.com/) or a similar service.
-2. Install Docker
-3. Download rockpool either using `git` or [via zip download](https://github.com/hughrun/rockpool/releases)
-4. Copy `settings-example.json` to `settings.json` and fill in the relevant values
-5. run `npm install`
-6. optionally run `npm run migrate`
-7. run `npm run setup`
+3. Obtain app credentials for Mastodon and Twitter accounts, if you plan to use them.
+4. [Install](https://docs.docker.com/compose/install/) `docker` and `docker-compose`
+5. Download rockpool either using `git clone` or [via zip download](https://github.com/hughrun/rockpool/releases)
+6. Copy `settings-example.json` to `settings.json` and fill in the relevant values
+7. Update password fields: the `pwd` value in `mongo-init.js` must match the `mongo_password` value in `settings.json` and should not be the default value.
+8. Set up your reverse-proxy server. See **Setting up your web server** below for tips on this.
+9. Run `docker-compose up -d --build`
+10. At this point, if you have a legacy database you will need to migrate your DB in to the `mongo` container. See **Migrating from a legacy database** below. It is unlikely you will need to do this.
+11. Run `docker exec -it rockpool_app sh`
+12. You should now be inside the `rockpool_app` container. Run `npm run setup`. This creates indexes in the database, sets up your admin user, and updates the text of the `help` page if you have made changes to `markdown/help.md`. Then run `exit` to exit out of the container.
+13. Enjoy your new Rockpool app!
+
+**Note:** Currently there are no svg image files in `public/assets`. This is because of the licensing restrictions on the images I use in production. I will put some placeholder images in the repo soon, as well as making it easier to change colours and fonts.
 
 ## Registering external services
 
@@ -23,17 +28,19 @@ The official documentation for Mastodon is ok for general users, but incomplete 
 
 Twitter is a PITA to register new applications with, because they have a vetting service where some 24 year old techbro from "the Bay Area" decides whether your app is worthy of joining their giant binfire. We use the "standard API" in Rockpool. Read [the Twitter developer docs](https://developer.twitter.com/en/docs/basics/getting-started) to get started.
 
-## Installing Docker
+## Installing Docker and Compose
 
 **Rockpool** runs in Docker and uses MongoDB for all data.
 
 TODO: info on installing Docker and docker-compose.
 
-### Security
+Docker is designed to created 'throw away' containers. However, we obviously don't want our database to be deleted every time we make a change to our app. We use a "named volume" for the mongo database, so what when the app stops or you run a command like `docker-compose down` we don't lose it. If you run `docker volume ls` you will see a volume called `rockpool_mongodata`. **Do not delete this volume** - it is where your database lives. Be _very_ careful about running docker cleanup commands like `docker volume prune` as this will delete your data if your app is not running.
 
-Your database **must** use https and **must** have [Access Control](https://docs.mongodb.com/manual/tutorial/enable-authentication/) enabled. Although Mongo will allow you to use a locally installed database without authentication, **Rockpool** expects a username and password. This is deliberate, so that you don't accidentally forget to secure your DB.
+## Security
 
-TODO: **MORE ON SECURING MONGO HERE**
+Rockpool is designed to be run in Docker containers via `docker-compose`. Your Mongo database is bound to `localhost` inside the mongo container, and runs with `--auth`, requiring a registered account to log in. You should change both the default administrator password (in `docker-compose.yml` as `MONGO_INITDB_ROOT_PASSWORD`) and the default `mongo_password` to strong and long passwords. This should secure your Mongo database against most likely security breaches, as long as an attacker does not get access to your host server. If you choose to run Rockpool with an external mongo database, you are responsible for any changes you make to the setup and should familiarise yourself with Mongo security best practices.
+
+Rockpool will not allow any users to log in unless it is running over https. You can use [Let's Encrypt](https://letsencrypt.org/) to obtain and install certificates free of charge.
 
 ## Settings
 
@@ -67,9 +74,8 @@ Copy `settings-example.json` to a file called `settings.json`. This is where all
 | `minutes_between_checking_announcements` | The number of minutes between checking whether any articles need to be added to the announcements queue. | `required` |
 | `minutes_between_checking_feeds` | The number of minutes between checking each blog's RSS feed for new articles. | `required` |
 | `mongo_db` | The name of the database | `required` |
-| `mongo_url` | The URL of your mongodb instance. In most cases this should be `"mongodb://localhost"` | `required` |
+| `mongo_url` | The URL of your mongodb instance. In most cases this should be `""mongo:27017"` - do not change it unless you really know what you are doing. | `required` |
 | `mongo_password` | Use a good password for your mongo user. | `required` |
-| `mongo_port` | The port number of your mongodb instance. In most cases this should be `"27017"` | `required` |
 | `mongo_user` | The username of your mongo user. Note this is the username in mongo, not the operating system user. | `required` |
 | `org_name` | Name of the organisation responsible for administering your community. Appears in the footer | `required` |
 | `org_url` | Website address of your organisation's website. Appears in the footer | `required` |
@@ -86,20 +92,81 @@ Copy `settings-example.json` to a file called `settings.json`. This is where all
 | `twitter.access_token` | Twitter [access_token](https://developer.twitter.com/en/docs/basics/authentication/oauth-1-0a) | `required` if using Twitter |
 | `twitter.access_token_secret` | Twitter [access_token_secret](https://developer.twitter.com/en/docs/basics/authentication/oauth-1-0a) | `required` if using Twitter |
 
+## Setting up your web server
+
+Your app should be available on port `3000` on your server. You will need a web server such as Apache, nginx, or caddy to act as a reverse-proxy to make it available at a url like `https://www.example.com`. 
+
+### nginx
+
+nginx is a good choice, because it's often used as a reverse-proxy. You could use a configuration like this:
+
+```
+server {
+ server_name rockpool.example.com;
+ location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+  }
+}
+```
+
+You should then use `certbot` to add Lets Encrypt certificates and update your config so you can run your app on https. If you have installed certbot you can do this by running:
+
+```
+sudo certbot --nginx
+```
+
+### caddy
+
+[Caddy](https://caddyserver.com/) is a newer system that has the advantage of automatically incorporating Lets Encrypt certificates, and a very simple syntax. A Caddyfile would look something like this:
+
+```
+rockpool.example.com
+
+proxy / localhost:3000
+```
+
+### Changing the port number
+
+If you already have something else runnning on port 3000, or want to change the port for some other reason, you can easily do this by changing the `ports` value of `app` in the `docker-compose.yml` file. For example to run the app on port 4000, make the following change:
+
+```
+ports:
+  - "4000:3000"
+```
+
+This maps port 3000 inside the container (where the app is running) to port 4000 on your server.
+
 ## Migrating from a legacy database
 
-In the unlikely event you were using [CommunityTweets](https://github.com/hughrun/CommunityTweets), you will need to migrate your database to the new `rockpool` structure. From the command line run:
+In the unlikely event you were using [CommunityTweets](https://github.com/hughrun/CommunityTweets), you will need to migrate your database to the new `rockpool` structure. More instructions will be listed here shortly.
 
-```shell
-NODE_ENV=production npm run migrate
-```
-### Setting up 
+## Upgrading
 
-To set up your `rockpool` you need to run the setup script. Before doing so, you should have set up MongoDB, and checked that `settings.json` includes all relevant fields. Now run the script from the command line:
+TODO:
 
-```shell
-NODE_ENV=production npm run setup
-```
+## Making changes to files
+
+If you make changes to any files, you will need to run some commands before you see any changes. The most important thing to remember is that _Rockpool_ is running inside a series of Docker containers, so if you adjust something on your server, you need to get those files into the right container.
+
+### Changing the help file or default admin user
+
+1. Make your changes to `settings.json` or `markdown/help.md`
+2. Run `docker-compose up -d --rebuild`. This will rebuild the docker containers and bring everything up again.
+3. Once the app is running, run `docker exec -it rockpool_app sh`
+4. You should now be inside the `rockpool_app` container. Run `npm run setup`. This sets your admin user as an admin, and updates the text of the `help` page if you have made changes to `markdown/help.md`. Note that this will _not_ remove admin rights from any previous default admin user: you will need to do that through the app if you do longer want them to have admin rights.
+5. Run `exit` to exit out of the container.
+
+### Changing assets like css files and images
+
+If you just want to change the colours, fonts etc, you only need to follow the first steps, to re-build the `rockpool_app` container.
+
+1. Make your changes.
+2. Run `docker-compose up -d --rebuild`. This will rebuild the docker containers and bring everything up again.
 
 ---
 [Home](/README.md)  

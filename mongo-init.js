@@ -4,11 +4,11 @@ db.createUser({
   roles: [
     {
       role: 'dbAdmin',
-      db: 'rockpool_docker',
+      db: 'rockpool',
     },
     {
       role: 'readWrite',
-      db: 'rockpool_docker'
+      db: 'rockpool'
     },
     {
       role: 'readWrite',
