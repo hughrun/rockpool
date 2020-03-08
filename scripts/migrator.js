@@ -8,7 +8,7 @@ const debug = require('debug') // debug for development
 // Mongo
 const { MongoClient } = require('mongodb')
 const assert = require('assert')
-const url = `${settings.mongo_user}:${settings.mongo_password}@${settings.mongo_url}:${settings.mongo_port}`
+const url = `mongodb://${settings.mongo_user}:${settings.mongo_password}@${settings.mongo_url}/${settings.mongo_db}`
 const dbName = settings.mongo_db
 
 // USERS
