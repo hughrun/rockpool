@@ -21,19 +21,18 @@
   "filtered_tags" : ["uncategorized", "uncategorised", "post", "page"],
   "legacy_db" : false,
   "mastodon" : {
-    "use_mastodon" : false,
+    "access_token" : "1234",
+    "domain_name" : "ausglam.space",
     "hours_between_toots" : 12,
     "number_of_toots_per_article" : 2,
-    "domain_name" : "ausglam.space",
-    "access_token" : "1234"
+    "use_mastodon" : true
   },
   "minutes_between_announcements" : 5,
   "minutes_between_checking_announcements" : 20,
   "minutes_between_checking_feeds" : 60,
   "mongo_db" : "rockpool",
   "mongo_password" : "my_great_password",
-  "mongo_port" : "27017",
-  "mongo_url" : "mongodb://localhost",
+  "mongo_url" : "mongo:27017",
   "mongo_user" : "rockpool",
   "org_name" : "My Community",
   "org_url" : "https://example.com",
