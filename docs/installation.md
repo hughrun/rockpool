@@ -31,15 +31,15 @@ Twitter is a PITA to register new applications with, because they have a vetting
 
 ## Installing Docker and Compose
 
-**Rockpool** runs in Docker and uses MongoDB for all data.
+**Rockpool** runs in Docker and uses MongoDB for all data. You will need both _Docker_ and _Docker Compose_.
 
-TODO: info on installing Docker and docker-compose.
+One of the advantages of using Docker is that you should be able to run Rockpool on any operating system. Check out the Docker website to [get started](https://docs.docker.com/). You will also need to [install Docker Compose](https://docs.docker.com/compose/install/). Note that the official docs can be a little confusing. Digital Ocean has some [somewhat easier to understand instructions](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04) for installing Docker and [Docker Compose](https://www.digitalocean.com/community/tutorials/how-to-install-docker-compose-on-ubuntu-18-04) on Ubuntu. If you are using a Mac, [Homebrew](https://formulae.brew.sh/formula/docker) is your friend.
 
 Docker is designed to created 'throw away' containers. However, we obviously don't want our database to be deleted every time we make a change to our app. We use a "named volume" for the mongo database, so what when the app stops or you run a command like `docker-compose down` we don't lose it. If you run `docker volume ls` you will see a volume called `rockpool_mongodata`. **Do not delete this volume** - it is where your database lives. Be _very_ careful about running docker cleanup commands like `docker volume prune` as this will delete your data if your app is not running.
 
 ## Downloading Rockpool code
 
-You can download the latest code using git:
+You can download the latest Rockpool code using [`git`](https://git-scm.com/):
 ```
 git clone https://github.com/hughrun/rockpool.git
 ```
@@ -247,7 +247,7 @@ Now we use `mongorestore` to restore the backup. Note that we are using `--drop`
 ```
 mongorestore -d rockpool /dump/rockpool_backup -u rockpool -p my_great_password --drop
 ```
-If it is a fresh container (i.e. has been rebuilt since you took your backup) then the mongodup will have dumped the collections straight into `/dump`. In that case run it slightly differently:
+If it is a fresh container (i.e. has been rebuilt since you took your backup) then the mongodump will have dumped the collections straight into `/dump`. In that case run it slightly differently:
 ```
 mongorestore -d rockpool /dump -u rockpool -p my_great_password --drop
 ```
