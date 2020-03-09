@@ -1,6 +1,6 @@
 ## Logging in
 
-To log in, click [login or register](http://localhost:3000/letmein) and enter your email address. You will not need to remember a password as the app emails you with a magic time-limited single-use link every time you log in. If you haven't set up an account with that email address, you can now register. If you have, it will remember your details and you will be able to make changes as described below.
+To log in, click [login or register](/letmein) and enter your email address. You will not need to remember a password as the app emails you with a magic time-limited single-use link every time you log in. If you haven't set up an account with that email address, you can now register. If you have, it will remember your details and you will be able to make changes as described below.
 
 ## Registering your blog
 
@@ -31,7 +31,7 @@ If you write a blog post that is 'off topic' and don't want it to be included in
 2. Click on `Cancel Pocket subscription`
 3. Go to [https://getpocket.com/connected_applications](https://getpocket.com/connected_applications) and "remove access" to this app.
 
-## Excluding one of more blogs from Pocket subscription
+## Excluding one or more blogs from Pocket subscription
 
 On the `browse` page you can exclude or include (unexclude) each blog. Make sure you are logged in first, and have registered your Pocket account. You will then be able to click on 'Actions' to the right of each blog, and then click the button to Exclude or Include.
 
