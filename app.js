@@ -504,7 +504,7 @@ awaitDb.then( function() {
             }
           }
           for (let blog of data.blogs) {
-            if (response.users[0].blogsForApproval) {
+            if (response.users[0] > 0 && response.users[0].blogsForApproval) {
               let match = response.users[0].blogsForApproval.some( x => {
                 return blog._id.equals(x)
               })
@@ -518,6 +518,10 @@ awaitDb.then( function() {
               legacy: settings.legacy_db,
               user: response.users[0]
             })
+        })
+        .catch(err => {
+          console.error(err)
+          res.json({error: `${err}`})
         })
       } else {
         res.json({
@@ -708,7 +712,7 @@ awaitDb.then( function() {
   app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
     const args = req.body
     args.query = { "_id" : ObjectId(args.idString)}
-    args.action = "register"
+    args.action = "register" // TODO: should we make this "claim" so we can avoid an announcement ???
     args.user = req.user
     db.getBlogs(args)
       // then check users for any claiming this blog
@@ -1028,7 +1032,7 @@ awaitDb.then( function() {
       sendEmail(message)
       return args
     })
-    .then( args => {
+    .then( args => { // FIXME: at this point we ideally will check args.action to see whether it was new or 'claimed'
       announcements.queueBlogAnnouncement(args)
       res.send({class: 'flash-success', text: `blog approved`})
     })
