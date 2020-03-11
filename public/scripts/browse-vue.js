@@ -155,6 +155,9 @@ Vue.component('browse-list', {
       this.user = res.data.user
       this.actionsAvailable = this.user && (this.legacy || this.user.pocket)
     })
+    .catch(err => {
+      console.error(err)
+    })
   },
   methods: {
     addMessage(msg) {
@@ -206,6 +209,9 @@ new Vue({
     .get('/api/v1/categories')
     .then( res => {
       this.categories = res.data.categories
+    })
+    .catch(err => {
+      console.error(err)
     })
   }
 })
