@@ -95,7 +95,7 @@ awaitDb.then( function() {
         to: recipient,
         subject: 'Log in to ' + settings.app_name,
         attachment: [
-          {data: `<html><p>Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please <a href="${settings.app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)}">log in in</a> now.</p><p>If it wasn't you, simply delete this email.</p></html>`, alternative: true}
+          {data: `<html><p>Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please <a href="${settings.app_url + '/tokens/?token=' + tokenToSend + '&uid=' + encodeURIComponent(uidToSend)}">log in</a> now.</p><p>If it wasn't you, simply delete this email.</p></html>`, alternative: true}
         ]
       }
       sendEmail(message)
