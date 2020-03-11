@@ -27,15 +27,16 @@ Vue.component('message-list', {
 })
 
 Vue.component('user-info', {
-  props: ['user', 'messages'],
+  props: ['user'],
   data() {
     return {
       editing: false
+      // FIXME: should there be a 'processing' variable here?
     }
   },
   methods: {
     addMessage(msg) {
-      this.messages.push(msg)
+      this.$emit('add-message', msg)
     },
     updateUser(event) {
       var params = {
@@ -43,22 +44,23 @@ Vue.component('user-info', {
         twitter : event.target.parentNode.twitter.value,
         mastodon : event.target.parentNode.mastodon.value
       }
-      axios.post('/api/v1/update/user/info', params)
+      axios.post('/api/v1/update/user/info', params) // FIXME: this should do validation 
       .then( response => {
-        this.editing = false
-        this.user.email = res.email
+        console.log(response.data)
+        this.editing = false // FIXME:this should go BEFORE we send the API call?
         if (response.data.user) {
           let res = response.data.user
+          this.user.email = res.email
           this.user.twitter = res.twitter
           this.user.mastodon = res.mastodon
+        } else if (response.data.redirect) {
+          window.location.href = '/email-updated' // log out and redirect if new email
         } else if (response.data.error) {
-          this.addMessage(res.data.error)
+          this.addMessage(response.data.error)
         }
       })
       .catch( err => {
-        // server errors should be caught in response.data.error
-        // anything else is probably a 404
-        console.log(err)
+        console.error(err)
       })
     },
     cancelPocket() {
@@ -120,7 +122,7 @@ Vue.component('user-info', {
 })
 
 Vue.component('user-approved-blogs', {
-  props: ['messages', 'categories'],
+  props: ['categories'],
   data () {
     return {
       userIdString: null,
@@ -132,6 +134,7 @@ Vue.component('user-approved-blogs', {
     axios
     .get('/api/v1/user/blogs')
     .then(response => {
+      console.log(response.data)
       this.userIdString = response.data.user
       this.blogs = response.data.blogs
       this.blogs.forEach( blog => {
@@ -139,14 +142,14 @@ Vue.component('user-approved-blogs', {
         blog.editing = false
       })
       if (response.data.blogs.length == 0) {
-        this.messages.push({class: 'flash-warning', text: 'You have no registered/approved blogs yet'})
+        this.addMessage({class: 'flash-warning', text: 'You have no registered/approved blogs yet'})
       }
     })
     .catch( err => this.blogs = 'error')
   },
   methods: {
     addMessage(msg) {
-      this.messages.push(msg)
+      this.$emit('add-message', msg)
     },
     deleteBlog(blog) {
       var payload = {
@@ -216,7 +219,7 @@ Vue.component('user-approved-blogs', {
 })
 
 Vue.component('register-blog', {
-  props: ['messages', 'ublogs', 'categories'],
+  props: ['ublogs', 'categories'],
   data () {
     return {
       registering: false,
@@ -226,7 +229,7 @@ Vue.component('register-blog', {
   },
   methods: {
     addMessage(msg) {
-      this.messages.push(msg)
+      this.$emit('add-message', msg)
     },
     validateUrl(input) {
       var regex = /http(s)?:\/\/([a-z0-9-_~:\/?#[\]@!$&'()*+,;=]*)(\.([a-z0-9-_~:\/?#[\]@!$&'()*+,;=]+)+)+/i
@@ -291,21 +294,15 @@ Vue.component('register-blog', {
   })
 
 Vue.component('user-unapproved-blogs', {
-  props: ['messages', 'ublogs'],
+  props: ['ublogs'],
   data () {
     return {
       category: null,
       url: null
     }
   },
-  mounted () {
-  
-  },
-  methods: {
-    addMessage(msg) {
-      this.messages.push(msg)
-    }
-  },
+  mounted () {},
+  methods: {},
   template: `
   <ul class="blog-list unapproved-blogs" >
     <li v-for='blog in ublogs' v-bind:key="blog.idString" class="listed-blog">
@@ -351,11 +348,14 @@ new Vue({
     .then( res => {
       this.categories = res.data.categories
     })
-
+    .catch( err => this.messages.push({class: 'flash-error', text: err}))
   },
   methods: {
     updateUblogs(args) {
       Vue.set(this.ublogs, this.ublogs.length, args) // add to the end of the blogs list
+    },
+    addMessage(msg) {
+      this.messages.push(msg)
     },
     removeMessage(msg) {
       // fired when click on X to get rid of it

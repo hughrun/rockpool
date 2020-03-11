@@ -637,7 +637,12 @@ awaitDb.then( function() {
     .then(updateUserContacts)
     .then(args => {
       if (args.user.email != req.user) {
-        res.redirect('/email-updated') // force logout if email has changed
+        res.send(
+          {
+            redirect: '/email-updated',
+            error: null
+          }
+        )
       } else {
         args.msg = {}
         args.msg.class = 'flash-success'
@@ -652,13 +657,11 @@ awaitDb.then( function() {
       }
     })
     .catch(err => {
-      debug.log('ERROR', err)
       res.send(
         {
-          user: null, 
-          msg: {
+          error: {
             class: 'flash-error',
-            message: err.message
+            text: `${err}`
           }
         }
       )

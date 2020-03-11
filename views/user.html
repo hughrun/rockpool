@@ -6,14 +6,11 @@
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <section id="main" class="main">
       <message-list v-bind:messages="messages" @remove-message="removeMessage"></message-list>
-      <user-info 
-      v-bind:messages="messages" 
-      v-bind:user="user"
-      ></user-info>
+      <user-info v-bind:user="user" @add-message="addMessage"></user-info>
       <h3 class="form-label">Your blogs</h3>
-      <user-approved-blogs v-bind:messages="messages" v-bind:categories="categories"></user-approved-blogs>
-      <user-unapproved-blogs v-bind:ublogs="ublogs" v-bind:messages="messages"></user-unapproved-blogs>
-      <register-blog v-bind:messages="messages" v-bind:categories="categories" @update-ublogs="updateUblogs"></register-blog>
+      <user-approved-blogs @add-message="addMessage" v-bind:categories="categories"></user-approved-blogs>
+      <user-unapproved-blogs v-bind:ublogs="ublogs"></user-unapproved-blogs>
+      <register-blog @add-message="addMessage" v-bind:categories="categories" @update-ublogs="updateUblogs"></register-blog>
     </section>
     <!-- vuejs components -->
     <script src="/scripts/user-vue.js"></script>
