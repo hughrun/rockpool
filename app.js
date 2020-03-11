@@ -204,7 +204,7 @@ awaitDb.then( function() {
         searchTermEncoded: req.query.tag ? 'tag=' + encodeURIComponent(req.query.tag) : req.query.q ? 'q=' + encodeURIComponent(req.query.q) : '',
         next: req.query.page ? Number(req.query.page) + 1 : 1,
         prev: Number(req.query.page) - 1,
-        prevExists: Number(req.query.page) != NaN ? Number(req.query.page) : false,
+        prevExists: isNaN(Number(req.query.page)) ? false : Number(req.query.page),
         month: req.query.month,
         monthName: docs.monthName,
         hasNext: docs.hasNext,
@@ -712,7 +712,7 @@ awaitDb.then( function() {
   app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
     const args = req.body
     args.query = { "_id" : ObjectId(args.idString)}
-    args.action = "register" // TODO: should we make this "claim" so we can avoid an announcement ???
+    args.action = "register"
     args.user = req.user
     db.getBlogs(args)
       // then check users for any claiming this blog
@@ -1032,8 +1032,10 @@ awaitDb.then( function() {
       sendEmail(message)
       return args
     })
-    .then( args => { // FIXME: at this point we ideally will check args.action to see whether it was new or 'claimed'
-      announcements.queueBlogAnnouncement(args)
+    .then( args => {
+      if (args.action !== 'approve_claim') { // if we're approving a claim we don't want to announce the blog as 'new'
+        announcements.queueBlogAnnouncement(args)
+      }
       res.send({class: 'flash-success', text: `blog approved`})
     })
     .catch( e => {

@@ -113,8 +113,7 @@ Vue.component('blogs-for-approval', {
       .post('/api/v1/update/admin/approve-blog', {
         user: this.email,
         url: blog.url,
-        blog: blog.idString,
-        reason: this.reason
+        blog: blog.idString
       })
       .then( res => {
         this.addMessage(res.data)
