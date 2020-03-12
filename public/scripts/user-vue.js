@@ -46,7 +46,6 @@ Vue.component('user-info', {
       }
       axios.post('/api/v1/update/user/info', params) // FIXME: this should do validation 
       .then( response => {
-        console.log(response.data)
         this.editing = false // FIXME:this should go BEFORE we send the API call?
         if (response.data.user) {
           let res = response.data.user
@@ -78,15 +77,15 @@ Vue.component('user-info', {
     </div>
     <h3 class="form-label">Your Info</h3>
     <form v-if="editing" name="user-info" id="user-info" method="POST">
-      <div>
+      <div class="user-form-vals">
         <label for="email">Email:</label>
         <input id="email" name="email" v-model="user.email">
       </div>
-      <div>
+      <div class="user-form-vals">
         <label for="twitter">Twitter:</label>
         <input id="twitter" name="twitter" v-model="user.twitter">
       </div>
-      <div>
+      <div class="user-form-vals">
         <label for="mastodon">Mastodon:</label>
         <input id="mastodon" name="mastodon" v-model="user.mastodon">
       </div>
@@ -95,15 +94,15 @@ Vue.component('user-info', {
     </form>
     <div v-else>
       <div class="user-info">
-        <div id="email">
+        <div class="user-form-vals" id="email">
           <span class="form-label">Email: </span>
           <span v-if="user">{{ user.email }}</span>
         </div>
-        <div id="twitter">
+        <div class="user-form-vals" id="twitter">
           <span class="form-label">Twitter: </span>
           <span v-if="user">{{ user.twitter }}</span>
         </div>
-        <div id="mastodon">
+        <div class="user-form-vals" id="mastodon">
           <span class="form-label">Mastodon: </span>
           <span v-if="user">{{user.mastodon }}</span>
         </div>
@@ -134,7 +133,6 @@ Vue.component('user-approved-blogs', {
     axios
     .get('/api/v1/user/blogs')
     .then(response => {
-      console.log(response.data)
       this.userIdString = response.data.user
       this.blogs = response.data.blogs
       this.blogs.forEach( blog => {

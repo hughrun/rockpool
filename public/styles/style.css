@@ -226,7 +226,7 @@ button:hover,
 .credits {
   font-size: 0.9em;
   text-align: right;
-  font-family: "SourceSansPro";
+	font-family: "SourceSansPro", Verdana, Tahoma, Arial, sans-serif;
   color: #3a3a3a;
 }
 
@@ -533,7 +533,8 @@ ul.browse-blogs {
  ################### */
 
 #user-info input {
-	font-size: 1.2em;
+	font-size: 1em;
+	font-family: "SourceSansPro", Verdana, Tahoma, Arial, sans-serif;
 }
 
 .user-info {
@@ -542,13 +543,21 @@ ul.browse-blogs {
 
 .user-form-vals {
 	display: grid;
-	grid-template-columns: max-content minmax(8em, 16em);
+	grid-template-columns: 6em minmax(8em, 20em);
+	margin-bottom: 0.25em;
+	font-size: 1em;
+	font-family: "SourceSansPro", Verdana, Tahoma, Arial, sans-serif;
+}
+
+.user-info-vals {
+	margin-bottom: 6px;
 }
 
 .pocket-info {
 	margin-top: 1em;
 }
 
+/* TODO: is this used? what is it for? */
 .profile-value {
 	border: none;
 	border-bottom: 1px dotted #3a3a3a;
@@ -558,7 +567,6 @@ ul.browse-blogs {
 
 .blog-list {
 	list-style: none;
-	font-size: 1em;
 }
 
 .listed-blog {
