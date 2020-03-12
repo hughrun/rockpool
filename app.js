@@ -33,8 +33,7 @@ const awaitDb = new Promise( function (resolve, reject) {
       }
       else {
         debug.log('ready..')
-        client.close()
-        resolve()
+        client.close().then( () => resolve() )
       }
     })
   }
