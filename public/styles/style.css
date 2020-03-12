@@ -170,7 +170,12 @@ button:hover,
 
  ############## */
 
- .flash-success {
+#user-messages {
+	position: sticky;
+	top: 0;
+}
+
+.flash-success {
 	padding: 0.5em;
 	border-radius: 5px;
 	color: #000;
