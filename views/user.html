@@ -11,6 +11,12 @@
       <user-approved-blogs @add-message="addMessage" v-bind:categories="categories"></user-approved-blogs>
       <user-unapproved-blogs v-bind:ublogs="ublogs"></user-unapproved-blogs>
       <register-blog @add-message="addMessage" v-bind:categories="categories" @update-ublogs="updateUblogs"></register-blog>
+      <section class="tips">
+        <p>Confused about where to start?</p> 
+        <p class="tip">Try the <a href="/help">help</a> page.</p>
+        <p>Want to {if legacy}claim your blog, or {/if}exclude a blog from being added to your pocket account?</p>
+        <p class="tip">Click 'actions' next to the relevant blog, on the <a href="/browse">browse</a> page.</p>
+      </section>
     </section>
     <!-- vuejs components -->
     <script src="/scripts/user-vue.js"></script>

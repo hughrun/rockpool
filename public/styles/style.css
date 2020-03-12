@@ -599,6 +599,7 @@ ul.browse-blogs {
 }
 
 .claimed-blogs,
+.tips,
 .admins-list,
 .assign-admin {
 	border: 1px solid #3a3a3a;
@@ -644,6 +645,10 @@ ul.browse-blogs {
 	font-size: 1.25em;
 	margin-top: 0.5em;
 	max-width: 100%;
+}
+
+.tip {
+	font-style: italic;
 }
 
 /* #################
