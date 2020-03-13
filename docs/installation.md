@@ -40,15 +40,15 @@ Docker is designed to created 'throw away' containers. However, we obviously don
 ## Downloading Rockpool code
 
 You can download the latest Rockpool code using [`git`](https://git-scm.com/):
-```
+```shell
 git clone https://github.com/hughrun/rockpool.git
 ```
 You should use the latest _release_ - the latest code that is not packaged into a version release may not be stable. Fetch all the tags:
-```
+```shell
 git fetch --tags
 ```
 You now want to _check out_ the latest stable version. This is probably the highest-numbered tag, however note that tags ending in "rc" are _release candidate_ versions and may not be stable.
-```
+```shell
 git checkout v1.0.0
 ```
 Alternatively, find the latest stable version in [releases](https://github.com/hughrun/rockpool/releases) and download the zip file, then transfer the contents to your server.
@@ -113,7 +113,7 @@ Your app should be available on port `3000` on your server. You will need a web 
 
 nginx is a good choice, because it's often used as a reverse-proxy. You could use a configuration like this:
 
-```
+```nginx
 server {
  server_name rockpool.example.com;
  location / {
@@ -129,7 +129,7 @@ server {
 
 You should then use `certbot` to add Lets Encrypt certificates and update your config so you can run your app on https. If you have installed certbot you can do this by running:
 
-```
+```shell
 sudo certbot --nginx
 ```
 
@@ -147,7 +147,7 @@ proxy / localhost:3000
 
 If you already have something else runnning on port 3000, or want to change the port for some other reason, you can easily do this by changing the `ports` value of `app` in the `docker-compose.yml` file. For example to run the app on port 4000, make the following change:
 
-```
+```yaml
 ports:
   - "4000:3000"
 ```
@@ -165,7 +165,7 @@ cp docker-compose.yml docker-compose.yml-backup
 You do not need to make a copy of your `settings.json` file, but do check whether there are any changes to `settings-example.json` as you may need to copy them across.
 
 Now from your `rockpool` directory run:
-```shell
+```git
 git fetch --tags
 ```
 This should download all changes in the git repository, with information about each tagged release. You have probably made changes to at least `docker-compose.yml`. To prevent git moaning about unsaved changes, run:
@@ -213,19 +213,19 @@ If you just want to change the colours, fonts etc, you only need to follow the f
 You can make a backup of your database using [`mongodump`](https://docs.mongodb.com/manual/reference/program/mongodump/). You should _always_ do this before upgrading to a new version of Rockpool, in case something horrible happens and you have to start again.
 
 Enter the mongo container:
-```
+```shell
 docker exec -it mongodb bash
 ```
 Use `mongodump` to take a copy. Because the database is using authorisation mode we need to use the username and password from `settings.json`. Assuming you have kept the database name of 'rockpool':
-```
+```shell
 mongodump -d rockpool -u rockpool -p my_great_password
 ```
 Exit the container.
-```
+```shell
 exit
 ```
 Copy the file you just created, into your server's `/tmp` folder (or somewhere else you want to keep backup files).
-```
+```shell
 docker cp mongodb:/dump/. /tmp
 ```
 Your backup is now at `/tmp/rockpool`
@@ -234,23 +234,23 @@ Your backup is now at `/tmp/rockpool`
 
 You can use [`mongorestore`](https://docs.mongodb.com/manual/reference/program/mongorestore/) to restore your backup. Assuming you have a backup at `/tmp/rockpool_backup`, from your server command line run:
 
-```
+```shell
 docker cp /tmp/rockpool_backup mongodb:/dump
 ```
 This copies your backup into the `/dump` folder inside the mongo container. Let's go in and take a look:
-```
+```shell
 docker exec -it mongodb bash
 ```
 Now we use `mongorestore` to restore the backup. Note that we are using `--drop` here: this drops the current database before we restore the backup. If you don't use `--drop`, `mongorestore` will duplicate everthing in your database because it doesn't perform updates to data but simply inserts. Your backup file must have a user with the same name and credentials as the existing database. In practice this should not be a problem, since the database you are restoring is a backup of that same database and your user is created when you build the image. The following command assumes you already created a backup in this container and therefore have a `/dump` directory.
-```
+```shell
 mongorestore -d rockpool /dump/rockpool_backup -u rockpool -p my_great_password --drop
 ```
 If it is a fresh container (i.e. has been rebuilt since you took your backup) then the mongodump will have dumped the collections straight into `/dump`. In that case run it slightly differently:
-```
+```shell
 mongorestore -d rockpool /dump -u rockpool -p my_great_password --drop
 ```
 You should see several rows of messages saying mongo has finished restoring each collection, then `done` and a return to the command prompt. Exit the container:
-```
+```shell
 exit
 ```
 You are now using your backup version of the database.
@@ -262,19 +262,19 @@ In the unlikely event you were using [CommunityTweets](https://github.com/hughru
 You should use [`mongodump`](https://docs.mongodb.com/manual/reference/program/mongodump/) to make a copy of your legacy database from its current location. Move it to your server using something like [`scp`](https://linux.die.net/man/1/scp) or via the ability for `mongodump` to copy from remote servers.
 
 Now copy the file into the container:
-```
+```shell
 docker cp /tmp/rockpool_backup mongodb:/dump
 ```
 This copies your backup into the `/dump` folder inside the mongo container. Let's go in and take a look:
-```
+```shell
 docker exec -it mongodb bash
 ```
 The /dump folder didn't exist until we used `docker cp`, so the database bson files are all directly in `/dump`:
-```
+```shell
 mongorestore -d rockpool /dump -u rockpool -p my_great_password
 ```
 You should see several rows of messages saying mongo has finished restoring each collection, then `done` and a return to the command prompt. Exit the container:
-```
+```shell
 exit
 ```
 
@@ -283,26 +283,26 @@ The important exception to a normal restore is that if you run `mongorestore` wi
 Once you start using it with rockpool, any further database restores should be from a new backup taken following the instructions in _Creating a backup of your database_.
 
 With a legacy database, you will now need to migrate the data structure to match the new _rockpool_ structure. Exit out of the mongo container, and then move into the rockpool container:
-```
+```shell
 docker exec -it rockpool_app sh
 ```
 Now run the migrate script:
-```
+```shell
 npm run migrate
 ```
 Now run the setup script against your database:
-```
+```shell
 npm run setup
 ```
 And exit
-```
+```shell
 exit
 ```
 You should now see all the blogs from your database in the `/browse` page, and latest articles at `/`.
 
 ## A note on Security
 
-Rockpool is designed to be run in Docker containers via `docker-compose`. Your Mongo database is bound to `localhost` inside the mongo container, and runs with `--auth`, requiring a registered account to log in. If you try to run Rockpool without running mongo in `--auth` mode it will throw an error. You should change both the default administrator password (in `docker-compose.yml` as `MONGO_INITDB_ROOT_PASSWORD`) and the default `mongo_password` to strong and long passwords. This should secure your Mongo database against most likely security breaches, as long as an attacker does not get access to your host server. If you choose to run Rockpool with an external mongo database, you are responsible for any changes you make to the setup and should familiarise yourself with Mongo security best practices.
+Rockpool is designed to be run in Docker containers via `docker-compose`. Your Mongo database is bound to `localhost` inside the mongo container, and runs with `--auth`, requiring a registered account to log in. If you try to run Rockpool without running mongo in `--auth` mode it will throw an error. You should change both the default administrator password (in `docker-compose.yml` as `MONGO_INITDB_ROOT_PASSWORD`) and the default `mongo_password` to strong and long passwords. This should secure your Mongo database against most likely security breaches, as long as an attacker does not get access to your host server. If you choose to run Rockpool with an external mongo database, you are responsible for any changes you make to the setup and should familiarise yourself with Mongo security best practices. Note that if you bind port 27017 in the `mongodb` container to a port in the host it will provide full access to the outside world despite the localhost binding, because it will look to Mongo like the connection is coming from inside the container.
 
 You can use [Let's Encrypt](https://letsencrypt.org/) to obtain and install certificates free of charge.
 
