@@ -6,7 +6,8 @@
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <section id="main" class="main" >
-      <browse-list v-bind:categories="categories"></browse-list>
+      <loader-screen v-bind:processing="processing"></loader-screen>
+      <browse-list v-bind:categories="categories" @loading="loading"></browse-list>
     </section>
     <!-- vuejs components -->
     <script src="/scripts/browse-vue.js"></script>

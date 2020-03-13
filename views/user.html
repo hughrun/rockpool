@@ -5,12 +5,13 @@
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <section id="main" class="main">
+      <loader-screen v-bind:processing="processing"></loader-screen>
       <message-list v-bind:messages="messages" @remove-message="removeMessage"></message-list>
-      <user-info v-bind:user="user" @add-message="addMessage"></user-info>
+      <user-info v-bind:user="user" @add-message="addMessage" @loading="loading"></user-info>
       <h3 class="form-label">Your blogs</h3>
-      <user-approved-blogs @add-message="addMessage" v-bind:categories="categories"></user-approved-blogs>
+      <user-approved-blogs @add-message="addMessage" v-bind:categories="categories" @loading="loading"></user-approved-blogs>
       <user-unapproved-blogs v-bind:ublogs="ublogs"></user-unapproved-blogs>
-      <register-blog @add-message="addMessage" v-bind:categories="categories" @update-ublogs="updateUblogs"></register-blog>
+      <register-blog @add-message="addMessage" v-bind:categories="categories" @update-ublogs="updateUblogs" @loading="loading"></register-blog>
       <section class="tips">
         <p>Confused about where to start?</p> 
         <p class="tip">Try the <a href="/help">help</a> page.</p>

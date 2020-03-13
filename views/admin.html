@@ -5,10 +5,11 @@
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <section id="main" class="main">
+      <loader-screen v-bind:processing="processing"></loader-screen>
       <message-list v-bind:messages="messages" @remove-message="removeMessage"></message-list>
-      <users-with-approvals @add-message="addMessage"></users-with-approvals>
-      <failing-blogs-list @add-message="addMessage"></failing-blogs-list>
-      <admins-list @add-message="addMessage"></admins-list>
+      <users-with-approvals @add-message="addMessage" @loading="loading"></users-with-approvals>
+      <failing-blogs-list @add-message="addMessage" @loading="loading"></failing-blogs-list>
+      <admins-list @add-message="addMessage" @loading="loading"></admins-list>
     </section>
     <!-- vuejs components -->
     <script src="/scripts/admin-vue.js"></script>

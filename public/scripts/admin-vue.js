@@ -1,3 +1,16 @@
+Vue.component('loader-screen', {
+  props: ['processing'],
+  template: `
+  <div v-if="processing" id="loader">
+  <div class="loader-container">
+    <div class="loader-text">
+      <p>Processing request...</p>
+    </div>
+  </div>
+</div>
+  `
+})
+
 Vue.component('message-list', {
   props: ['messages'],
   template: `
@@ -41,26 +54,32 @@ Vue.component('reject-reason', {
   </div>
   `,
   methods: {
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
     confirmRejection() {
       if (this.reason) {
-      axios
-      .post('/api/v1/update/admin/reject-blog', {
-        user: this.email,
-        url: this.blog.url,
-        blog: this.blog.idString,
-        reason: this.reason
-      })
-      .then( () => {
-        this.$emit('reject-blog', this.blog)
-      })
-      .catch( err => {
-        console.log(err)
-        msg = {
-          class: 'flash-error',
-          text: 'Something went wrong rejecting that blog.'
-        }
-        this.$emit('add-message', msg)
-      })
+        this.loading(true)
+        axios
+        .post('/api/v1/update/admin/reject-blog', {
+          user: this.email,
+          url: this.blog.url,
+          blog: this.blog.idString,
+          reason: this.reason
+        })
+        .then( () => {
+          this.$emit('reject-blog', this.blog)
+          this.loading(false)
+        })
+        .catch( err => {
+          console.log(err)
+          msg = {
+            class: 'flash-error',
+            text: 'Something went wrong rejecting that blog.'
+          }
+          this.$emit('add-message', msg)
+          this.loading(false)
+        })
       } else {
         msg = {
           class: 'flash-error',
@@ -104,11 +123,15 @@ Vue.component('blogs-for-approval', {
     addMessage(msg) {
       this.$emit('add-message', msg)
     },
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
     approve(blog) {
       blog.approving = true
       Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
     },
     confirmApproval(blog) {
+      this.loading(true)
       axios
       .post('/api/v1/update/admin/approve-blog', {
         user: this.email,
@@ -120,6 +143,7 @@ Vue.component('blogs-for-approval', {
         if (res.data.class === "flash-success") {
           Vue.delete(this.blogs, this.blogs.indexOf(blog))
         }
+        this.loading(false)
       })
       .catch( err => {
         msg = {
@@ -127,6 +151,7 @@ Vue.component('blogs-for-approval', {
           text: 'Something went wrong approving that blog.'
         }
         this.addMessage(msg)
+        this.loading(false)
       })
     },
     reject(blog) {
@@ -177,7 +202,8 @@ Vue.component('users-with-approvals', {
         <blogs-for-approval 
           v-bind:blogs="user.claims" 
           v-bind:email="user.email" 
-          @add-message="addMessage" 
+          @add-message="addMessage"
+          @loading="loading"
         ></blogs-for-approval>
       </div>
     </div>
@@ -187,7 +213,10 @@ Vue.component('users-with-approvals', {
   methods: {
     addMessage(msg) {
       this.$emit('add-message', msg)
-    }
+    },
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
   }
 })
 
@@ -202,6 +231,9 @@ Vue.component('failing-blog', {
   methods: {
     addMessage(msg) {
       this.$emit('add-message', msg)
+    },
+    loading(bool) {
+      this.$emit('loading', bool)
     },
     editBlog() {
       this.editing = true
@@ -272,8 +304,11 @@ Vue.component('failing-blogs-list', {
     addMessage(msg) {
       this.$emit('add-message', msg)
     },
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
     deleteBlog(blog, reason) {
-      // delete blog from server
+      this.loading(true)
       axios
       .post('/api/v1/update/admin/delete-blog', {
         blog: blog.idString,
@@ -285,15 +320,18 @@ Vue.component('failing-blogs-list', {
         if (res.data.class === 'flash-success') {
           Vue.delete(this.failing, this.failing.indexOf(blog)) // then remove from blogs list
         }
+        this.loading(false)
       })
       .catch(err => {
         this.addMessage({class: 'flash-error', text: err.message})
+        this.loading(false)
       })
     },
     suspendBlog(blog, reason) {
       // suspend blog on server
       let data = blog
       data.reason = reason
+      this.loading(true)
       axios
       .post('/api/v1/update/admin/suspend-blog', data)
       .then( res => {
@@ -301,6 +339,7 @@ Vue.component('failing-blogs-list', {
         if (res.data.class === 'flash-success') {
           Vue.set(this.suspended, this.suspended.length, blog) // then add to the suspended list
         }
+        this.loading(false)
       })
     }
   },
@@ -325,7 +364,7 @@ Vue.component('failing-blogs-list', {
       </form>
     </section>
     <div v-else>You have no failing feeds to attend to.</div>
-    <suspended-blogs @add-message="addMessage" v-bind:suspended="suspended"></suspended-blogs>
+    <suspended-blogs @add-message="addMessage" @loading="loading" v-bind:suspended="suspended"></suspended-blogs>
     <suspend-blog @add-message="addMessage" @suspend-blog="suspendBlog"></suspend-blog>
   </section>
   `
@@ -340,6 +379,9 @@ Vue.component('suspended-blog', {
     }
   },
   methods: {
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
     editBlog() {
       this.editing = true
     },
@@ -379,13 +421,19 @@ Vue.component('suspended-blog', {
 Vue.component('suspended-blogs', {
   props: ['suspended'],
   data () {
-    return {}
+    return {
+      suspendedBlogs: this.suspended.length
+    }
   },
   methods: {
     addMessage(msg) {
       this.$emit('add-message', msg)
     },
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
     deleteBlog(blog,reason) {
+      this.loading(true)
       axios
       .post('/api/v1/update/admin/delete-blog', {url: blog.url}) // delete blog
       .then( res => {
@@ -393,12 +441,15 @@ Vue.component('suspended-blogs', {
         if (res.data.class === 'flash-success') {
           Vue.delete(this.suspended, this.suspended.indexOf(blog)) // then remove from blogs list
         }
+        this.loading(false)
       })
       .catch(err => {
         this.addMessage({class: 'flash-error', text: err.message})
+        this.loading(false)
       })
     },
     unsuspendBlog(blog) {
+      this.loading(true)
       axios
       .post('/api/v1/update/admin/unsuspend-blog', {url: blog.url}) // suspend blog
       .then( res => {
@@ -406,19 +457,22 @@ Vue.component('suspended-blogs', {
         if (res.data.class === 'flash-success') {
           Vue.delete(this.suspended, this.suspended.indexOf(blog)) // then remove from blogs list
         }
+        this.loading(false)
       })
       .catch(err => {
         this.addMessage({class: 'flash-error', text: err.message})
+        this.loading(false)
       })
     }
   },
   template: `
   <div>
-    <h3>Suspended Blogs</h3>
+    <h3 v-if="suspendedBlogs">Suspended Blogs</h3>
     <form v-for="blog in suspended" class="claimed-blogs">
       <suspended-blog 
       v-bind:blog="blog"
       @add-message="addMessage"
+      @loading="loading"
       @delete-blog="deleteBlog"
       @unsuspend-blog="unsuspendBlog"></suspended-blog>
     </form>
@@ -510,7 +564,11 @@ Vue.component('admins-list', {
     addMessage(msg) {
       this.$emit('add-message', msg)
     },
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
     removeAdmin(admin) {
+      this.loading(true)
       axios
       .post('/api/v1/update/admin/remove-admin', {user: admin.email})
       .then( res => {
@@ -518,9 +576,15 @@ Vue.component('admins-list', {
         if (res.data.class === 'flash-success') {
           Vue.delete(this.admins, this.admins.indexOf(admin))
         }
+        this.loading(false)
+      })
+      .catch(err => {
+        this.addMessage({class: 'flash-error', text: err.message})
+        this.loading(false)
       })
     },
     addAdmin(admin) {
+      this.loading(true)
       axios
       .post('/api/v1/update/admin/make-admin', {user: admin.email})
       .then( res => {
@@ -528,6 +592,11 @@ Vue.component('admins-list', {
         if (res.data.class === 'flash-success') {
           Vue.set(this.admins, this.admins.length, admin)
         }
+        this.loading(false)
+      })
+      .catch(err => {
+        this.addMessage({class: 'flash-error', text: err.message})
+        this.loading(false)
       })
     }
   },
@@ -546,7 +615,7 @@ Vue.component('admins-list', {
         <p><strong>You are currently the only administrator.</strong></p> 
         <p>You should add someone else in case you get hit by a bus.</p>
       </div>
-      <make-admin @add-admin="addAdmin"></make-admin>
+      <make-admin @add-admin="addAdmin" @loading="loading"></make-admin>
     </section>
     `
 })
@@ -580,7 +649,8 @@ new Vue({
   el: '#main',
   data () {
     return {
-      messages: []
+      messages: [],
+      processing: false
     }
   },
   methods: {
@@ -590,6 +660,9 @@ new Vue({
     removeMessage(msg) {
       // fired when click on X to get rid of it
       Vue.delete(this.messages, this.messages.indexOf(msg))
+    },
+    loading(bool) {
+      this.processing = bool
     }
   }
 })

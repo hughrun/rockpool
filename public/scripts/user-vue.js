@@ -1,3 +1,16 @@
+Vue.component('loader-screen', {
+  props: ['processing'],
+  template: `
+  <div v-if="processing" id="loader">
+  <div class="loader-container">
+    <div class="loader-text">
+      <p>Processing request...</p>
+    </div>
+  </div>
+</div>
+  `
+})
+
 Vue.component('message-list', {
   props: ['messages'],
   template: `
@@ -30,11 +43,13 @@ Vue.component('user-info', {
   props: ['user'],
   data() {
     return {
-      editing: false
-      // FIXME: should there be a 'processing' variable here?
+      editing: false,
     }
   },
   methods: {
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
     addMessage(msg) {
       this.$emit('add-message', msg)
     },
@@ -44,9 +59,10 @@ Vue.component('user-info', {
         twitter : event.target.parentNode.twitter.value,
         mastodon : event.target.parentNode.mastodon.value
       }
+      this.editing = false
+      this.loading(true)
       axios.post('/api/v1/update/user/info', params) // FIXME: this should do validation 
       .then( response => {
-        this.editing = false // FIXME:this should go BEFORE we send the API call?
         if (response.data.user) {
           let res = response.data.user
           this.user.email = res.email
@@ -56,17 +72,21 @@ Vue.component('user-info', {
           window.location.href = '/email-updated' // log out and redirect if new email
         } else if (response.data.error) {
           this.addMessage(response.data.error)
+          // TODO: probably need to do more if the error is to do with validation
         }
+        this.loading(false)
       })
       .catch( err => {
         console.error(err)
       })
     },
     cancelPocket() {
+      this.loading(true)
       axios.post('/api/v1/update/user/remove-pocket')
       .then( res => {
         this.addMessage(res.data)
         this.user.pocket = false
+        this.loading(false)
       })
     }
   },
@@ -149,11 +169,15 @@ Vue.component('user-approved-blogs', {
     addMessage(msg) {
       this.$emit('add-message', msg)
     },
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
     deleteBlog(blog) {
       var payload = {
         blog: event.target.id,
         action: 'delete'
       }
+      this.loading(true)
       axios.post('api/v1/update/user/delete-blog', payload)
       .then( response => {
         var msg = response.data.msg || response.data.error
@@ -163,9 +187,11 @@ Vue.component('user-approved-blogs', {
           this.blogs = response.data.blogs
           Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
         }
+        this.loading(false)
       })
     },
     editBlog(blog, index) {
+      this.loading(true)
       axios
       .post('/api/v1/update/user/edit-blog', {
         url: blog.url,
@@ -178,6 +204,7 @@ Vue.component('user-approved-blogs', {
         if (response.data.msg) {
           Vue.set(this.blogs, index, blog) // on success message, simply update the blog client-side
         }
+        this.loading(false)
       })
     },
     cancelEditing(blog, index) {
@@ -229,6 +256,9 @@ Vue.component('register-blog', {
     addMessage(msg) {
       this.$emit('add-message', msg)
     },
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
     validateUrl(input) {
       var regex = /http(s)?:\/\/([a-z0-9-_~:\/?#[\]@!$&'()*+,;=]*)(\.([a-z0-9-_~:\/?#[\]@!$&'()*+,;=]+)+)+/i
       return regex.test(input)
@@ -251,6 +281,7 @@ Vue.component('register-blog', {
       }
     },
     registerBlog(url, category) {
+      this.loading(true)
       axios
       .post('/api/v1/update/user/register-blog', {
         url: url, 
@@ -267,10 +298,12 @@ Vue.component('register-blog', {
         }
         this.url = null
         this.category = null
+        this.loading(false)
       })
       .catch(err => {
         console.log(err)
         this.addMessage({class: 'flash-error', text: err.message})
+        this.loading(false)
       })
     }
   },
@@ -320,7 +353,8 @@ new Vue({
       categories: [],
       messages: [],
       user: null,
-      ublogs: []
+      ublogs: [],
+      processing: false
     }
   },
   mounted () {
@@ -347,6 +381,7 @@ new Vue({
       this.categories = res.data.categories
     })
     .catch( err => this.messages.push({class: 'flash-error', text: err}))
+
   },
   methods: {
     updateUblogs(args) {
@@ -358,6 +393,9 @@ new Vue({
     removeMessage(msg) {
       // fired when click on X to get rid of it
       Vue.delete(this.messages, this.messages.indexOf(msg))
+    },
+    loading(bool) {
+      this.processing = bool
     }
   }
 })

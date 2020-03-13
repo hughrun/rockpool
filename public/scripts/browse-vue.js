@@ -1,3 +1,16 @@
+Vue.component('loader-screen', {
+  props: ['processing'],
+  template: `
+  <div v-if="processing" id="loader">
+  <div class="loader-container">
+    <div class="loader-text">
+      <p>Processing request...</p>
+    </div>
+  </div>
+</div>
+  `
+})
+
 Vue.component('message-list', {
   props: ['messages'],
   template: `
@@ -34,7 +47,11 @@ Vue.component('blog-actions', {
     }
   },
   methods: {
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
     excludeFromPocket(blog) {
+      this.loading(true)
       axios
       .post('/api/v1/update/user/filter-pocket', {blog: blog.idString, exclude: true})
       .then( response => {
@@ -46,12 +63,15 @@ Vue.component('blog-actions', {
         }
         this.blog = blog
         this.active = false
+        this.loading(false)
       })
       .catch(err => {
         this.$emit('add-message', {class: 'flash-error', text: err.message})
+        this.loading(false)
       })
     },
     includeInPocket(blog) {
+      this.loading(true)
       axios
       .post('/api/v1/update/user/filter-pocket', {blog: blog.idString, exclude: false})
       .then( response => {
@@ -63,12 +83,15 @@ Vue.component('blog-actions', {
         }
         this.blog = blog
         this.active = false
+        this.loading(false)
       })
       .catch(err => {
         this.$emit('add-message', {class: 'flash-error', text: err.message})
+        this.loading(false)
       })
     },
     claimBlog(blog) {
+      this.loading(true)
       axios
       .post('/api/v1/update/user/claim-blog', blog)
       .then( response => {
@@ -79,9 +102,11 @@ Vue.component('blog-actions', {
         }
         this.blog = blog
         this.active = false
+        this.loading(false)
       })
       .catch(err => {
         this.$emit('add-message', {class: 'flash-error', text: err.message})
+        this.loading(false)
       })
     }
   },
@@ -110,6 +135,11 @@ Vue.component('blog-listing', {
   computed: {
     blogClass () {
       return 'class-' + this.categories.indexOf(this.blog.category)
+    }
+  },
+  methods: {
+    loading(bool) {
+      this.$emit('loading', bool)
     }
   },
   template: `<div>
@@ -163,6 +193,9 @@ Vue.component('browse-list', {
     addMessage(msg) {
       this.messages.push(msg)
     },
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
     removeMessage(msg) {
       // fired when click on X to get rid of it
       Vue.delete(this.messages, this.messages.indexOf(msg))
@@ -178,10 +211,12 @@ Vue.component('browse-list', {
             <blog-listing 
               v-bind:blog="blog"
               v-bind:categories="categories"
+              @loading="loading"
             ></blog-listing>
             <blog-actions 
               v-if="actionsAvailable"
               @add-message="addMessage"
+              @loading="loading"
               v-bind:blog="blog"
               v-bind:legacy="legacy"
               v-bind:user="user">
@@ -201,7 +236,8 @@ new Vue({
   el: '#main',
   data () {
     return {
-      categories: null
+      categories: null,
+      processing: false
     }
   },
   mounted () {
@@ -213,5 +249,10 @@ new Vue({
     .catch(err => {
       console.error(err)
     })
+  },
+  methods: {
+    loading(bool) {
+      this.processing = bool
+    }
   }
 })
