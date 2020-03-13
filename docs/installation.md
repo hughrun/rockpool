@@ -159,31 +159,31 @@ This maps port 3000 inside the container (where the app is running) to port 4000
 From time to time a new version of Rockpool may be released, with new features or updates. You can get the upgraded code using `git pull`, but will need to take a few precautions.
 
 If you want to save any changes to your docker-compose file (e.g. a new admin password), make a backup of your file:
-```
+```shell
 cp docker-compose.yml docker-compose.yml-backup
 ```
 You do not need to make a copy of your `settings.json` file, but do check whether there are any changes to `settings-example.json` as you may need to copy them across.
 
 Now from your `rockpool` directory run:
-```
+```shell
 git fetch --tags
 ```
 This should download all changes in the git repository, with information about each tagged release. You have probably made changes to at least `docker-compose.yml`. To prevent git moaning about unsaved changes, run:
-```
+```shell
 git stash
 ```
 Now you need to 'check out' the relevant release. e.g.
-```
+```shell
 git checkout v1.0.2
 ```
 You are now on the new branch. Check that `settings.json` is still correct and up to date, and adjust if necessary. Then check for any changes in `docker-compose.yml`, making a note if there are any. If the changes are minor or there are none, run:
-```
+```shell
 cp docker-compose.yml-backup docker-compose.yml
 ```
 This will copy your backup over the top of the default docker-compose.yml. You should now make any adjustments necessary to update the file. If the changes are major. make a note of what you previously changed earlier (probably just the password) and change that in docker-compose.yml rather than overwriting it with the older file.
 
 You are now ready to _build_ and launch:
-```
+```shell
 docker-compose up -d --build
 ```
 
@@ -194,19 +194,17 @@ If you make changes to any files, you will need to run some commands before you 
 ### Changing the help file or default admin user
 
 1. Make your changes to `settings.json` or `markdown/help.md`
-2. Run `docker-compose down` to stop and destroy your docker containers.
-3. Run `docker-compose up -d --build`. This will rebuild the docker containers and bring everything up again.
-4. Once the app is running, run `docker exec -it rockpool_app sh`
-5. You should now be inside the `rockpool_app` container. Run `npm run setup`. This sets your admin user as an admin, and updates the text of the `help` page if you have made changes to `markdown/help.md`. Note that this will _not_ remove admin rights from any previous default admin user: you will need to do that through the app if you do longer want them to have admin rights.
-6. Run `exit` to exit out of the container.
+2. Run `docker-compose up -d --build`. This will rebuild the docker containers and bring everything up again.
+3. Once the app is running, run `docker exec -it rockpool_app sh`
+4. You should now be inside the `rockpool_app` container. Run `npm run setup`. This sets your admin user as an admin, and updates the text of the `help` page if you have made changes to `markdown/help.md`. Note that this will _not_ remove admin rights from any previous default admin user: you will need to do that through the app if you do longer want them to have admin rights.
+5. Run `exit` to exit out of the container.
 
 ### Changing assets like css files and images
 
 If you just want to change the colours, fonts etc, you only need to follow the first steps, to re-build the `rockpool_app` container:
 
 1. Make your changes.
-2. Run `docker-compose down` to stop and destroy your docker containers.
-3. Run `docker-compose up -d --build`. This will rebuild the docker containers and bring everything up again.
+2. Run `docker-compose up -d --build`. This will rebuild the docker containers and bring everything up again.
 
 ## Backups and legacy databases
 
