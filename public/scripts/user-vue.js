@@ -99,15 +99,15 @@ Vue.component('user-info', {
     <form v-if="editing" name="user-info" id="user-info" method="POST">
       <div class="user-form-vals">
         <label for="email">Email:</label>
-        <input id="email" name="email" v-model="user.email">
+        <input id="email" name="email" placeholder="name@example.com" v-model="user.email">
       </div>
       <div class="user-form-vals">
         <label for="twitter">Twitter:</label>
-        <input id="twitter" name="twitter" v-model="user.twitter">
+        <input id="twitter" name="twitter" placeholder="@alexbloggs" v-model="user.twitter">
       </div>
       <div class="user-form-vals">
         <label for="mastodon">Mastodon:</label>
-        <input id="mastodon" name="mastodon" v-model="user.mastodon">
+        <input id="mastodon" name="mastodon" placeholder="@mastodon@example.social" v-model="user.mastodon">
       </div>
       <button class="update-button" v-on:click.prevent="updateUser" id="update-button">Update</button>
       <button class="update-button" v-on:click="editing = false">Cancel</button>
