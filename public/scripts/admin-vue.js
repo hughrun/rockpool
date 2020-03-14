@@ -153,7 +153,7 @@ Vue.component('blogs-for-approval', {
         <div v-if="blog.rejecting">
           <reject-reason 
             v-bind:blog="blog" 
-            v-bind:email="email",
+            v-bind:email="email"
             @reject-blog="rejectBlog" 
             @add-message="addMessage"
           ></reject-reason>
