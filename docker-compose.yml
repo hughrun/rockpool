@@ -6,7 +6,7 @@ services:
     container_name: rockpool_app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - 3000:3000
     depends_on:
       - mongo
     networks: 

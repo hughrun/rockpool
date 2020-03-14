@@ -388,7 +388,7 @@ new Vue({
     .then( res => {
       this.categories = res.data.categories
     })
-    .catch( err => this.messages.push({class: 'flash-error', text: err}))
+    .catch( err => console.error(err))
 
   },
   methods: {
