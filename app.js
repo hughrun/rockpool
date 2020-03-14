@@ -224,7 +224,9 @@ awaitDb.then( function() {
         footer: __dirname+'/views/partials/footer.html'
       },
       user: req.session.passwordless,
-      errors: req.flash('error')
+      errors: req.flash('error'),
+      mastodon_url: `https://${settings.mastodon.domain_name}/${settings.mastodon.username}`,
+      twitter_url: `https://twitter.com/${settings.twitter.username}`
     })
   })
 

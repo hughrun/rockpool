@@ -25,7 +25,8 @@
     "domain_name" : "ausglam.space",
     "hours_between_toots" : 12,
     "number_of_toots_per_article" : 2,
-    "use_mastodon" : true
+    "use_mastodon" : true,
+    "username" : ""
   },
   "minutes_between_announcements" : 5,
   "minutes_between_checking_announcements" : 20,
@@ -46,12 +47,13 @@
     "#blogjune" : "blog june"
   },
   "twitter" : {
-    "use_twitter" : false,
-    "hours_between_tweets" : 6,
-    "number_of_tweets_per_article" : 3,
+    "access_token": "token",
+    "access_token_secret": "secret",
     "consumer_key" : "key",
     "consumer_secret": "secret",
-    "access_token": "token",
-    "access_token_secret": "secret"
+    "hours_between_tweets" : 6,
+    "number_of_tweets_per_article" : 3,
+    "use_twitter" : false,
+    "username" : ""
   }
 }
