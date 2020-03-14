@@ -40,7 +40,7 @@ Vue.component('message-list', {
 })
 
 Vue.component('user-info', {
-  props: ['user'],
+  props: ['user', 'registered'],
   data() {
     return {
       editing: false
@@ -68,6 +68,7 @@ Vue.component('user-info', {
           this.user.email = res.email
           this.user.twitter = res.twitter
           this.user.mastodon = res.mastodon
+          this.$emit('registered') // if they are registering
         } else if (response.data.redirect) {
           window.location.href = '/email-updated' // log out and redirect if new email
         } else if (response.data.error) {
@@ -134,7 +135,7 @@ Vue.component('user-info', {
       </div>
       <button v-on:click="editing = true">Edit</button>
     </div>
-    <form id="pocket" class="pocket-info">
+    <form v-if="registered" id="pocket" class="pocket-info">
       <template v-if="user && user.pocket">
         <p>You are subscribed to receive articles straight to your <strong>{{ user.pocket.username }}</strong> Pocket list. Nice one!</p>
         <button v-on:click="this.cancelPocket" type="button">Cancel Pocket Subscription</button>
@@ -306,7 +307,6 @@ Vue.component('register-blog', {
         this.loading(false)
       })
       .catch(err => {
-        console.log(err)
         this.addMessage({class: 'flash-error', text: err.message})
         this.loading(false)
       })
@@ -359,7 +359,8 @@ new Vue({
       messages: [],
       user: null,
       ublogs: [],
-      processing: false
+      processing: false,
+      registered: false
     }
   },
   mounted () {
@@ -367,11 +368,13 @@ new Vue({
     .get('/api/v1/user/info')
     .then(response => {
       this.user = response.data
-      if (response.data.error) {
-        this.messages.push(response.data.error) // if the user is not registered yet
+      this.registered = true
+      if (response.data.error) { // if the user is not registered yet
+        this.messages.push(response.data.error)
+        this.registered = false
       }
     })
-    .catch( err => this.user = 'error')
+    .catch( err => this.messages.push({class: 'flash-error', text: err}))
 
     axios
     .get('/api/v1/user/unapproved-blogs')
@@ -401,6 +404,9 @@ new Vue({
     },
     loading(bool) {
       this.processing = bool
+    },
+    userRegistered() {
+      this.registered = true
     }
   }
 })

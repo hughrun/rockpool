@@ -6,16 +6,16 @@
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <section id="main" class="main">
       <loader-screen v-bind:processing="processing"></loader-screen>
-      <message-list v-bind:messages="messages" @remove-message="removeMessage"></message-list>
-      <user-info v-bind:user="user" @add-message="addMessage" @loading="loading"></user-info>
-      <h3 class="form-label">Your blogs</h3>
-      <user-approved-blogs @add-message="addMessage" v-bind:categories="categories" @loading="loading"></user-approved-blogs>
-      <user-unapproved-blogs v-bind:ublogs="ublogs"></user-unapproved-blogs>
-      <register-blog @add-message="addMessage" v-bind:categories="categories" @update-ublogs="updateUblogs" @loading="loading"></register-blog>
-      <section class="tips">
+      <message-list v-bind:registered="registered" v-bind:messages="messages" @remove-message="removeMessage"></message-list>
+      <user-info v-bind:user="user" @registered="userRegistered" @add-message="addMessage" @loading="loading"></user-info>
+      <h3 v-if="registered" class="form-label">Your blogs</h3>
+      <user-approved-blogs v-if="registered" @add-message="addMessage" v-bind:categories="categories" @loading="loading"></user-approved-blogs>
+      <user-unapproved-blogs v-if="registered" v-bind:ublogs="ublogs"></user-unapproved-blogs>
+      <register-blog v-if="registered" @add-message="addMessage" v-bind:categories="categories" @update-ublogs="updateUblogs" @loading="loading"></register-blog>
+      <section  v-if="registered" class="tips">
         <p>Confused about where to start?</p> 
         <p class="tip">Try the <a href="/help">help</a> page.</p>
-        <p>Want to {if legacy}claim your blog, or {/if}exclude a blog from being added to your pocket account?</p>
+        <p>Want to {if legacy}claim your blog from the old app, or {/if}exclude a blog from being added to your pocket account?</p>
         <p class="tip">Click 'actions' next to the relevant blog, on the <a href="/browse">browse</a> page.</p>
       </section>
     </section>
