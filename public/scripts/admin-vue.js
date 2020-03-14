@@ -92,33 +92,10 @@ Vue.component('reject-reason', {
 })
 
 Vue.component('blogs-for-approval', {
-  props: ['blogs', 'email'],
+  props: ['blogs', 'email', 'index'],
   data () {
     return {}
   },
-  template: `
-  <ul class="blog-list">
-    <li v-for="blog in blogs">
-      <form>
-        <a v-if="blog.title" v-bind:href="blog.url" v-bind:class="{ deleting: blog.rejecting }">{{ blog.title }}</a>
-        <a v-else v-bind:href="blog.url" v-bind:class="{ deleting: blog.rejecting }">{{ blog.url }}</a>
-        <div v-if="blog.rejecting">
-          <reject-reason 
-            v-bind:blog="blog" 
-            v-bind:email="email" 
-            @reject-blog="rejectBlog" 
-            @add-message="addMessage"
-          ></reject-reason>
-        </div>
-        <span v-else>
-          <button  v-if="blog.approving" class="" v-on:click.prevent="confirmApproval(blog)">Confirm Approval</button>
-          <button v-else class="" class="approve-button" v-on:click.prevent="approve(blog)">Approve</button>
-          <button class="reject-button"  v-on:click.prevent="reject(blog)" type="button">Reject</button>
-        </span>
-      </form>
-    </li>
-  </ul>
-  `,
   methods: {
     addMessage(msg) {
       this.$emit('add-message', msg)
@@ -144,8 +121,12 @@ Vue.component('blogs-for-approval', {
           Vue.delete(this.blogs, this.blogs.indexOf(blog))
         }
         this.loading(false)
+        if (this.blogs.length === 0) {
+          this.$emit('remove-user', this.index)
+        }
       })
       .catch( err => {
+        console.log(err)
         msg = {
           class: 'flash-error',
           text: 'Something went wrong approving that blog.'
@@ -162,10 +143,39 @@ Vue.component('blogs-for-approval', {
       Vue.delete(this.blogs, this.blogs.indexOf(blog))
       this.$emit('add-message', {class: 'flash-success', text: `${blog.url} rejected`})
     }
-  }
+  },
+  template: `
+  <ul class="blog-list">
+    <li v-for="blog in blogs">
+      <form>
+        <a v-if="blog.title" v-bind:href="blog.url" v-bind:class="{ deleting: blog.rejecting }">{{ blog.title }}</a>
+        <a v-else v-bind:href="blog.url" v-bind:class="{ deleting: blog.rejecting }">{{ blog.url }}</a>
+        <div v-if="blog.rejecting">
+          <reject-reason 
+            v-bind:blog="blog" 
+            v-bind:email="email",
+            @reject-blog="rejectBlog" 
+            @add-message="addMessage"
+          ></reject-reason>
+        </div>
+        <span v-else>
+          <button  v-if="blog.approving" class="" v-on:click.prevent="confirmApproval(blog)">Confirm Approval</button>
+          <button v-else class="" class="approve-button" v-on:click.prevent="approve(blog)">Approve</button>
+          <button class="reject-button"  v-on:click.prevent="reject(blog)" type="button">Reject</button>
+        </span>
+      </form>
+    </li>
+  </ul>
+  `
 })
 
 Vue.component('users-with-approvals', {
+  data() {
+    return {
+      legacy: false,
+      approvals: null
+    }
+  },
   mounted() {
     axios
     .get('/api/v1/admin/blogs-for-approval')
@@ -183,17 +193,28 @@ Vue.component('users-with-approvals', {
     })
 
   },
-  data() {
-    return {
-      legacy: false,
-      approvals: null
+  methods: {
+    addMessage(msg) {
+      this.$emit('add-message', msg)
+    },
+    loading(bool) {
+      this.$emit('loading', bool)
+    },
+    removeUser(index) {
+      this.approvals.splice(index, 1)
     }
   },
   template: `
   <section>
     <div v-if="approvals">
       <h2>Awaiting Approval</h2>
-      <div v-for="user in approvals" class="claimed-blogs">
+      <div 
+        v-for="(user, index) in approvals"
+        v-bind:key="user.email"
+        v-bind:user="user"
+        v-bind:index="index"
+        class="claimed-blogs"
+        >
         <div><strong>Email:</strong> <a v-bind:href="'mailto:' + user.email">{{ user.email }}</a></div>
         <div><strong>Twitter:</strong> <a v-bind:href="'https://twitter.com/' + user.twitter">{{ user.twitter }}</a></div>
         <div><strong>Mastodon:</strong> {{ user.mastodon }}</div>
@@ -202,22 +223,16 @@ Vue.component('users-with-approvals', {
         <blogs-for-approval 
           v-bind:blogs="user.claims" 
           v-bind:email="user.email" 
+          v-bind:index="index"
           @add-message="addMessage"
           @loading="loading"
+          @remove-user="removeUser"
         ></blogs-for-approval>
       </div>
     </div>
     <div v-else>There are no blogs awaiting approval.</div>
   </section>
-  `,
-  methods: {
-    addMessage(msg) {
-      this.$emit('add-message', msg)
-    },
-    loading(bool) {
-      this.$emit('loading', bool)
-    },
-  }
+  `
 })
 
 Vue.component('failing-blog', {
