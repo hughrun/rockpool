@@ -483,7 +483,7 @@ awaitDb.then( function() {
       #######################
   */
 
-  app.get('/api/v1/browse', function (req, res, next) {
+  app.get('/api/v1/browse', function (req, res) {
     db.getBlogs({query: {
       approved: true
     }})
@@ -494,22 +494,8 @@ awaitDb.then( function() {
         .then( response => {
           if (response.users[0] && response.users[0].blogs) {
             for (let blog of data.blogs) {
-              let match = response.users[0].blogs.some( x => {
-                return blog._id.equals(x)
-              })
-              if (match) {
-                blog.owned = true
-              }
-            }
-          }
-          for (let blog of data.blogs) {
-            if (response.users[0] > 0 && response.users[0].blogsForApproval) {
-              let match = response.users[0].blogsForApproval.some( x => {
-                return blog._id.equals(x)
-              })
-              if (match) {
-                blog.claimed = true
-              }
+              blog.owned = response.users[0].blogs.some( x => blog._id.equals(x) )
+              blog.claimed = response.users[0].blogsForApproval.some( x => blog._id.equals(x) )
             }
           }
           res.json({
