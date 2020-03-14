@@ -374,14 +374,14 @@ new Vue({
         this.registered = false
       }
     })
-    .catch( err => this.messages.push({class: 'flash-error', text: err}))
+    .catch( err => console.error(err))
 
     axios
     .get('/api/v1/user/unapproved-blogs')
     .then(response => {
       this.ublogs = response.data
     })
-    .catch( err => this.messages.push({class: 'flash-error', text: err}))
+    .catch( err => console.error(err))
 
     axios
     .get('/api/v1/categories')
