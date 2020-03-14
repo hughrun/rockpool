@@ -43,7 +43,7 @@ Vue.component('user-info', {
   props: ['user'],
   data() {
     return {
-      editing: false,
+      editing: false
     }
   },
   methods: {
@@ -61,7 +61,7 @@ Vue.component('user-info', {
       }
       this.editing = false
       this.loading(true)
-      axios.post('/api/v1/update/user/info', params) // FIXME: this should do validation 
+      axios.post('/api/v1/update/user/info', params) 
       .then( response => {
         if (response.data.user) {
           let res = response.data.user
@@ -71,12 +71,17 @@ Vue.component('user-info', {
         } else if (response.data.redirect) {
           window.location.href = '/email-updated' // log out and redirect if new email
         } else if (response.data.error) {
-          this.addMessage(response.data.error)
-          // TODO: probably need to do more if the error is to do with validation
+          // error from this API call is an array
+          let errors = response.data.error
+          for (var i=0; i < errors.length; ++i) {
+            this.user[errors[i].param] = null // blank the input value
+            this.addMessage({class: 'flash-error', text: errors[i].msg})
+          }
         }
         this.loading(false)
       })
       .catch( err => {
+        // this is an error with the axios call or the API route that is not otherwise caught
         console.error(err)
       })
     },

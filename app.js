@@ -629,42 +629,64 @@ awaitDb.then( function() {
   // DO NOT make routes taking logged in user id or current email from req.body
 
   // update user contact info
-  app.post('/api/v1/update/user/info', function(req,res) {
-    var args = req.body
-    args.user = req.user
-    db.checkEmailIsUnique(args)
-    .then(updateUserContacts)
-    .then(args => {
-      if (args.user.email != req.user) {
-        res.send(
-          {
-            redirect: '/email-updated',
-            error: null
-          }
-        )
-      } else {
-        args.msg = {}
-        args.msg.class = 'flash-success'
-        args.msg.text = 'Your details have been updated'
-        res.send(
-          {
-            msg: args.msg,
-            user: args.user, // NOTE: this is *only* the data that was sent! i.e. it's "args"
-            error: null
-          }
-        )
-      }
-    })
-    .catch(err => {
-      res.send(
-        {
+  app.post('/api/v1/update/user/info', 
+  [
+    // normalise email
+    body('email').isEmail().normalizeEmail(),
+    // validate twitter with custom check
+    body('twitter').custom( val => {
+      return val === '' || val.match(/^@+[A-Za-z0-9_]*$/)
+    }).withMessage("Twitter handles must start with '@' and contain only alphanumerics or underscores"),
+    // validate twitter length
+    body('twitter').isLength({max: 16}).withMessage("Twitter handles must contain fewer than 16 characters"),
+    // validate mastodon with custom check
+    body('mastodon').custom( val => {
+      return val === '' || val.match(/^@+[A-Za-z0-9_]+@+[A-Za-z0-9_\.]*$/)
+    }).withMessage("Mastodon addresses should be in the form '@user@server.com'")
+  ],
+  (req, res) => {
+    if (!validationResult(req).isEmpty()) { // if there are validation errors
+      // validation errors are an array
+      // we turn this into multiple error messages on the client end
+      let errors = validationResult(req).array()
+      res.send({
+        error: errors
+      })
+    } else { // if no validation errors
+      var args = req.body
+      args.user = req.user
+      db.checkEmailIsUnique(args)
+      .then(updateUserContacts)
+      .then(args => {
+        if (args.user.email != req.user) {
+          res.send(
+            {
+              redirect: '/email-updated',
+              error: null
+            }
+          )
+        } else {
+          args.msg = {}
+          args.msg.class = 'flash-success'
+          args.msg.text = 'Your details have been updated'
+          res.send(
+            {
+              msg: args.msg,
+              user: args.user, // NOTE: this is *only* the data that was sent! i.e. it's "args"
+              error: null
+            }
+          )
+        }
+      })
+      .catch(err => {
+        res.send({
           error: {
             class: 'flash-error',
             text: `${err}`
           }
-        }
-      )
-    })
+        })
+      })
+    }
   })
 
   // register blog
