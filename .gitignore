@@ -2,7 +2,6 @@ notes/
 feeds/
 public/assets/*.svg
 public/files/feeds.opml
-!public/assets/**/.gitkeep
 test/sites/bobRss.xml
 test/sites/LegacyOneRss.xml
 test/sites/LegacyTwoRss.xml
