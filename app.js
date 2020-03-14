@@ -719,7 +719,7 @@ awaitDb.then( function() {
   })
 
   // claim blog
-  app.post('/api/v1/update/user/claim-blog', function(req, res, next) {
+  app.post('/api/v1/update/user/claim-blog', function(req, res) {
     const args = req.body
     args.query = { "_id" : ObjectId(args.idString)}
     args.action = "register"
@@ -1028,10 +1028,15 @@ awaitDb.then( function() {
     // user will be the owner email
     // url is blog url
     // blog is blog _id as a string
-    args.action= 'approve'
-    args.query = {'email' : args.user} // query for getUsers later
-    db.getUsers(args) 
-    .then(approveBlog) // set to approved: true
+    feedfinder.getFeed(args.url) // for legacy blogs we want to pick up the title
+    .then( ff => {
+      args.action= 'approve'
+      args.query = {'email' : args.user} // query for getUsers
+      args.title = ff.title
+      return args
+    })
+    .then(db.getUsers) // get the user ID 
+    .then(approveBlog) // set blog to approved: true and update title if needed
     .then(updateUserBlogs) // move from blogsForApproval to blogs
     .then( args => {
       message = {
