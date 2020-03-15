@@ -79,10 +79,10 @@ You can use a free email service like Gmail or Hotmail for this, however I recom
 Once you are set up, enter the relevant details in `settings.json`:
 ```json
   "email" : {
-    "user": "postmaster@mg.example.com", // you have to do a bit of setup with Mailgun to use your own domain but it's free
-    "password": "my_awesome_password", // use a better password then this!
+    "user": "postmaster@mg.example.com", 
+    "password": "my_awesome_password", 
     "host": "smtp.mailgun.org",
-    "from": "hello@example.com" // the 'from' address that will be used in outgoing emails
+    "from": "hello@example.com" 
   },
 ```
 ## Finalise settings
