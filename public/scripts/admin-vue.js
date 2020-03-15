@@ -113,7 +113,8 @@ Vue.component('blogs-for-approval', {
       .post('/api/v1/update/admin/approve-blog', {
         user: this.email,
         url: blog.url,
-        blog: blog.idString
+        blog: blog.idString,
+        legacy: blog.approved // for approveBlog() to know whether this a new or legacy blog
       })
       .then( res => {
         this.addMessage(res.data)
