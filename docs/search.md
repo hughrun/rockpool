@@ -55,3 +55,4 @@ Both text searching and tag browsing can be filtered by publication date 'this m
 [User dashboard](dashboard.md)  
 [Admin dashboard](admin.md)  
 [Browse page](browse.md)  
+[Contributing](docs/contributing.md)  

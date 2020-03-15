@@ -4,7 +4,7 @@ Support a community and store what you need from the ocean of information.
 
 Successor to and complete rewrite of [CommunityTweets](https://github.com/hughrun/CommunityTweets).
 
-Rockpool is an Express app interfacing with MongoDB, designed to run using Docker Compose. It ingests metadata about articles from RSS feeds ("blog posts") and optionally tweets and/or toots links to those post when they are published. Users can register and manage their accounts via passwordless login, and connect the feed to their Pocket accounts for automatic ingest to their Pocket list, or download an OPML file to import into an RSS reader.
+Rockpool is an Express app using MongoDB, designed to run with Docker Compose. It ingests metadata about articles from RSS feeds ("blog posts") and optionally tweets and/or toots links to those post when they are published. Users can register and manage their accounts via passwordless login using one time login links sent via email, and connect the feed to their Pocket accounts for automatic ingest to their Pocket list, or download an OPML file to import manually into an RSS reader.
 
 ## Documentation
 
@@ -14,10 +14,7 @@ Rockpool is an Express app interfacing with MongoDB, designed to run using Docke
 4. [User dashboard](docs/dashboard.md)
 5. [Admin dashboard](docs/admin.md)
 6. [Browse page](docs/browse.md)
-
-## Contributing
-
-[See Contributing guide](docs/contributing.md)
+7. [Contributing](docs/contributing.md)
 
 ## License
 

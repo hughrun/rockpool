@@ -6,5 +6,6 @@ test/sites/bobRss.xml
 test/sites/LegacyOneRss.xml
 test/sites/LegacyTwoRss.xml
 test/sites/bobbieRss.xml
+views/help.html
 *.bak
 *.pem

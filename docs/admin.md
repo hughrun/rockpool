@@ -45,3 +45,4 @@ You can make another user an administrator by entering their email address in th
 [User dashboard](dashboard.md)  
 [Admin dashboard](admin.md)  
 [Browse page](browse.md)  
+[Contributing](docs/contributing.md)  

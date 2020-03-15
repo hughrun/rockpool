@@ -26,3 +26,4 @@ If there are no actions available, you will simply not see the 'actions' button.
 [User dashboard](dashboard.md)  
 [Admin dashboard](admin.md)  
 [Browse page](browse.md)  
+[Contributing](docs/contributing.md)  
