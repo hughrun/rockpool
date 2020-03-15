@@ -251,7 +251,19 @@ Now you need to 'check out' the relevant release. e.g.
 ```shell
 git checkout v1.0.2
 ```
-You are now on the new branch. Check that `settings.json` is still correct and up to date, and adjust if necessary. Then check for any changes you need to make in `docker-compose.yml`. If the changes you made are minor (e.g. a port number), make a note of what you previously changed earlier (probably just the password) and change that in the new (default) docker-compose.yml rather than overwriting it with the older file. Otherwise, when ready, run:
+You are now on the new branch. 
+
+There are two ways to re-apply the changes you previously _stashed_ (but be careful).
+
+**Option 1**
+This is best if you have made a lot of changes to styles, fonts etc. 
+```shell
+git stash pop
+```
+This should re-apply any changes you made, and will then display the current state of your git branch (like `git status`).
+
+**Option 2**
+Check that `settings.json` is still correct and up to date, and adjust if necessary. Then check for any changes you need to make in `docker-compose.yml`. If the changes you made are minor (e.g. a port number), make a note of what you previously changed earlier (probably just the password) and change that in the new (default) docker-compose.yml rather than overwriting it with the older file. Otherwise, when ready, run:
 
 ```shell
 cp docker-compose.yml-backup docker-compose.yml
@@ -282,7 +294,7 @@ If you just want to change the colours, fonts etc, you only need to follow the f
 1. Make your changes.
 2. Run `docker-compose up -d --build`. This will rebuild the docker containers and bring everything up again.
 
-Note that you will need to `git stash` these changes before fetching any updates.
+Note that you will need to `git stash` these changes before fetching any updates and then `git stash pop` after applying updates, to re-instate your files.
 
 ## Backups and legacy databases
 
