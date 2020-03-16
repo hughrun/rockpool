@@ -7,7 +7,7 @@
     <section id="main" class="main">
       <loader-screen v-bind:processing="processing"></loader-screen>
       <message-list v-bind:registered="registered" v-bind:messages="messages" @remove-message="removeMessage"></message-list>
-      <user-info v-bind:user="user" @registered="userRegistered" @add-message="addMessage" @loading="loading"></user-info>
+      <user-info v-bind:user="user" v-bind:registered="registered" @registered="userRegistered" @add-message="addMessage" @loading="loading"></user-info>
       <h3 v-if="registered" class="form-label">Your blogs</h3>
       <user-approved-blogs v-if="registered" @add-message="addMessage" v-bind:categories="categories" @loading="loading"></user-approved-blogs>
       <user-unapproved-blogs v-if="registered" v-bind:ublogs="ublogs"></user-unapproved-blogs>
