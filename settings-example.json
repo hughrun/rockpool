@@ -10,6 +10,7 @@
   "blog_club_name" : "Blog Club",
   "blog_club_tag" : "glam blog club",
   "blog_club_url" : "https://example.com/blog-club",
+  "content_warnings" : ["coronavirus", "mental health", "politics", "trauma"],
   "deliver_tokens_by" : "email",
   "email" : {
     "user": "postmaster@mg.example.com",
