@@ -764,26 +764,60 @@ awaitDb.then( function() {
     })
   })
 
+  // TODO: delete-pending-registration
+  app.post('/api/v1/update/user/delete-pending-registration', function(req, res) {
+    const args = req.body
+    args.user = req.user
+    args.query = {"_id" : ObjectId(args.blog)} // for getBlogs
+    updateUserBlogs(args)
+    .then(db.getBlogs)
+    .then( args => {
+      if (args.blogs[0].approved) {
+        return args // if the blog is approved then this was a legacy claim
+      } else {
+        return deleteBlog(args) // if the blog isn't approved it's just a new registration
+      }
+    })
+    .then( args => {
+      let blog = args.blogs[0]
+      message = {
+        text: `User ${req.user} has cancelled their registration of ${blog.url} with ${settings.app_name}. There is no need to take any action in response to this email.`,
+        to: 'admins',
+        subject: `Registration of ${blog.url} has been cancelled`,
+      }
+      sendEmail(message) // send email to admins
+      res.send(
+        {
+          msg: {
+            type: 'success',
+            class:'flash-success',
+            text: 'Pending blog registration cancelled!'
+          }, 
+          error: null
+        }
+      )
+    })
+    .catch( e => {
+      debug.log('**ERROR DELETING BLOG REGISTRATION**')
+      debug.log(e)
+        res.send({
+          blogs: null,
+          msg: {
+            class:'flash-error',
+            text: `Error deleting pending blog registration: ${e.message}`
+          }
+        })
+    })
+  })
   // delete blog
-  app.post('/api/v1/update/user/delete-blog', function(req, res, next) {
+  app.post('/api/v1/update/user/delete-blog', function(req, res) {
     const args = req.body
     args.user = req.user // for updateUserBlogs & getUserDetails
     updateUserBlogs(args)
     .then(deleteBlog)
-    .then( args => {
-      args.query = {"email" : args.user }
-      return args
-    })
-    .then(db.getUsers)
-    .then( args => {
-      args.query = {"_id": {$in: args.users[0].blogs}}
-      return args
-    })
-    .then(db.getBlogs)
-    .then( args => {
+    .then( () => {
       res.send(
         {
-          blogs: args.blogs, 
           msg: {
             type: 'success',
             class:'flash-success',

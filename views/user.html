@@ -9,9 +9,9 @@
       <message-list v-bind:registered="registered" v-bind:messages="messages" @remove-message="removeMessage"></message-list>
       <user-info v-bind:user="user" v-bind:registered="registered" @registered="userRegistered" @add-message="addMessage" @loading="loading"></user-info>
       <h3 v-if="registered" class="form-label">Your blogs</h3>
-      <user-approved-blogs v-if="registered" @add-message="addMessage" v-bind:categories="categories" @loading="loading"></user-approved-blogs>
-      <user-unapproved-blogs v-if="registered" v-bind:ublogs="ublogs"></user-unapproved-blogs>
-      <register-blog v-if="registered" @add-message="addMessage" v-bind:categories="categories" @update-ublogs="updateUblogs" @loading="loading"></register-blog>
+      <user-approved-blogs v-if="registered" @add-message="addMessage" @loading="loading" v-bind:categories="categories"></user-approved-blogs>
+      <user-unapproved-blogs v-if="registered" @add-message="addMessage" @loading="loading" v-bind:ublogs="ublogs"></user-unapproved-blogs>
+      <register-blog v-if="registered" @add-message="addMessage" @update-ublogs="updateUblogs" @loading="loading" v-bind:categories="categories"></register-blog>
       <section  v-if="registered" class="tips">
         <p>Confused about where to start?</p> 
         <p class="tip">Try the <a href="/help">help</a> page.</p>
