@@ -764,7 +764,6 @@ awaitDb.then( function() {
     })
   })
 
-  // TODO: delete-pending-registration
   app.post('/api/v1/update/user/delete-pending-registration', function(req, res) {
     const args = req.body
     args.user = req.user
@@ -809,6 +808,7 @@ awaitDb.then( function() {
         })
     })
   })
+  
   // delete blog
   app.post('/api/v1/update/user/delete-blog', function(req, res) {
     const args = req.body
