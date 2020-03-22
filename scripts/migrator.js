@@ -11,6 +11,9 @@ const assert = require('assert')
 const url = `mongodb://${settings.mongo_user}:${settings.mongo_password}@${settings.mongo_url}/${settings.mongo_db}`
 const dbName = settings.mongo_db
 
+// feedfinder
+const { getFeed } = require('@hughrun/feedfinder')
+
 // USERS
 // Only migrate if emails[0].verified is true
 // Strip everything except for _id, and emails[0].address (renamed to 'email')
@@ -114,9 +117,10 @@ function migrateTags(records) {
         })
       }
       update(db, function() {
-        client.close()
-        console.log('Tags migration complete.')
-        resolve() // resolve
+        client.close().then( () => {
+          console.log('Tags migration complete.')
+          resolve() // resolve
+        })
       })
     })
   })
@@ -129,7 +133,9 @@ const prepareBlogs = function() {
       assert.strictEqual(null, err)
       const db = client.db(dbName)
       const transform = function(db, callback) {
-          db.collection("blogs").find().map(entry => {
+        db.collection("blogs")
+        .find()
+        .map(entry => {
           delete entry._id // remove old non-object _id
           entry.category = entry.type 
           delete entry.type // $rename 'type' to 'category'
@@ -140,20 +146,48 @@ const prepareBlogs = function() {
           if (entry.category === 'DH') {
             entry.category = 'digital humanities'
           }
-          return entry // return the amended record
-        }).toArray(function(err, docs) {
+          return entry
+        })
+        .toArray(function(err, docs) {
           assert.equal(null, err)
-          resolve( docs ) // resolve as an array of documents, now without valid _ids
-          callback() // close the connection
+          callback(docs) // close the connection
         })
       }
-      transform(db, function() {
-        client.close()
+      transform(db, function(docs) {
+        client.close().then( () => {
+          resolve( docs ) // resolve as an array of documents, now without valid _ids
+        })
       })
     })
   })
+  .catch( err => {
+    console.log('ERROR PREPARING BLOGS')
+    throw new Error(err)
+  })
 }
 
+// Find title where possible, using feedfinder
+function updateTitles(records) {
+  console.log('Finding blog titles - this will take a few moments...')
+  let promises = []
+  for (let entry of records) {
+    let record = getFeed(entry.url).catch( () => entry) // get the title or simply return the entry
+    promises.push(record)
+  }
+  return Promise.all(promises)
+  .then( result => {
+    for (let res of result) {
+      records.map( record => {
+        if ( (record.url === res.url) && res.title) {
+          record.title = res.title
+        }
+        return record
+      }) 
+    }
+    console.log('Titles updated')
+    return records
+  })
+}
 
 // insert everything into a new collection
 // because there is now no _id, this creates one, as an ObjectID
@@ -163,15 +197,26 @@ function migrateBlogs(records) {
       assert.strictEqual(null, err)
       const db = client.db(dbName)
       const update = function(db, callback) {
-        const create = db.collection("rp_blogs").insertMany(records)
-        callback(create) // close the connection
+        db.collection("rp_blogs")
+        .insertMany(records)
+        .then( () => {
+          callback()
+        })
+        
       }
-      update(db, function(create) {
+      update(db, function() {
         client.close()
-        resolve(create) // resolve
-        debug.log('Blogs migration complete.')
+        .then( () => {
+          console.log('Blogs migration complete.')
+          resolve()
+        })
+        .catch(err => reject(err))
       })
     })
+  })
+  .catch( err => {
+    console.log('ERROR MIGRATING BLOGS')
+    throw new Error(err)
   })
 }
 
@@ -199,6 +244,10 @@ const prepareArticles = function() {
         client.close()
       })
     })
+  })
+  .catch( err => {
+    console.log('ERROR PREPARING ARTICLES')
+    throw new Error(err)
   })
 }
 
@@ -236,6 +285,10 @@ function LinkArticlesToBlogs(records) {
       })
     })
   })
+  .catch( err => {
+    console.log('ERROR LINKING')
+    throw new Error(err)
+  })
 }
 
 // insert everything into a new collection
@@ -255,6 +308,10 @@ function migrateArticles(records) {
         resolve(create) // resolve
       })
     })
+  })
+  .catch( err => {
+    console.log('ERROR MIGRATING ARTICLES')
+    throw new Error(err)
   })
 }
 
@@ -292,10 +349,11 @@ Promise.all([migrateUsers, migratePockets]).then(x => {
 prepareTags()
 .then(migrateTags)
 .then(prepareBlogs)
+.then(updateTitles)
 .then(migrateBlogs)
 .then(prepareArticles)
 .then(LinkArticlesToBlogs)
 .then(migrateArticles)
 .catch( err => {
-  console.log(error)
+  console.log(err)
 })
