@@ -316,7 +316,7 @@ You can make a backup of your database using [`mongodump`](https://docs.mongodb.
 
 Use `mongodump` to take a copy. Because the database is using authorisation mode we need to use the username and password from `settings.json`. Assuming you have kept all the default settings including the insecure default password (not recommended!):
 ```shell
-docker exec mongodb -d mongodump -d rockpool -u rockpool -p my_great_password
+docker exec -d mongodb mongodump -d rockpool -u rockpool -p my_great_password
 ```
 Copy the file you just created, into your host server's `/tmp` folder (or somewhere else you want to keep backup files).
 ```shell
