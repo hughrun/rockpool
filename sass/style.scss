@@ -486,7 +486,7 @@ input[type="email"].email-signup {
 
 .blog-listing-url a {
   word-wrap: break-word;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .failing span,
@@ -787,7 +787,6 @@ ul.browse-blogs {
 
   .browse-blogs span {
     display: block;
-    width: fit-content;
     margin: 0.5em 0;
     text-align: center;
   }

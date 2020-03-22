@@ -12,7 +12,7 @@ This function exists because in the previous version of the app there were no ow
 
 You will not be able to claim a blog you already own.
 
-## Exclude blog from Pocket
+## Exclude a blog from Pocket
 
 This action is only available when you have registered a Pocket account either from the user dashboard or the subscribe page. You can choose to exclude particular blogs from being added to your Pocket list. If you have already excluded a blog, the action available will be 'Include blog in Pocket' which reverses the process - essentially it's an "undo" option.
 

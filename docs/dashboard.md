@@ -24,6 +24,14 @@ To register a blog, click the `Register a new blog` button. Enter the blog URL, 
 
 Until it is approved by an admin, your blog will be listed under _Your Blogs_ as awaiting approval.
 
+## Claiming a blog
+
+In legacy databases, users can _claim_ an unowned blog. This is done on the [Browse page](browse.md), rather than the user dashboard.
+
+## Cancelling a pending blog
+
+If you have registered or claimed a blog but your registration hasn't yet been approved, you can cancel it. Simply click 'cancel' next to the 'unnapproved' blog.
+
 ## Editing and deleting a blog
 
 Once your blog (or claim) is approved, your blog will be listed under _Your Blogs_ and you will have the option to _edit_ or _delete_ it. Editing allows you to change the category the blog is listed under. Deleting will remove the blog from the database and stop further articles from being added, but will not delete old article listings.
