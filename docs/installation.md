@@ -102,6 +102,7 @@ You should now review the rest of the values in `settings.json` and change them 
 | `blog_club_name` | Name of your blog club. | `optional` |
 | `blog_club_tag` | Tag (category) used by bloggers when participating in your blog club. | `optional` unless there is a blog_club_name |
 | `blog_club_url` | Website for your blog club. | `optional` unless there is a blog_club_name |
+| `content_warnings` | This is an array of words that will trigger a content warning on Mastodon if they appear in the tags or title of a blog post. Note that this is _generally_ only triggered if the word appears as a separate word, but hyphenated words will also be picked up: e.g. "covid" will be triggered both by "covid" and "covid-19" | `required` but can be an empty array |
 | `deliver_tokens_by` | **In production this must always be set to `"email"`**. In development you can choose to set this to `"clipboard"` so that your login code is sent to the clipboard instead of via email. In test this should always be set to `"clipboard"`. Note that this will throw error in Alpine Linux containers so currently running tests should not be attempted using Docker. | `required` |
 | `email` | Rockpool requires an SMTP email account to send system emails, using [emailjs](https://github.com/eleith/emailjs). You can use a personal Outlook or Hotmail etc account, but I recommend a service like [Mailgun](https://www.mailgun.com/) which will be free unless your app becomes enormously popular. | `required` in production and development |
 | `excluded_tags` | articles with one or more of these tags will be ignored by the app and neither ingested nor announced | `required`, but may be an empty array. |
@@ -353,44 +354,26 @@ Now copy the file into the container:
 ```shell
 docker cp /tmp/rockpool_backup mongodb:/dump
 ```
-This copies your backup into the `/dump` folder inside the mongo container. Let's go in and take a look:
+This copies your backup into the `/dump` folder inside the mongo container. The /dump folder didn't exist until we used `docker cp`, so the database bson files are all directly in `/dump`. Now use `mongorestore` to import the database into mongo. The important exception to a normal restore is that when you run `mongorestore` on a legacy database you should **not** use the `--drop` flag because you won't have the `rockpool` user in your legacy database. As long as you import your database before you do anything else, all will be well:
 ```shell
-docker exec -it mongodb bash
+docker exec -d mongodb mongorestore -d rockpool /dump -u rockpool -p my_great_password
 ```
-The /dump folder didn't exist until we used `docker cp`, so the database bson files are all directly in `/dump`:
-```shell
-mongorestore -d rockpool /dump -u rockpool -p my_great_password
-```
-You should see several rows of messages saying mongo has finished restoring each collection, then `done` and a return to the command prompt. Exit the container:
-```shell
-exit
-```
-
-The important exception to a normal restore is that if you run `mongorestore` with the `--drop` flag on a legacy database it will fail because you won't have the `rockpool` user in your legacy database. As long as you import your database before you do anything else, all will be well. 
-
 Once you start using it with rockpool, any further database restores should be from a new backup taken following the instructions in _Creating a backup of your database_.
 
-With a legacy database, you will now need to migrate the data structure to match the new _rockpool_ structure. Exit out of the mongo container, and then move into the rockpool container:
+With a legacy database, you will now need to migrate the data structure to match the new _rockpool_ structure:
 ```shell
-docker exec -it rockpool_app sh
-```
-Now run the migrate script:
-```shell
-npm run migrate
-```
-Now run the setup script against your database:
-```shell
-npm run setup
-```
-And exit
-```shell
-exit
+docker exec -d rockpool_app npm run migrate
+docker exec -d rockpool_app npm run setup
 ```
 You should now see all the blogs from your database in the `/browse` page, and latest articles at `/`.
 
 ## A note on Security
 
-Rockpool is designed to be run in Docker containers via `docker-compose`. Your Mongo database is bound to `localhost` inside the mongo container, and runs with `--auth`, requiring a registered account to log in. If you try to run Rockpool without running mongo in `--auth` mode it will throw an error. You should change both the default administrator password (in `docker-compose.yml` as `MONGO_INITDB_ROOT_PASSWORD`) and the default `mongo_password` to strong and long passwords. This should secure your Mongo database against most likely security breaches, as long as an attacker does not get access to your host server. If you choose to run Rockpool with an external mongo database, you are responsible for any changes you make to the setup and should familiarise yourself with Mongo security best practices. Note that if you bind port 27017 in the `mongodb` container to a port in the host it will provide **full access to the outside world despite the localhost binding**, because it will look to Mongo like the connection is coming from inside the container.
+Rockpool is designed to be run in Docker containers via `docker-compose`. Your Mongo database is bound to `localhost` inside the mongo container, and runs with `--auth`, requiring a registered account to log in. If you try to run Rockpool without running mongo in `--auth` mode it will throw an error. You should change both the default administrator password (in `docker-compose.yml` as `MONGO_INITDB_ROOT_PASSWORD`) and the default `mongo_password` to strong and long passwords. This should secure your Mongo database against most likely security breaches, as long as an attacker does not get access to your host server. 
+
+If you choose to run Rockpool with an external mongo database, you are responsible for any changes you make to the setup and should familiarise yourself with Mongo security best practices. 
+
+Note that if you bind port 27017 in the `mongodb` container to a port in the host it will provide **full access to the outside world despite the localhost binding**, because it will look to Mongo like the connection is coming from inside the container.
 
 Rockpool should always run over https. You can use [Let's Encrypt](https://letsencrypt.org/) to obtain and install certificates free of charge, or use [caddy](https://caddyserver.com/) as your web server and it will automatically register Lets Encrypt certificates.
 
