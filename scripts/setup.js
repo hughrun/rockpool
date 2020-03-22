@@ -156,7 +156,7 @@ const processHelp = new Promise( function (resolve, reject) {
   // fs.writeFileSync to views folder
   filepath = path.resolve(__dirname, '../views')
   fs.writeFileSync(filepath + '/help.html', page)
-  resolve()
+  resolve('help file processed')
 })
 
 // let's do this...

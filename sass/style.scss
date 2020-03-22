@@ -1,60 +1,104 @@
+@use "sass:color";
+$standard-font: "SourceSansPro", "Verdana", "Tahoma", "Arial", sans-serif;
+$header-font: "Helsinki", "Goudy Stout", "Arial", sans-serif;
+$highlight-color: #A6C5E5; 
+$secondary-color: #000066; 
+$text-color: #3b3b3b;
+$button-text-color: #000066;
+$background-color: #fff;
+$button-color: #EAEEF5;
+$success-color: lightgreen;
+$warning-color: lightyellow;
+$failure-color: lightcoral;
+$font-size: 1.2rem; // note this is rem (relative to html root) not em (relative to parent)
+$subtle-text: rgba(128,128,128,0.5);
+
+// These colours are for the categories in the browse page
+
+$color0: rgba(100, 131, 255, 0.5);
+$border0: rgba(192, 214, 228, 1);
+$color1: rgba(248, 200, 246, 0.5);
+$border1: rgba(248, 200, 246, 1);
+$color2: rgba(192, 214, 228, 0.5);
+$border2: rgba(192, 214, 228, 1);
+$color3: rgba(128, 218, 128, 0.5);
+$border3: rgba(128, 218, 128, 1);
+$color4: rgba(255, 240, 178, 0.5);
+$border4: rgba(255, 240, 178, 1);
+$color5: rgba(211, 173, 157, 0.5);
+$border5: rgba(211, 173, 157, 1);
+$color6: rgba(114, 95, 163, 0.5);
+$border6: rgba(114, 95, 163, 1);
+$color7: rgba(250, 100, 48, 0.5);
+$border7: rgba(250, 100, 48, 1);
+$color8: rgba(119, 215, 191, 0.5);
+$border8: rgba(119, 215, 191, 1);
+$color9: rgba(191, 101, 30, 0.5);
+$border9: rgba(191, 101, 30, 1);
+$color10: rgba(179, 141, 31, 0.5);
+$border10: rgba(179, 141, 31, 1);
+
 /* ########################################
                   FONTS
  ########################################## */
+
 @font-face {
   font-family: "SourceSansPro";
   src: url("../assets/fonts/source-sans-pro/SourceSansPro-Regular.otf") format("opentype");
 }
+
 @font-face {
   font-family: "Helsinki";
   src: url("../assets/fonts/helsinki/helsinki.ttf") format("opentype");
 }
+
 /* ########################################
                   ELEMENTS
  ########################################## */
+
 html {
   max-width: 100vw;
   margin: 0;
 }
 
 body {
-  font-family: "SourceSansPro", "Verdana", "Tahoma", "Arial", sans-serif;
-  color: #3b3b3b;
-  font-size: 1.2rem;
+  font-family: $standard-font;
+  color: $text-color;
+  font-size: $font-size;
   margin: 0;
   max-width: 100vw;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Helsinki", "Goudy Stout", "Arial", sans-serif;
-  color: #A6C5E5;
+  font-family: $header-font;
+  color: $highlight-color;
 }
 
 a {
-  color: #3b3b3b;
-  text-decoration: dashed underline #A6C5E5;
+  color: $text-color;
+  text-decoration: dashed underline $highlight-color;
 }
 
 button {
-  border: 1px solid #3b3b3b;
-  font-family: "SourceSansPro", "Verdana", "Tahoma", "Arial", sans-serif;
-  font-size: 0.96rem;
+  border: 1px solid $text-color;
+  font-family: $standard-font;
+  font-size: $font-size * 0.8;
   margin: 0;
   padding: 5px 10px;
   cursor: pointer;
 }
 
 code, pre {
-  background: rgba(234, 238, 245, 0.5);
-  padding: 0.24rem;
+  background: rgba($button-color, 0.5);
+  padding: ($font-size/5);
 }
 
 input,
 select,
 span,
 textarea {
-  font-family: "SourceSansPro", "Verdana", "Tahoma", "Arial", sans-serif;
-  font-size: 1.2rem;
+  font-family: $standard-font;
+  font-size: $font-size;
   box-sizing: border-box;
   max-width: 100%;
 }
@@ -62,7 +106,9 @@ textarea {
 /* ########################################
                   CLASSES
  ########################################## */
+
 /* LOADER SCREEN */
+
 .loader {
   position: fixed;
   z-index: 999;
@@ -74,7 +120,7 @@ textarea {
   position: fixed;
   min-height: 100vh;
   width: 100vw;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba($background-color, 0.8);
   text-align: center;
   display: grid;
   align-items: center;
@@ -83,12 +129,13 @@ textarea {
 }
 
 .loader-text p {
-  color: #A6C5E5;
-  font-size: 2.4rem;
-  font-family: "Helsinki", "Goudy Stout", "Arial", sans-serif;
+  color: $highlight-color;
+  font-size: $font-size * 2;
+  font-family: $header-font;
 }
 
 /* MAIN */
+
 .main {
   min-height: 100vh;
   padding: 2em;
@@ -103,29 +150,30 @@ textarea {
 /* ##############
     buttons
  ############## */
-.actions-button {
-  background-color: #EAEEF5;
-  color: #000066;
+
+ .actions-button {
+  background-color: $button-color;
+  color:$button-text-color;
 }
 
-.approve-button {
+ .approve-button {
   margin: 0.25em auto;
 }
 
 .cancel-button {
   border: none;
-}
+}	
 
 .failing-suspended-button {
   margin-top: 1em;
-  border: 1px solid #3b3b3b;
+  border: 1px solid $text-color
 }
 
 .search-button {
   margin: 1em auto 0;
-  font-family: "Helsinki", "Goudy Stout", "Arial", sans-serif;
-  border: 1px solid #A6C5E5;
-  background: #fff;
+  font-family: $header-font;
+  border: 1px solid $highlight-color;
+  background: $background-color;
   padding: 5px 10px;
 }
 
@@ -134,12 +182,12 @@ textarea {
 }
 
 .browse-actions .actions-button {
-  width: 6rem;
+  width: $font-size * 5;
 }
 
 .article-search button,
 .login-form input {
-  font-size: 1.2rem;
+  font-size: $font-size;
 }
 
 .browse-actions {
@@ -150,27 +198,27 @@ textarea {
 .action {
   border: none;
   font-weight: bold;
-  color: #3b3b3b;
-  background-color: rgba(234, 238, 245, 0.5);
+  color: $text-color;
+  background-color: rgba($button-color, 0.5);
   width: 100%;
 }
 
 .action:nth-child(odd) {
-  color: #3b3b3b;
-  background-color: rgba(234, 238, 245, 0.5);
+  color: $text-color;
+  background-color: rgba($button-color, 0.5);
   border-bottom: none;
 }
 
 .action:nth-child(even) {
-  color: #3b3b3b;
-  background-color: #EAEEF5;
+  color: $text-color;
+  background-color: $button-color;
 }
 
 .reject-button,
 .delete-button {
-  color: #A6C5E5;
-  border-color: #A6C5E5;
-  background-color: #fff;
+  color: $highlight-color;
+  border-color: $highlight-color;
+  background-color: $background-color;
 }
 
 .admins-list div button,
@@ -179,14 +227,14 @@ textarea {
 }
 
 .action.excluded {
-  color: #ff738c;
-  background-color: rgba(234, 238, 245, 0.25);
+  color: rgba(255, 115, 140, 1);
+  background-color: rgba($button-color, 0.25);
 }
 
 button:hover,
 .action:hover {
-  color: #3b3b3b;
-  background-color: rgba(166, 197, 229, 0.5);
+  color: $text-color;
+  background-color: rgba($highlight-color, 0.5);
 }
 
 /* ##############
@@ -194,6 +242,7 @@ button:hover,
   flash messages
 
  ############## */
+
 #user-messages {
   position: sticky;
   top: 0;
@@ -202,8 +251,8 @@ button:hover,
 .flash-success {
   padding: 0.5em;
   border-radius: 5px;
-  color: #000066;
-  background: lightgreen;
+  color: $button-text-color;
+  background: $success-color;
   text-align: center;
   margin-bottom: 0.5em;
 }
@@ -211,8 +260,8 @@ button:hover,
 .flash-error {
   padding: 0.5em;
   border-radius: 5px;
-  color: #000066;
-  background: lightcoral;
+  color: $button-text-color;
+  background: $failure-color;
   text-align: center;
   margin-bottom: 0.5em;
 }
@@ -220,14 +269,14 @@ button:hover,
 .flash-warning {
   padding: 0.5em;
   border-radius: 5px;
-  color: #000066;
-  background: lightyellow;
+  color: $button-text-color;
+  background: $warning-color;
   text-align: center;
   margin-bottom: 0.5em;
 }
 
 .flash-close {
-  color: rgba(128, 128, 128, 0.5);
+  color: $subtle-text;
   float: right;
   text-decoration: none;
   margin-right: 0.5em;
@@ -237,29 +286,30 @@ button:hover,
 /* ##############
     footer
  ############## */
+
 .footer {
   text-align: center;
-  font-family: "Helsinki", "Goudy Stout", "Arial", sans-serif;
+  font-family: $header-font;
   padding: 2em 1em 1em 1em;
-  background: #A6C5E5;
-  color: #fff;
+  background: $highlight-color;
+  color: $background-color;
 }
 
 .footer a {
-  color: #3b3b3b;
+  color: $text-color;
   text-decoration: none;
   font-weight: normal;
 }
 
 .credits {
-  font-size: 1.08rem;
+  font-size: $font-size * 0.9;
   text-align: right;
-  font-family: "SourceSansPro", "Verdana", "Tahoma", "Arial", sans-serif;
-  color: #3b3b3b;
+  font-family: $standard-font;
+  color: $text-color;
 }
 
 .credits a {
-  border-bottom: 2px dotted #fff;
+  border-bottom: 2px dotted $background-color;
 }
 
 .icon {
@@ -279,7 +329,7 @@ button:hover,
 
 .subscribe a {
   text-decoration: none;
-  color: #3b3b3b;
+  color: $text-color;
 }
 
 .subscription {
@@ -290,13 +340,13 @@ button:hover,
 header {
   margin: 0;
   padding: 2em 2em 1em 2em;
-  background: #000066;
-  color: #fff;
+  background: $secondary-color;
+  color: $background-color;
 }
 
 header a {
-  color: #fff;
-  text-decoration: underline #A6C5E5;
+  color: $background-color;
+  text-decoration: underline $highlight-color;
 }
 
 .nav {
@@ -305,14 +355,15 @@ header a {
 
 .nav a {
   text-decoration: none;
-  color: #A6C5E5;
+  color: $highlight-color;
 }
 
 /* ###################
     archive and search
  ##################### */
+
 .archive-and-search {
-  border: 2px solid rgba(59, 59, 59, 0.3);
+  border: 2px solid color.scale($text-color,$alpha: -70%);
   padding: 0.5em 0;
   margin: 1em 0;
   border-radius: 5px;
@@ -320,17 +371,17 @@ header a {
 }
 
 .archive-and-search a {
-  color: #000066;
+  color: $button-text-color;
 }
 
 .article-search {
   margin: 2em auto 0.5em;
 }
 
-.article-search input[type=text],
-input[type=email].email-signup {
+.article-search input[type="text"],
+input[type="email"].email-signup {
   margin: 1em auto 0;
-  font-size: 2.4rem;
+  font-size: $font-size * 2;
   text-align: center;
   width: 90%;
   max-width: 90%;
@@ -339,6 +390,7 @@ input[type=email].email-signup {
 /* ##############
     paged nav
  ############## */
+
 .paged {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -355,9 +407,10 @@ input[type=email].email-signup {
 /* ##############
     articles
  ############## */
+
 .article-listing {
-  background: rgba(59, 59, 59, 0.1);
-  border: 1px solid #fff;
+  background: color.scale($text-color, $alpha: -90%);
+  border: 1px solid $background-color;
   border-radius: 10px;
   margin: 1em;
   padding: 1em;
@@ -370,21 +423,21 @@ input[type=email].email-signup {
 
 .article-title {
   font-weight: bold;
-  color: #3b3b3b;
-  font-size: 1.44rem;
+  color: $text-color;
+  font-size: $font-size * 1.2;
 }
 
 .article-date,
 .article-tag {
   font-style: italic;
-  font-size: 0.96rem;
+  font-size: $font-size * 0.8;
 }
 
 .article-tag {
   display: inline-block;
-  border: 1px solid #A6C5E5;
+  border: 1px solid $highlight-color;
   border-radius: 5px;
-  background: #fff;
+  background: $background-color;
   margin: 2px 1px;
   padding: 0.5em;
 }
@@ -396,6 +449,7 @@ input[type=email].email-signup {
 /* ##############
     tags
  ############## */
+
 #top-tags {
   text-align: center;
 }
@@ -405,24 +459,25 @@ input[type=email].email-signup {
 }
 
 .top-tag {
-  font-family: "Helsinki", "Goudy Stout", "Arial", sans-serif;
+  font-family: $header-font;
   display: inline-block;
-  font-size: 0.96rem;
-  border: 1px solid #A6C5E5;
+  font-size: $font-size * 0.8;
+  border: 1px solid $highlight-color;
   border-radius: 5px;
-  background: #fff;
+  background: $background-color;
   margin: 2px 1px;
   padding: 0.5em;
 }
 
 .top-tag a {
   text-decoration: none;
-  color: #3b3b3b;
+  color: $text-color;
 }
 
 /* ##############
   blogs browse 
  ############## */
+
 .browse-blogs li {
   max-width: 100vw;
   display: grid;
@@ -436,14 +491,14 @@ input[type=email].email-signup {
 
 .failing span,
 .failing span a {
-  color: lightcoral;
+  color: $failure-color;
   text-decoration: line-through;
   font-style: italic;
 }
 
 .suspended span,
 .suspended span a {
-  color: rgba(128, 128, 128, 0.5);
+  color: $subtle-text;
   text-decoration: line-through;
 }
 
@@ -457,18 +512,17 @@ span.suspended-icon,
 }
 
 span.failing-icon {
-  color: lightcoral;
-  border: 1px solid lightcoral;
+  color: $failure-color;
+  border: 1px solid $failure-color;
 }
-
 span.suspended-icon,
 .excluded span.excluded-icon {
-  color: rgba(128, 128, 128, 0.5);
-  border: 1px solid rgba(128, 128, 128, 0.5);
+  color: $subtle-text;
+  border: 1px solid $subtle-text;
 }
 
 span[class^=class-] {
-  color: #3b3b3b;
+  color: $text-color;
   text-decoration: none;
   font-style: normal;
   padding: 0 0.5em;
@@ -477,58 +531,58 @@ span[class^=class-] {
 }
 
 .class-0 {
-  background-color: rgba(100, 131, 255, 0.5);
-  border: 1px solid #c0d6e4;
+  background-color: $color0;
+  border: 1px solid $border0;
 }
 
 .class-1 {
-  background-color: rgba(248, 200, 246, 0.5);
-  border: 1px solid #f8c8f6;
+  background-color: $color1;
+  border: 1px solid $border1;
 }
 
 .class-2 {
-  background-color: rgba(192, 214, 228, 0.5);
-  border: 1px solid #c0d6e4;
+  background-color: $color2;
+  border: 1px solid $border2;
 }
 
-.class-3 {
-  background-color: rgba(128, 218, 128, 0.5);
-  border: 1px solid #80da80;
+.class-3 { 
+  background-color: $color3;
+  border: 1px solid $border3;
 }
 
 .class-4 {
-  background-color: rgba(255, 240, 178, 0.5);
-  border: 1px solid #fff0b2;
+  background-color: $color4;
+  border: 1px solid $border4;
 }
 
 .class-5 {
-  background-color: rgba(211, 173, 157, 0.5);
-  border: 1px solid #d3ad9d;
+  background-color: $color5;
+  border: 1px solid $border5;
 }
 
 .class-6 {
-  background-color: rgba(114, 95, 163, 0.5);
-  border: 1px solid #725fa3;
+  background-color: $color6;
+  border: 1px solid $border6;
 }
 
 .class-7 {
-  background-color: rgba(250, 100, 48, 0.5);
-  border: 1px solid #fa6430;
+  background-color: $color7;
+  border: 1px solid $border7;
 }
 
 .class-8 {
-  background-color: rgba(119, 215, 191, 0.5);
-  border: 1px solid #77d7bf;
+  background-color: $color8;
+  border: 1px solid $border8;
 }
 
 .class-9 {
-  background-color: rgba(191, 101, 30, 0.5);
-  border: 1px solid #bf651e;
+  background-color: $color9;
+  border: 1px solid $border9;
 }
 
 .class-10 {
-  background-color: rgba(179, 141, 31, 0.5);
-  border: 1px solid #b38d1f;
+  background-color: $color10;
+  border: 1px solid $border10;
 }
 
 ul.browse-blogs {
@@ -536,8 +590,8 @@ ul.browse-blogs {
 }
 
 .browse-blogs hr {
-  color: rgba(128, 128, 128, 0.125);
-  background-color: rgba(128, 128, 128, 0.125);
+  color: color.scale($subtle-text, $alpha: -75%);
+  background-color: color.scale($subtle-text, $alpha: -75%);
   border: 0 none;
   height: 1px;
 }
@@ -545,6 +599,12 @@ ul.browse-blogs {
 /* #################
     user dashboard 
  ################### */
+
+// #user-info input {
+// 	font-size: $;
+// 	font-family: $standard-font;
+// }
+
 .user-info {
   margin-bottom: 1em;
 }
@@ -553,11 +613,12 @@ ul.browse-blogs {
   display: grid;
   grid-template-columns: 6em minmax(8em, 20em);
   margin-bottom: 0.25em;
-  font-family: "SourceSansPro", "Verdana", "Tahoma", "Arial", sans-serif;
+  // font-size: 1em;
+  font-family: $standard-font;
 }
 
 .user-info-vals {
-  margin-bottom: 6rem;
+  margin-bottom: $font-size * 5;
 }
 
 .pocket-info {
@@ -576,7 +637,7 @@ ul.browse-blogs {
   display: inline-block;
   width: 1em;
   height: 1em;
-  background: lightgreen;
+  background: $success-color;
   border-radius: 50%;
   margin: auto 1em;
   vertical-align: text-bottom;
@@ -586,7 +647,7 @@ ul.browse-blogs {
   display: inline-block;
   width: 1em;
   height: 1em;
-  background: lightcoral;
+  background: $failure-color;
   border-radius: 50%;
   margin: auto 1em;
   vertical-align: text-bottom;
@@ -594,14 +655,14 @@ ul.browse-blogs {
 
 .awaiting-approval {
   font-style: italic;
-  color: rgba(128, 128, 128, 0.5);
+  color: $subtle-text;
 }
 
 .claimed-blogs,
 .tips,
 .admins-list,
 .assign-admin {
-  border: 1px solid #3b3b3b;
+  border: 1px solid $text-color;
   border-radius: 5px;
   margin-top: 1em;
   padding: 1em;
@@ -614,11 +675,11 @@ ul.browse-blogs {
 
 .deleting a {
   text-decoration: line-through;
-  color: rgba(128, 128, 128, 0.5);
+  color: $subtle-text;
 }
 
 .deleting .approved-blog {
-  background-color: rgba(128, 128, 128, 0.5);
+  background-color: $subtle-text;
 }
 
 .blog-editing-form {
@@ -627,12 +688,12 @@ ul.browse-blogs {
 }
 
 .editing {
-  background-color: rgba(166, 197, 229, 0.25);
+  background-color: color.scale($highlight-color, $alpha: -75%);
   text-decoration: none;
 }
 
 .editing .approved-blog {
-  background-color: rgba(128, 128, 128, 0.5);
+  background-color: $subtle-text;
 }
 
 .register-blog-button {
@@ -641,7 +702,9 @@ ul.browse-blogs {
 
 .register-blog input,
 .register-blog select {
+  // font-size: $font-size;
   margin-top: 0.5em;
+  // width: 90%;
   max-width: 100%;
 }
 
@@ -652,34 +715,37 @@ ul.browse-blogs {
 /* #################
     admin dashboard 
  ################### */
-.form-label {
-  font-weight: bold;
-}
 
-.make-admin {
-  margin-top: 1em;
-}
+ .form-label {
+   font-weight: bold;
+ }
 
-.feed-link {
-  color: #A6C5E5;
-}
+ .make-admin {
+   margin-top: 1em;
+ }
 
-/* #################
-   smaller screens 
-################### */
-@media only screen and (max-width: 600px) {
+ .feed-link {
+  color: $highlight-color;
+ }
+
+ /* #################
+    smaller screens 
+ ################### */
+@media only screen and (max-width : 600px) {
+
   .main {
     padding: 1em;
     max-width: 100vw;
     overflow-wrap: break-word;
   }
-
+  
   .flash-success {
     overflow-wrap: normal;
   }
 
   /* HOME (/) and SEARCH (/search) */
-  .article-search input[type=text] {
+
+  .article-search input[type="text"] {
     margin: auto;
     width: 90%;
     max-width: 90%;
@@ -690,6 +756,7 @@ ul.browse-blogs {
   }
 
   /* BROWSE (/browse) */
+
   .browse-actions {
     text-align: left;
     max-width: 50vw;
@@ -702,7 +769,7 @@ ul.browse-blogs {
   }
 
   .browse-blogs:nth-child(2n+1) {
-    background-color: rgba(59, 59, 59, 0.1);
+    background-color: color.scale($text-color, $alpha: -90%);
   }
 
   .browse-blogs hr {
@@ -710,12 +777,12 @@ ul.browse-blogs {
   }
 
   .browse-blogs ul,
-.browse-blogs li {
-    grid-template-columns: auto;
+  .browse-blogs li {
+    grid-template-columns: auto; 
     list-style-type: none;
     list-style-position: inside;
-    margin: 0;
-    padding: 0;
+    margin:0;
+    padding:0; 
   }
 
   .browse-blogs span {
@@ -725,12 +792,12 @@ ul.browse-blogs {
     text-align: center;
   }
 
-  span[class^=class-] {
+  span[class^="class-"] {
     text-align: center;
   }
 
   .excluded span.excluded-icon {
-    margin-left: 0;
+    margin-left: 0
   }
 
   .browse-actions {
@@ -739,26 +806,28 @@ ul.browse-blogs {
   }
 
   /* SUBSCRIBE (/subscribe) */
+
   .subscribe {
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
 
   /* ACCOUNT (/user) */
+
   .blog-list,
-.blog-list ul {
+  .blog-list ul {
     list-style-position: inside;
     margin: 0;
     padding: 0;
   }
 
   .approved-blogs {
-    border: 1px solid lightgreen;
+    border: 1px solid $success-color;
     padding: 1em;
   }
 
   .unapproved-blogs {
-    border: 1px solid lightcoral;
+    border: 1px solid $failure-color;
     padding: 1em;
     margin: 1em 0;
   }
@@ -769,7 +838,7 @@ ul.browse-blogs {
   }
 
   .approved-blog,
-.unapproved-blog {
+  .unapproved-blog {
     display: none;
   }
 
@@ -779,7 +848,7 @@ ul.browse-blogs {
   }
 
   .listed-blog:nth-child(1n+2) {
-    border-top: 1px solid #3b3b3b;
+    border-top: 1px solid $text-color;
     padding-top: 1em;
     margin-top: 1em;
   }
@@ -799,6 +868,7 @@ ul.browse-blogs {
   }
 
   /* ADMIN (/admin) */
+
   .claimed-blogs form {
     margin-top: 1em;
   }
@@ -808,11 +878,10 @@ ul.browse-blogs {
   }
 
   .admins-list div button,
-.assign-admin button,
-.claimed-blogs button {
+  .assign-admin button,
+  .claimed-blogs button {
     margin-top: 1em;
     float: none;
   }
-}
 
-/*# sourceMappingURL=style.css.map */
+}

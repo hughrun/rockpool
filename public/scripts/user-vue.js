@@ -184,16 +184,44 @@ Vue.component('user-approved-blogs', {
         action: 'delete'
       }
       this.loading(true)
-      axios.post('api/v1/update/user/delete-blog', payload)
+      axios.post('/api/v1/update/user/delete-blog', payload)
+      .catch( err => {
+        console.log(`error with axios:\n${err}`)
+      })
       .then( response => {
         var msg = response.data.msg || response.data.error
         this.addMessage(msg)
         blog.deleting = false
-        if (response.data.blogs) {
-          this.blogs = response.data.blogs
-          Vue.set(this.blogs, this.blogs.indexOf(blog), blog)
+        if (!response.data.error){
+         Vue.delete(this.blogs, this.blogs.indexOf(blog))
         }
         this.loading(false)
+      })
+      .catch( err => {
+        console.log(`error deleting blog:\n${err}`)
+      })
+    },
+    deletePendingBlogRegistration(blog) {
+      var payload = {
+        blog: event.target.id,
+        action: 'delete'
+      }
+      this.loading(true)
+      axios.post('/api/v1/update/user/delete-pending-registration', payload)
+      .catch( err => {
+        console.log(`error with axios:\n${err}`)
+      })
+      .then( response => {
+        var msg = response.data.msg || response.data.error
+        this.addMessage(msg)
+        blog.deleting = false
+        if (!response.data.error){
+         Vue.delete(this.blogs, this.blogs.indexOf(blog))
+        }
+        this.loading(false)
+      })
+      .catch( err => {
+        console.log(`error deleting blog registration:\n${err}`)
       })
     },
     editBlog(blog, index) {
@@ -338,7 +366,41 @@ Vue.component('user-unapproved-blogs', {
     }
   },
   mounted () {},
-  methods: {},
+  methods: {
+    addMessage(msg) {
+      this.$emit('add-message', msg)
+    },
+    checkingDeletion(blog) {
+      blog.deleting = true
+      Vue.set(this.ublogs, this.ublogs.indexOf(blog), blog)
+    },
+    deletePendingBlogRegistration(blog) {
+      var payload = {
+        blog: event.target.id,
+        action: 'reject'
+      }
+      this.$emit('loading', true)
+      axios.post('/api/v1/update/user/delete-pending-registration', payload)
+      .catch( err => {
+        console.log(`error with axios:\n${err}`)
+      })
+      .then( response => {
+        var msg = response.data.msg || response.data.error
+        this.addMessage(msg)
+        blog.deleting = false
+        if (!response.data.error){
+         Vue.delete(this.ublogs, this.ublogs.indexOf(blog))
+        }
+        this.$emit('loading', false)
+      })
+      .catch( err => {
+        console.log(`error deleting blog registration:\n${err}`)
+      })
+    },
+    loading(bool) {
+      this.$emit('loading', bool)
+    }
+  },
   template: `
   <ul class="blog-list unapproved-blogs" >
     <li v-for='blog in ublogs' v-bind:key="blog.idString" class="listed-blog">
@@ -346,6 +408,9 @@ Vue.component('user-unapproved-blogs', {
       <span v-if="blog.title"><a v-bind:href="blog.url">{{ blog.title }}</a></span>
       <span v-else>{{ blog.url }}</span>
       <span class="awaiting-approval"> - awaiting approval</span>
+      <button class="" v-if="blog.deleting" v-on:click="deletePendingBlogRegistration(blog)" v-bind:id="blog.idString">Confirm cancellation</button>
+      <span v-else-if="blog.editing"></span>
+      <button class="" v-else v-on:click="checkingDeletion(blog)" v-bind:id="blog.idString">Cancel</button>
     </li>
   </ul>
   `

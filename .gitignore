@@ -8,4 +8,5 @@ test/sites/LegacyTwoRss.xml
 test/sites/bobbieRss.xml
 views/help.html
 *.bak
+*.css.map
 *.pem
