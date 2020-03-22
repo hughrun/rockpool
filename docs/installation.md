@@ -221,11 +221,9 @@ docker-compose up -d --build
 ```
 At this point, if you have a legacy database you will need to migrate your existing DB in to the `mongo` container. See [Migrating from a legacy database](#migrating-from-a-legacy-database) below. (It is very unlikely you will need to do this).
 
-Now we need to run the setup script. Run the following commands to enter your app's docker container, run the setup script, and exit the container again. The setup script creates indexes in the database, sets up your rockpool admin user, and processes `markdown/help.md` to create a help page at `/views/help.html`:
+Now we need to run the setup script. The setup script creates indexes in the database, sets up your rockpool admin user, and processes `markdown/help.md` to create a help page at `/views/help.html`:
 ```shell
-docker exec -it rockpool_app sh
-npm run setup
-exit
+docker exec -d rockpool_app npm run setup
 ```
 Your app should now be running and ready for use.
 
@@ -270,31 +268,45 @@ cp docker-compose.yml-backup docker-compose.yml
 ```
 This will copy your backup over the top of the default docker-compose.yml. You should now make any adjustments necessary to update the file. 
 
-You are now ready to _build_ from the updated code base and launch:
+You are now ready to _build_ from the updated code base, relaunch the app, and rebuild the _Help_ page:
 ```shell
 docker-compose up -d --build
+docker exec -d rockpool_app npm run setup
 ```
 
 ## Making changes to files
 
+Some key files you may want to change are:
+
+* `settings.json`
+* `markdown/help.md`
+* images and fonts in `public/assets`
+* `sass/style.scss` for stylesheet changes
+
 If you make changes to any files, you may need to run some commands before you see any changes. The most important thing to remember is that _Rockpool_ is running inside a series of Docker containers, so if you adjust something on your server, you need to get those files into the right container.
 
-### Changing the help file or default admin user
-
-1. Make your changes to `settings.json` or `markdown/help.md`
-2. Run `docker-compose up -d --build`. This will rebuild the docker containers and bring everything up again.
-3. Once the app is running, run `docker exec -it rockpool_app sh`
-4. You should now be inside the `rockpool_app` container. Run `npm run setup`. This sets your admin user as an admin, and updates the text of the `help` page if you have made changes to `markdown/help.md`. Note that this will _not_ remove admin rights from any previous default admin user: you will need to do that through the app if you do longer want them to have admin rights.
-5. Run `exit` to exit out of the container.
-
-### Changing assets like css files and images
-
-If you just want to change the colours, fonts etc, you only need to follow the first steps, to re-build the `rockpool_app` container:
-
 1. Make your changes.
-2. Run `docker-compose up -d --build`. This will rebuild the docker containers and bring everything up again.
+2. Run the command:
+```shell
+docker-compose up -d --build
+```
+This will rebuild the docker containers and bring everything up again.
+3. Once the app is running:
+```shell
+docker exec -d rockpool_app npm run setup
+```
+This sets your admin user as an admin, and updates the text of the `help` page if you have made changes to `markdown/help.md`. Note that this will _not_ remove admin rights from any previous default admin user: you will need to do that through the app if you do longer want them to have admin rights.
+4. If you changed the `style.scss` file, you will need to update your css. First, you need to install `sass` inside the container:
+```shell
+docker exec -d rockpool_app npm install -g sass
+```
+Then copy your scss file into the container, and use sass to process it into css:
+```shell
+docker cp sass/style.scss rockpool_app:/usr/src/app/sass/style.scss
+docker exec -d rockpool_app sass sass/style.scss public/styles/style.css
+```
 
-Note that you will need to `git stash` these changes before fetching any updates and then `git stash pop` after applying updates, to re-instate your files.
+Note that you will need to `git stash` any changes before fetching any updates and then `git stash pop` after applying updates, to re-instate your files.
 
 ## Backups and legacy databases
 
@@ -302,23 +314,15 @@ Note that you will need to `git stash` these changes before fetching any updates
 
 You can make a backup of your database using [`mongodump`](https://docs.mongodb.com/manual/reference/program/mongodump/). You should _always_ do this before upgrading to a new version of Rockpool, in case something horrible happens and you have to start again.
 
-Enter the mongo container:
-```shell
-docker exec -it mongodb bash
-```
 Use `mongodump` to take a copy. Because the database is using authorisation mode we need to use the username and password from `settings.json`. Assuming you have kept all the default settings including the insecure default password (not recommended!):
 ```shell
-mongodump -d rockpool -u rockpool -p my_great_password
+docker exec mongodb -d mongodump -d rockpool -u rockpool -p my_great_password
 ```
-Now exit the container:
-```shell
-exit
-```
-Copy the file you just created, into your server's `/tmp` folder (or somewhere else you want to keep backup files).
+Copy the file you just created, into your host server's `/tmp` folder (or somewhere else you want to keep backup files).
 ```shell
 docker cp mongodb:/dump/. /tmp
 ```
-Your backup will now be at `/tmp/rockpool`
+Your backup will now be at `/tmp/rockpool` on your host machine.
 
 ### Restoring your database from backup
 
@@ -327,23 +331,17 @@ You can use [`mongorestore`](https://docs.mongodb.com/manual/reference/program/m
 ```shell
 docker cp /tmp/rockpool_backup mongodb:/dump
 ```
-This copies your backup into the `/dump` folder inside the mongo container. Let's go in and take a look:
-```shell
-docker exec -it mongodb bash
-```
+This copies your backup into the `/dump` folder inside the mongo container. 
+
 Now we use `mongorestore` to restore the backup. Note that we are using `--drop` here: this drops the current database before we restore the backup. If you don't use `--drop`, `mongorestore` will duplicate everthing in your database because it peforms an _insert_ rather than an _update_. Your backup file must have a user with the same name and credentials as the existing database. In practice this should generally not be a problem, since the database you are restoring is a backup of that same database and your user is created when you build the image. The following command assumes you already created a backup in this container and therefore have a `/dump` directory.
 ```shell
-mongorestore -d rockpool /dump/rockpool_backup -u rockpool -p my_great_password --drop
+docker exec mongodb -d mongorestore -d rockpool /dump/rockpool_backup -u rockpool -p my_great_password --drop
 ```
 If it is a fresh container (i.e. has been rebuilt since you took your backup) then the mongodump will have dumped the collections straight into `/dump`. In that case run it slightly differently:
 ```shell
-mongorestore -d rockpool /dump -u rockpool -p my_great_password --drop
+docker exec mongodb -d mongorestore -d rockpool /dump -u rockpool -p my_great_password --drop
 ```
-You should see several rows of messages saying mongo has finished restoring each collection, then `done` and a return to the command prompt. Exit the container:
-```shell
-exit
-```
-You are now using your backup version of the database - you do not need to restart the app.
+You should now be using your backup version of the database - you do not need to restart the app.
 
 ### Migrating from a legacy database
 
