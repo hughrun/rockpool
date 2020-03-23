@@ -327,7 +327,13 @@ Promise.all([migrateUsers, migratePockets]).then(x => {
       cleanPockets.forEach(user => {
         newUsers.updateOne(
           {email: user.email},
-          {$set: {pocketName: user.pocketName, pocketToken: user.pocketToken}},
+          { $set: {
+            pocket: {
+              username: user.pocketName, 
+              token: user.pocketToken
+              }
+            }
+          },
           {upsert: true}
           )
       })
