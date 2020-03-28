@@ -1,26 +1,20 @@
 # Installation Instructions
 
-To install `rockpool`, you should follow these steps in order:
+To install `rockpool`, you should follow these steps in order. More detailed instructions follow this list.
 
 1. Register an app with [Pocket](https://getpocket.com), and optionally with [Twitter](https://developer.twitter.com/en/docs/basics/getting-started) and [Mastodon](https://docs.joinmastodon.org/)
 2. Ensure you have the SMTP details for an admin email account. The recommended way to do this is via [Mailgun](https://www.mailgun.com/) or a similar service.
-
 3. Obtain app credentials for Mastodon and Twitter accounts, if you plan to use them.
 4. [Install](https://docs.docker.com/compose/install/) `docker` and `docker-compose`
 5. Download rockpool either using `git clone` or [via zip download](https://github.com/hughrun/rockpool/releases)
-
 6. Copy `settings-example.json` to `settings.json` and fill in the relevant values
-
 7. Update password fields: the `pwd` value in `mongo-init.js` must match the `mongo_password` value in `settings.json` and should not be the default value.
-
 8. Check the `markdown/help.md` file says what you want: if not, adjust the wording. This is a [markdown](https://daringfireball.net/projects/markdown/) file so ensure you use markdown syntax. It will be processed into HTML in a later step.
-
-8. Set up your reverse-proxy server. See **Setting up your web server** below for tips on this.
-9. Run `docker-compose up -d --build`
-
-10. At this point, if you have a legacy database you will need to migrate your DB in to the `mongo` container. See **Migrating from a legacy database** below. It is unlikely you will need to do this.
-11. Run `docker exec -d rockpool_app npm run setup`. This creates indexes in the database, sets up your admin user, and updates the text of the `help` page if you have made changes to `markdown/help.md`. Then run `exit` to exit out of the container.
-12. Enjoy your new Rockpool app!
+9. Set up your reverse-proxy server. See [Setting up your web server](https://github.com/hughrun/rockpool/blob/master/docs/installation.md#set-up-your-web-server) for tips on this.
+10. Run `docker-compose up -d --build`
+11. At this point, if you have a legacy database you will need to migrate your DB in to the `mongo` container. See [Migrating from a legacy database](https://github.com/hughrun/rockpool/blob/master/docs/installation.md#migrating-from-a-legacy-database) below. It is unlikely you will need to do this.
+12. Run `docker exec -d rockpool_app npm run setup`. This creates indexes in the database, sets up your admin user, and updates the text of the `help` page if you have made changes to `markdown/help.md`.
+13. Enjoy your new Rockpool app!
 
 ## Download Rockpool code
 
