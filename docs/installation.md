@@ -78,7 +78,7 @@ Once you are set up, enter the relevant details in `settings.json`:
     "from": "hello@example.com" 
   },
 ```
-## Finalise settings
+## Settings
 
 You should now review the rest of the values in `settings.json` and change them as appropriate.
 
@@ -138,8 +138,24 @@ If you write a blog post that is 'off topic' and don't want it to be included in
 
 * `notrockpool`
 ```
-
 This is a [markdown](https://daringfireball.net/projects/markdown/) file so ensure you use markdown syntax. It will be processed into HTML in a later step.
+
+## Customise the styles and images
+
+The out of the box styles and images can and should be customised to suit your preferences. To customise the colours and fonts, edit the file at `sass/style.scss`. This is a a Sass file that is processed into `public/styles/style.css` when you run `npm run setup`. 
+
+Everything above the `@font-face` statements is setting values for Sass variables. If you just want to customise your **colours**, you should not need to change anything else.
+
+If you want to use different **fonts**, you either need to add your font files to `public/assets/fonts` and then add a `@font-face` statement in scss file pointing to your font files, or use web fonts and add a `<link>` tag to `views/partials/head.html`. I favour the first option both from a performance point of view and a philosophy that the less junk you pull in from scripts, the better.
+
+The **images** at `/subscribe` are pretty terrible: they're just some crappy SVG files I created in literally about 10 minutes - **you're supposed to change them**. The licensing around good SVG files from somewhere like the Noun Project, or direct from Twitter, is pretty confusing and I wasn't confident I had the right to redistribute them. Hence you get my terrible versions. To replace these, simply find a quality SVG file you have the right to use, rename it to the same name as the file you want to replace, and save it to `/public/assets/images`. These files are called:
+
+* `masto-icon.scg` (Mastodon logo)
+* `opml-icon.svg` (OPML file download image)
+* `pocket-icon.svg` (Pocket logo)
+* `twitter-icon.svg` (Twitter logo)
+
+There is also a file in the same directory called `rp_favicon.png` which is where your favicon comes from. Unless you want the generic Rockpool favicon, you should also change this, but note that it's a png rather than an svg file.
 
 ## Install Docker and Compose
 
@@ -353,12 +369,12 @@ docker exec -d mongodb mongorestore -d rockpool /dump -u rockpool -p my_great_pa
 ```
 Once you start using it with rockpool, any further database restores should be from a new backup taken following the instructions in _Creating a backup of your database_.
 
-With a legacy database, you will now need to migrate the data structure to match the new _rockpool_ structure:
+With a legacy database, you will now need to migrate the data structure to match the new _rockpool_ structure. Wait 20 seconds or so to let Mongo start up, and then run the migrate script and the setup script:
 ```shell
 docker exec -d rockpool_app npm run migrate
 docker exec -d rockpool_app npm run setup
 ```
-You should now see all the blogs from your database in the `/browse` page, and latest articles at `/`.
+Depending on how big your database is, after a minute or two you should see all the blogs from your database in the `/browse` page, and latest articles at `/`.
 
 ## A note on Security
 

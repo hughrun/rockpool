@@ -1,6 +1,7 @@
 notes/
 feeds/
 public/assets/*.svg
+public/assets/*.png
 public/files/feeds.opml
 test/sites/bobRss.xml
 test/sites/LegacyOneRss.xml
