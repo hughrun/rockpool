@@ -19,9 +19,8 @@ To install `rockpool`, you should follow these steps in order:
 9. Run `docker-compose up -d --build`
 
 10. At this point, if you have a legacy database you will need to migrate your DB in to the `mongo` container. See **Migrating from a legacy database** below. It is unlikely you will need to do this.
-11. Run `docker exec -it rockpool_app sh`
-12. You should now be inside the `rockpool_app` container. Run `npm run setup`. This creates indexes in the database, sets up your admin user, and updates the text of the `help` page if you have made changes to `markdown/help.md`. Then run `exit` to exit out of the container.
-13. Enjoy your new Rockpool app!
+11. Run `docker exec -d rockpool_app npm run setup`. This creates indexes in the database, sets up your admin user, and updates the text of the `help` page if you have made changes to `markdown/help.md`. Then run `exit` to exit out of the container.
+12. Enjoy your new Rockpool app!
 
 ## Download Rockpool code
 
