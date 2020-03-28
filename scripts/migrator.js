@@ -12,7 +12,7 @@ const url = `mongodb://${settings.mongo_user}:${settings.mongo_password}@${setti
 const dbName = settings.mongo_db
 
 // feedfinder
-const { getFeed } = require('@hughrun/feedfinder')
+const { getSite } = require('@hughrun/feedfinder')
 
 // USERS
 // Only migrate if emails[0].verified is true
@@ -171,7 +171,7 @@ function updateTitles(records) {
   console.log('Finding blog titles - this will take a few moments...')
   let promises = []
   for (let entry of records) {
-    let record = getFeed(entry.url).catch( () => entry) // get the title or simply return the entry
+    let record = getSite(entry.feed).catch( () => entry) // get the title or simply return the entry
     promises.push(record)
   }
   return Promise.all(promises)
