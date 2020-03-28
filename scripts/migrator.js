@@ -171,6 +171,7 @@ function updateTitles(records) {
   console.log('Finding blog titles - this will take a few moments...')
   let promises = []
   for (let entry of records) {
+    console.log(entry.feed)
     let record = getSite(entry.feed).catch( () => entry) // get the title or simply return the entry
     promises.push(record)
   }
@@ -178,7 +179,7 @@ function updateTitles(records) {
   .then( result => {
     for (let res of result) {
       records.map( record => {
-        if ( (record.url === res.url) && res.title) {
+        if ( (record.feed === res.feed) && res.title) {
           record.title = res.title
         }
         return record
