@@ -580,6 +580,7 @@ awaitDb.then( function() {
       res.json({user: user, blogs: data.blogs})
     })
     .catch( err => {
+      console.log("error in app.get('/api/v1/user/blogs') in app.js")
       debug.log(err)
     })
   })
@@ -602,6 +603,7 @@ awaitDb.then( function() {
       res.json(data.blogs)
     })
     .catch( err => {
+      console.log("error in app.get('/api/v1/user/unapproved-blogs') in app.js")
       debug.log(err)
     })
   })
@@ -966,7 +968,7 @@ awaitDb.then( function() {
           user.claims = res.blogs
           return user
         })
-      })
+      }) // TODO: why use Promise.all when there is only one promise?
       return Promise.all(mapped).then(users => {
         let vals = users.map( user => {
           return {
@@ -980,6 +982,7 @@ awaitDb.then( function() {
       })
     })
     .catch(e => {
+      console.log("error in app.get('/api/v1/admin/blogs-for-approval') in app.js")
       debug(e)
       res.json({error: e})
     })
@@ -990,12 +993,13 @@ awaitDb.then( function() {
     args.query = {failing: true}
     db.getBlogs(args)
     .then( args => {
-      let data = args.blogs.map( blog => {
-        return {
-          url: blog.url,
-          feed: blog.feed,
-          idString: blog.idString
-        }
+      let failing = args.blogs.filter( x => x.suspended === false)
+      let data = failing.map( blog => {
+          return {
+            url: blog.url,
+            feed: blog.feed,
+            idString: blog.idString
+          }
       })
       res.json(data)
     })
@@ -1228,7 +1232,7 @@ awaitDb.then( function() {
           const message = {
             text: `User ${req.user} has deleted ${args.url} from ${settings.app_name}.`,
             to: args.user,
-            subject: `Your blog listing has been removed from ${settings.app_name}`,
+            subject: `Your blog has been removed from ${settings.app_name} because:\n\n${args.reason}`,
           }
           sendEmail(message) // send email to admins
           res.send({class: 'flash-success', text: `${args.url} deleted`})

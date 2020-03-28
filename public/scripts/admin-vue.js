@@ -174,7 +174,7 @@ Vue.component('users-with-approvals', {
   data() {
     return {
       legacy: false,
-      approvals: null
+      approvals: []
     }
   },
   mounted() {
@@ -207,7 +207,7 @@ Vue.component('users-with-approvals', {
   },
   template: `
   <section>
-    <div v-if="approvals">
+    <div v-if="approvals.length > 0">
       <h2>Awaiting Approval</h2>
       <div 
         v-for="(user, index) in approvals"
@@ -231,7 +231,6 @@ Vue.component('users-with-approvals', {
         ></blogs-for-approval>
       </div>
     </div>
-    <div v-else>There are no blogs awaiting approval.</div>
   </section>
   `
 })
@@ -345,6 +344,7 @@ Vue.component('failing-blogs-list', {
     },
     suspendBlog(blog, reason) {
       // suspend blog on server
+      console.log(blog)
       let data = blog
       data.reason = reason
       this.loading(true)
@@ -353,7 +353,11 @@ Vue.component('failing-blogs-list', {
       .then( res => {
         this.addMessage(res.data) // then add message
         if (res.data.class === 'flash-success') {
-          Vue.set(this.suspended, this.suspended.length, blog) // then add to the suspended list
+          Vue.set(this.suspended, this.suspended.length, blog) // add to the suspended list
+          let failIndex = this.failing.filter( x => x.idString === blog.idString)
+          if (failIndex) {
+            this.failing.splice(this.failing.indexOf(failIndex)) // remove from failing list
+          }
         }
         this.loading(false)
       })
@@ -362,7 +366,7 @@ Vue.component('failing-blogs-list', {
   template: `
   <section>
     <h2>Failing feeds</h2>
-    <section v-if="failing" class="claimed-blogs">
+    <section v-if="failing.length > 0" class="claimed-blogs">
       <p>
       These blog feeds are currently failing. 
       You can either delete them completely, or suspend them pending further research or changes. 
@@ -380,7 +384,7 @@ Vue.component('failing-blogs-list', {
       </form>
     </section>
     <div v-else>You have no failing feeds to attend to.</div>
-    <suspended-blogs @add-message="addMessage" @loading="loading" v-bind:suspended="suspended"></suspended-blogs>
+    <suspended-blogs v-if="suspended.length > 0" @add-message="addMessage" @loading="loading" v-bind:suspended="suspended"></suspended-blogs>
     <suspend-blog @add-message="addMessage" @suspend-blog="suspendBlog"></suspend-blog>
   </section>
   `
@@ -437,9 +441,7 @@ Vue.component('suspended-blog', {
 Vue.component('suspended-blogs', {
   props: ['suspended'],
   data () {
-    return {
-      suspendedBlogs: this.suspended.length
-    }
+    return {}
   },
   methods: {
     addMessage(msg) {
@@ -449,9 +451,14 @@ Vue.component('suspended-blogs', {
       this.$emit('loading', bool)
     },
     deleteBlog(blog,reason) {
+      let payload = {
+        url: blog.url,
+        blog: blog.idString,
+        reason: reason
+      }
       this.loading(true)
       axios
-      .post('/api/v1/update/admin/delete-blog', {url: blog.url}) // delete blog
+      .post('/api/v1/update/admin/delete-blog', payload) // delete blog
       .then( res => {
         this.addMessage(res.data) // then add message
         if (res.data.class === 'flash-success') {
@@ -483,7 +490,7 @@ Vue.component('suspended-blogs', {
   },
   template: `
   <div>
-    <h3 v-if="suspendedBlogs">Suspended Blogs</h3>
+    <h2>Suspended Blogs</h2>
     <form v-for="blog in suspended" class="claimed-blogs">
       <suspended-blog 
       v-bind:blog="blog"
@@ -527,7 +534,7 @@ Vue.component('suspend-blog', {
   },
   template: `
   <div>
-    <h3>Suspend Blog</h3>
+    <h2>Suspend Blog</h2>
     <form class="claimed-blogs">
       <label>URL of blog to suspend:</label><br/>
       <input v-model="url" type="url" size="40"><br/>
