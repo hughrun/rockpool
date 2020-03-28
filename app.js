@@ -993,7 +993,7 @@ awaitDb.then( function() {
     args.query = {failing: true}
     db.getBlogs(args)
     .then( args => {
-      let failing = args.blogs.filter( x => x.suspended === false)
+      let failing = args.blogs.filter( x => x.suspended !== true)
       let data = failing.map( blog => {
           return {
             url: blog.url,
