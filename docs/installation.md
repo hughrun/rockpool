@@ -112,7 +112,7 @@ You should now review the rest of the values in `settings.json` and change them 
 | `minutes_between_checking_feeds` | The number of minutes between checking each blog's RSS feed for new articles. The larger the number of blogs in your database, the larger this number should be: if you check too frequently on a large database the loop will not have finished when you start running it again. | `required` |
 | `mongo_db` | The name of the database. If you change the default database name (`rockpool`) you need to also change it in `docker-compose.yml` and `mongo-init.js`. | `required` |
 | `mongo_url` | The URL of your mongodb instance. In most cases this should be `""mongo:27017"` - do not change it unless you really know what you are doing. | `required` |
-| `mongo_password` | Use a good strong password for your mongo user. | `required` |
+| `mongo_password` | Use a good strong password for your mongo user. You should change the default value here, and also change it in `mongo-init.js`.| `required` |
 | `mongo_user` | The username of your mongo user. Note this is the username in mongo, not the operating system user. If you change the default user name (`rockpool`) you need to also change it in `mongo-init.js`. | `required` |
 | `org_name` | Name of the organisation responsible for administering your community. Appears in the footer | `required` |
 | `org_url` | Website address of your organisation's website. Appears in the footer | `required` |
