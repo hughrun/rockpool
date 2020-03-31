@@ -1,3 +1,6 @@
+// node inbuilt
+const { exec } = require('child_process')
+
 // settings
 const settings = require('../settings.json')
 const env = process.env.NODE_ENV // are we in production, development, or test?
@@ -161,6 +164,9 @@ const processHelp = new Promise( function (resolve, reject) {
 
 // let's do this...
 createAdmin
-  .then(createCollections)
-  .then(createIndexes)
-  .then(processHelp)
+.then(createCollections)
+.then(createIndexes)
+.then(processHelp)
+.then( () => {
+  return exec('sass sass/style.scss public/styles/style.css')
+})
