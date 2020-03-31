@@ -30,6 +30,7 @@
   },
   "excluded_tags" : ["notrockpool", "notpets", "notrockpoolblogs"],
   "filtered_tags" : ["uncategorized", "uncategorised", "post", "page"],
+  "included_tags" : [],
   "legacy_db" : false,
   "mastodon" : {
     "access_token" : "1234",
