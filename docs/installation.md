@@ -1,4 +1,4 @@
-# Installation Instructions
+# Installation, setup, and updates
 
 To install `rockpool`, you should follow these steps in order. More detailed instructions follow this list.
 
@@ -13,7 +13,7 @@ To install `rockpool`, you should follow these steps in order. More detailed ins
 9. Set up your reverse-proxy server. See [Setting up your web server](https://github.com/hughrun/rockpool/blob/master/docs/installation.md#set-up-your-web-server) for tips on this.
 10. Run `docker-compose up -d --build`
 11. At this point, if you have a legacy database you will need to migrate your DB in to the `mongo` container. See [Migrating from a legacy database](https://github.com/hughrun/rockpool/blob/master/docs/installation.md#migrating-from-a-legacy-database) below. It is unlikely you will need to do this.
-12. Run `docker exec -d rockpool_app npm run setup`. This creates indexes in the database, sets up your admin user, and updates the text of the `help` page if you have made changes to `markdown/help.md`.
+12. Run `docker exec -d rockpool_app npm run setup`. This creates indexes in the database, sets up your admin user, applies your sass settings, and updates the text of the `help` page.
 13. Enjoy your new Rockpool app!
 
 ## Download Rockpool code
@@ -100,6 +100,7 @@ You should now review the rest of the values in `settings.json` and change them 
 | `email` | Rockpool requires an SMTP email account to send system emails, using [emailjs](https://github.com/eleith/emailjs). You can use a personal Outlook or Hotmail etc account, but I recommend a service like [Mailgun](https://www.mailgun.com/) which will be free unless your app becomes enormously popular. | `required` in production and development |
 | `excluded_tags` | articles with one or more of these tags will be ignored by the app and neither ingested nor announced | `required`, but may be an empty array. |
 | `filtered_tags` | None of these tags will be added to the database record of a post (i.e. these are like "stop words" for tags) | `required`, but may be an empty array. |
+| `included_tags` | If this array is empty it has no effect. If not empty, any tags that are listed in this array become "opt in" tags, effectively the opposite of `exluded_tags`. Articles with one or more of these tags _will_ be ingested and announced, and articles that do _not_ include any of these tags will be ignored. | `required`, but may be an empty array. |
 | `legacy_db` | Indicates whether the database has been migrated from a `CommunityTweets` application. Near certain you should set to `false`. | `required` |
 | `mastodon` | An object for all information relating to Mastodon. | `required` |
 | `mastodon.use_mastodon` | Boolean indicating whether you are using Mastodon with your app. If set to `false` you do not need to enter any other values in `mastodon`. | `required` |
@@ -231,7 +232,12 @@ docker-compose up -d --build
 ```
 At this point, if you have a legacy database you will need to migrate your existing DB in to the `mongo` container. See [Migrating from a legacy database](#migrating-from-a-legacy-database) below. (It is very unlikely you will need to do this).
 
-Now we need to run the setup script. The setup script creates indexes in the database, sets up your rockpool admin user, and processes `markdown/help.md` to create a help page at `/views/help.html`:
+Now we need to run the setup script. The setup script:
+* creates indexes in the database, 
+* sets up your rockpool admin user, 
+* processes your `styles.scss` file into `styles.css`, and 
+* processes `markdown/help.md` to create a help page at `/views/help.html`:
+
 ```shell
 docker exec -d rockpool_app npm run setup
 ```
@@ -264,7 +270,7 @@ You are now on the new branch.
 There are two ways to re-apply the changes you previously _stashed_ (but be careful).
 
 **Option 1**
-This is best if you have made a lot of changes to styles, fonts etc. 
+This is recommended if you have made changes to styles, fonts etc. You should always check the Release notes before running `stash pop` as you may overwrite an important change. Once you have noted anything that needs to be adjusted, run:
 ```shell
 git stash pop
 ```
@@ -276,9 +282,9 @@ Check that `settings.json` is still correct and up to date, and adjust if necess
 ```shell
 cp docker-compose.yml-backup docker-compose.yml
 ```
-This will copy your backup over the top of the default docker-compose.yml. You should now make any adjustments necessary to update the file. 
+This will copy your backup over the top of the default docker-compose.yml. You should now make any adjustments necessary to update the file. Remember that you will probably need to change the default password in `mongo-init.js` again.
 
-You are now ready to _build_ from the updated code base, relaunch the app, and rebuild the _Help_ page:
+You are now ready to _build_ from the updated code base, relaunch the app, and run `setup` again:
 ```shell
 docker-compose up -d --build
 docker exec -d rockpool_app npm run setup
@@ -305,18 +311,9 @@ This will rebuild the docker containers and bring everything up again.
 ```shell
 docker exec -d rockpool_app npm run setup
 ```
-This sets your admin user as an admin, and updates the text of the `help` page if you have made changes to `markdown/help.md`. Note that this will _not_ remove admin rights from any previous default admin user: you will need to do that through the app if you do longer want them to have admin rights.
-4. If you changed the `style.scss` file, you will need to update your css. First, you need to install `sass` inside the container:
-```shell
-docker exec -d rockpool_app npm install -g sass
-```
-Then copy your scss file into the container, and use sass to process it into css:
-```shell
-docker cp sass/style.scss rockpool_app:/usr/src/app/sass/style.scss
-docker exec -d rockpool_app sass sass/style.scss public/styles/style.css
-```
+This sets your admin user as an admin, applies any style changes you made in `style.scss`, and updates the text of the `help` page if you have made changes to `markdown/help.md`. Note that this will _not_ remove admin rights from any previous default admin user: you will need to do that through the app if you do longer want them to have admin rights.
 
-Note that you will need to `git stash` any changes before fetching any updates and then `git stash pop` after applying updates, to re-instate your files.
+Note that you will need to `git stash` any changes before fetching any new releases, and then `git stash pop` after applying updates, to re-instate your files.
 
 ## Backups and legacy databases
 
@@ -332,7 +329,7 @@ Copy the file you just created, into your host server's `/tmp` folder (or somewh
 ```shell
 docker cp mongodb:/dump/. /tmp
 ```
-Your backup will now be at `/tmp/rockpool` on your host machine.
+Your backup will now be at `/tmp/rockpool` on your host machine. You should keep it somewhere safe.
 
 ### Restoring your database from backup
 
@@ -343,7 +340,7 @@ docker cp /tmp/rockpool_backup mongodb:/dump
 ```
 This copies your backup into the `/dump` folder inside the mongo container. 
 
-Now we use `mongorestore` to restore the backup. Note that we are using `--drop` here: this drops the current database before we restore the backup. If you don't use `--drop`, `mongorestore` will duplicate everthing in your database because it peforms an _insert_ rather than an _update_. Your backup file must have a user with the same name and credentials as the existing database. In practice this should generally not be a problem, since the database you are restoring is a backup of that same database and your user is created when you build the image. The following command assumes you already created a backup in this container and therefore have a `/dump` directory.
+Now we use `mongorestore` to restore the backup. Note that we are using `--drop` here: this wipes the current database before we restore the backup. If you don't use `--drop`, `mongorestore` will duplicate everthing in your database because it peforms an _insert_ rather than an _update_. Your backup file must have a user with the same name and credentials as the existing database. In practice this should generally not be a problem, since the database you are restoring is a backup of that same database and your user is created when you build the image. The following command assumes you already created a backup in this container and therefore have a `/dump` directory.
 ```shell
 docker exec mongodb -d mongorestore -d rockpool /dump/rockpool_backup -u rockpool -p my_great_password --drop
 ```
@@ -355,7 +352,7 @@ You should now be using your backup version of the database - you do not need to
 
 ### Migrating from a legacy database
 
-In the unlikely event you were using [CommunityTweets](https://github.com/hughrun/CommunityTweets), you will need to migrate your database to the new `rockpool` structure. 
+In the unlikely event you were using [CommunityTweets](https://github.com/hughrun/CommunityTweets), you will need to migrate your database to the new `rockpool` structure. These instructions are primarily for Hugh to remember how to do this.
 
 You should use [`mongodump`](https://docs.mongodb.com/manual/reference/program/mongodump/) to make a copy of your legacy database from its current location. Move it to your server using something like [`scp`](https://linux.die.net/man/1/scp) or via the ability for `mongodump` to copy from remote servers.
 
