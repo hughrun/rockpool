@@ -19,7 +19,6 @@ const engines = require('consolidate') // use consolidate with whiskers template
 // Mongo
 const { MongoClient, ObjectId } = require('mongodb') // Mongo
 const mongoUrl = `mongodb://${settings.mongo_user}:${settings.mongo_password}@${settings.mongo_url}/${settings.mongo_db}`
-const dbName = settings.mongo_db
 // WAIT FOR DATABASE TO CONNECT
 // This is important for running in Docker
 // Otherwise the app starts trying to connect to Mongo before it's ready
