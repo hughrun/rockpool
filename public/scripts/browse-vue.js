@@ -55,9 +55,9 @@ Vue.component('blog-actions', {
       axios
       .post('/api/v1/update/user/filter-pocket', {blog: blog.idString, exclude: true})
       .then( response => {
-        if (response.data.result == 'ok') { // hand on what are we getting back?
+        if (response.data.result == 'ok') {
           Vue.set(blog, 'excluded', true)
-          this.$emit('add-message', {class: 'flash-success', text: `${blog.url} now included excluded from Pocket feed`})
+          this.$emit('add-message', {class: 'flash-success', text: `${blog.url} now excluded from your Pocket feed`})
         } else {
           this.$emit('add-message', {class: 'flash-error', text: response.data.error})
         }
@@ -77,7 +77,7 @@ Vue.component('blog-actions', {
       .then( response => {
         if (response.data.result == 'ok') {
           Vue.set(blog, 'excluded', false)
-          this.$emit('add-message', {class: 'flash-success', text: `${blog.url} now included in Pocket feed`})
+          this.$emit('add-message', {class: 'flash-success', text: `${blog.url} now included in your Pocket feed`})
         } else {
           this.$emit('add-message', {class: 'flash-error', text: response.data.error})
         }
@@ -149,7 +149,7 @@ Vue.component('blog-listing', {
   <span v-if="this.blog.claimed" class="unapproved-blog"></span>
   <span v-bind:class="blogClass">{{ this.blog.category }}</span>
   <span v-if="this.blog.failing" class="failing-icon">failing</span>
-  <span v-if="this.blog.suspended" class="suspended-icon">supended</span>
+  <span v-if="this.blog.suspended" class="suspended-icon">suspended</span>
   <span v-if="this.blog.excluded" class="excluded-icon">excluded</span>
   </div>
   `
