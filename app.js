@@ -588,7 +588,7 @@ awaitDb.then( function() {
     db.getUsers({query: {"email" : req.user}})
     .then( // now get the unapproved blogs
       doc => {
-        if (doc.users.length > 0) {
+        if (doc.users.length > 0 && doc.users[0].blogsForApproval) {
           doc.query = {
             "_id": {$in: doc.users[0].blogsForApproval},
           }
@@ -621,7 +621,7 @@ awaitDb.then( function() {
   app.post('/api/v1/update/user/info', 
   [
     // normalise email
-    body('email').isEmail().normalizeEmail(),
+    body('email').isEmail(),
     // validate twitter with custom check
     body('twitter').custom( val => {
       return val === '' || val.match(/^@+[A-Za-z0-9_]*$/)
