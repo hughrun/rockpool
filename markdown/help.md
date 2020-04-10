@@ -20,12 +20,6 @@ If your blog was already registered, you can 'claim' a blog on the `browse` page
 
 If you change your mind, or you accidentally claimed a blog, you can cancel it in your account dashboard. Just click 'cancel' next to the blog name.
 
-## Excluding an individual blog post
-
-If you write a blog post that is 'off topic' and don't want it to be included in the _Rockpool_ database or tweeted/tooted, you can exclude it from being ingested by assigning one of the following tags to the post in your blogging software:
-
-* `notrockpool`
-
 ## Subscribing via Pocket
 
 1. Log in by clicking `login or register`, enter an email address, and click on the link when you receive it in your email inbox.
@@ -35,7 +29,7 @@ If you write a blog post that is 'off topic' and don't want it to be included in
 
 Posts will now automatically appear in your Pocket list after they are published.
 
-## Unsubscribing Pocket
+## Cancelling your Pocket subscription
 
 1. Log in by clicking `login or register`, enter an email address, and click on the link when you receive it in your email inbox.
 2. Click on `Cancel Pocket subscription`
@@ -45,8 +39,4 @@ Posts will now automatically appear in your Pocket list after they are published
 
 On the `browse` page you can exclude or include (i.e. cancel the exclusion) each blog. Make sure you are logged in first, and have registered your Pocket account. You will then be able to click on 'Actions' to the right of each blog, and then click the button to Exclude or Include.
 
-If you 'exclude' a blog, when new posts are published they will **not** be added to your Pocket list. 
-
-## More help
-
-Further documentation is available at the [Rockpool repo on GitHub](https://github.com/hughrun/rockpool/tree/master/docs)
+If you 'exclude' a blog, when new posts are published they will **not** be added to your Pocket list.

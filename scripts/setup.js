@@ -153,6 +153,7 @@ const processHelp = new Promise( function (resolve, reject) {
   {>header}
   <section class="main">
     ${html}
+    {>filters}
   </section>
   {>footer}
 {>foot}`

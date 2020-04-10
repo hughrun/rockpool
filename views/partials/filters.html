@@ -1,0 +1,31 @@
+<section>
+  {if excluded}
+  <h2>Using tags to stop your post being ingested</h2>
+  <p>If you use one of these tags in your blog post, it will not be ingested into <i>{appName}</i>, nor announced on Twitter or Mastodon. This is useful if your post is "off topic", or a little more personal.</p>
+  <ul>
+    {for tag in excluded}
+    <li><code>{tag}</code></li>
+    {/for}
+  </ul>
+  {/if}
+  {if included}
+  <h2>Using tags to ensure your blog post is included</h2>
+  <p>If you use one of these tags in your blog post, it will be ingested into <i>{appName}</i> (assuming your blog is registered).</p>
+  <ul>
+    {for tag in included}
+    <li><code>{tag}</code></li>
+    {/for}
+  </ul>
+  {/if}
+  {if contentWarnings}
+  <h2>Content Warnings</h2>
+  <p>If you use one of these words in the <strong>tags</strong> or <strong>title</strong> of your blog post, it will be given a content warning (using the word listed below) when posted to Mastodon.</p>
+  <ul>
+    {for warning in contentWarnings}
+    <li><code>{warning}</code></li>
+    {/for}
+  </ul>
+  {/if}
+  <h2>More help</h2>
+  <p>Further documentation is available at the <a href="https://github.com/hughrun/rockpool/tree/master/docs">Rockpool repo on GitHub</a>.</p>
+</section>

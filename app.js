@@ -236,10 +236,14 @@ awaitDb.then( function() {
         head: __dirname+'/views/partials/head.html',
         header: __dirname+'/views/partials/header.html',
         foot: __dirname+'/views/partials/foot.html',
-        footer: __dirname+'/views/partials/footer.html'
+        footer: __dirname+'/views/partials/footer.html',
+        filters: __dirname+'/views/partials/filters.html'
       },
-      user: req.session.passwordless,
-      errors: req.flash('error')
+      contentWarnings: settings.content_warnings,
+      errors: req.flash('error'),
+      excluded: settings.excluded_tags,
+      included: settings.included_tags,
+      user: req.session.passwordless
     })
   })
 
