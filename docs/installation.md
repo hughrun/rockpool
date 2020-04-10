@@ -102,6 +102,7 @@ You should now review the rest of the values in `settings.json` and change them 
 | `filtered_tags` | None of these tags will be added to the database record of a post (i.e. these are like "stop words" for tags) | `required`, but may be an empty array. |
 | `included_tags` | If this array is empty it has no effect. If not empty, any tags that are listed in this array become "opt in" tags, effectively the opposite of `exluded_tags`. Articles with one or more of these tags _will_ be ingested and announced, and articles that do _not_ include any of these tags will be ignored. | `required`, but may be an empty array. |
 | `legacy_db` | Indicates whether the database has been migrated from a `CommunityTweets` application. Near certain you should set to `false`. | `required` |
+| `locale` | The [locale string](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) for your language. Defaults to `en-AU` (Australian English). This is used when comparing downcased tags and titles against exlude and include tags and content warnings. | `required` |
 | `mastodon` | An object for all information relating to Mastodon. | `required` |
 | `mastodon.use_mastodon` | Boolean indicating whether you are using Mastodon with your app. If set to `false` you do not need to enter any other values in `mastodon`. | `required` |
 | `mastodon.hours_between_toots` | number indicating the number of hours between tooting the same article. | `required` if using Mastodon |

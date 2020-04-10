@@ -32,6 +32,7 @@
   "filtered_tags" : ["uncategorized", "uncategorised", "post", "page"],
   "included_tags" : [],
   "legacy_db" : false,
+  "locale" : "en-AU",
   "mastodon" : {
     "access_token" : "1234",
     "domain_name" : "ausglam.space",
