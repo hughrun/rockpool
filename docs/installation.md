@@ -184,13 +184,10 @@ nginx is a good choice, because it's fast and often used as a reverse-proxy. You
 ```nginx
 server {
  server_name rockpool.example.com;
- location / {
+  location / {
+    include proxy_params;
     proxy_pass http://127.0.0.1:3000;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
-    proxy_set_header Host $host;
-    proxy_cache_bypass $http_upgrade;
+    proxy_read_timeout 90;
   }
 }
 ```
@@ -332,6 +329,11 @@ docker cp mongodb:/dump/. /tmp
 ```
 Your backup will now be at `/tmp/rockpool` on your host machine. You should keep it somewhere safe.
 
+To ensure you don't have filename conflicts next time you do this, you should now delete the backup you made inside the container:
+```shell
+docker exec -d mongodb rm -r /dump/rockpool
+```
+
 ### Restoring your database from backup
 
 You can use [`mongorestore`](https://docs.mongodb.com/manual/reference/program/mongorestore/) to restore your backup. Assuming you have a backup at `/tmp/rockpool_backup`, from your server command line run:
@@ -343,11 +345,7 @@ This copies your backup into the `/dump` folder inside the mongo container.
 
 Now we use `mongorestore` to restore the backup. Note that we are using `--drop` here: this wipes the current database before we restore the backup. If you don't use `--drop`, `mongorestore` will duplicate everthing in your database because it peforms an _insert_ rather than an _update_. Your backup file must have a user with the same name and credentials as the existing database. In practice this should generally not be a problem, since the database you are restoring is a backup of that same database and your user is created when you build the image. The following command assumes you already created a backup in this container and therefore have a `/dump` directory.
 ```shell
-docker exec mongodb -d mongorestore -d rockpool /dump/rockpool_backup -u rockpool -p my_great_password --drop
-```
-If it is a fresh container (i.e. has been rebuilt since you took your backup) then the mongodump will have dumped the collections straight into `/dump`. In that case run it slightly differently:
-```shell
-docker exec mongodb -d mongorestore -d rockpool /dump -u rockpool -p my_great_password --drop
+docker exec -d mongodb mongorestore -d rockpool /dump/rockpool_backup -u rockpool -p my_great_password --drop
 ```
 You should now be using your backup version of the database - you do not need to restart the app.
 
