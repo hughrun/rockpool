@@ -477,6 +477,14 @@ input[type="email"].email-signup {
   blogs browse 
  ############## */
 
+ #browse-page h2 {
+  display: inline-block;
+}
+
+#clear-selection-button {
+  float: right;
+}
+
 .browse-blogs li {
   max-width: 100vw;
   display: grid;
@@ -527,6 +535,7 @@ span[class^=class-] {
   padding: 0 0.5em;
   margin: 1em;
   line-height: 1.6em;
+  cursor: pointer;
 }
 
 .class-0 {
