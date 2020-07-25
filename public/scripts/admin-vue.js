@@ -34,7 +34,7 @@ Vue.component('message-list', {
     }
   },
   mounted () {
-    // check messages in the database?
+    // TODO: check messages in the database?
     // e.g. blog approved or rejected, blog failing, error with Pocket account, new feature?
   }
 })
@@ -206,7 +206,7 @@ Vue.component('users-with-approvals', {
     }
   },
   template: `
-  <section>
+  <section class="section-admin">
     <div v-if="approvals.length > 0">
       <h2>Awaiting Approval</h2>
       <div 
@@ -365,25 +365,27 @@ Vue.component('failing-blogs-list', {
   },
   template: `
   <section>
-    <h2>Failing feeds</h2>
-    <section v-if="failing.length > 0" class="claimed-blogs">
-      <p>
-      These blog feeds are currently failing. 
-      You can either delete them completely, or suspend them pending further research or changes. 
-      Posts published whilst a blog is suspended will never be included, even if you lift the suspension later. 
-      </p>
-      <p>
-      Note that this may be a temporary glitch: always do your homework before deleting a blog.
-      </p>
-      <form v-for="blog in failing" class="claimed-blogs">
-        <failing-blog 
-        v-bind:blog="blog"
-        @delete-blog="deleteBlog"
-        @suspend-blog="suspendBlog"
-        @add-message="addMessage"></failing-blog>
-      </form>
+    <section class="section-admin">
+      <h2>Failing feeds</h2>
+      <div v-if="failing.length > 0" class="claimed-blogs">
+        <p>
+        These blog feeds are currently failing. 
+        You can either delete them completely, or suspend them pending further research or changes. 
+        Posts published whilst a blog is suspended will never be included, even if you lift the suspension later. 
+        </p>
+        <p>
+        Note that this may be a temporary glitch: always do your homework before deleting a blog.
+        </p>
+        <form v-for="blog in failing" class="claimed-blogs">
+          <failing-blog 
+          v-bind:blog="blog"
+          @delete-blog="deleteBlog"
+          @suspend-blog="suspendBlog"
+          @add-message="addMessage"></failing-blog>
+        </form>
+      </div>
+      <div v-else>You have no failing feeds to attend to.</div>
     </section>
-    <div v-else>You have no failing feeds to attend to.</div>
     <suspended-blogs v-if="suspended.length > 0" @add-message="addMessage" @loading="loading" v-bind:suspended="suspended"></suspended-blogs>
     <suspend-blog @add-message="addMessage" @suspend-blog="suspendBlog"></suspend-blog>
   </section>
@@ -489,7 +491,7 @@ Vue.component('suspended-blogs', {
     }
   },
   template: `
-  <div>
+  <section class="section-admin">
     <h2>Suspended Blogs</h2>
     <form v-for="blog in suspended" class="claimed-blogs">
       <suspended-blog 
@@ -499,16 +501,24 @@ Vue.component('suspended-blogs', {
       @delete-blog="deleteBlog"
       @unsuspend-blog="unsuspendBlog"></suspended-blog>
     </form>
-  </div>
+  </section>
   `
 })
 
 Vue.component('suspend-blog', {
   data () {
     return {
+      blogs: [],
       url: null,
       reason: null
     }
+  },
+  mounted () {
+    axios
+    .get('/api/v1/admin/unsuspended-blogs')
+    .then( res => {
+      this.blogs = res.data
+    })
   },
   methods: {
     addMessage(msg) {
@@ -533,16 +543,19 @@ Vue.component('suspend-blog', {
     }
   },
   template: `
-  <div>
+  <section class="section-admin">
     <h2>Suspend Blog</h2>
     <form class="claimed-blogs">
-      <label>URL of blog to suspend:</label><br/>
-      <input v-model="url" type="url" size="40"><br/>
+      <label>Blog to suspend:</label><br/>
+      <input type="text" list="blogList" v-model="url"><br/>
+      <datalist id="blogList">
+        <option v-for="blog in blogs">{{ blog }}</option>
+      </datalist>
       <label>Reason for suspending:</label><br/>
       <textarea v-model="reason" cols="40" rows="6" required></textarea><br/>
       <button @click.prevent="suspendBlog">Suspend</button>
     </form>
-  </div>
+  </section>
   `
 })
 
@@ -624,7 +637,7 @@ Vue.component('admins-list', {
     }
   },
   template: `
-    <section>
+    <section class="section-admin">
       <h2>Administrators</h2>
       <div v-if="admins.length">
         <h3>Remove admin rights</h3>
