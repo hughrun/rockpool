@@ -131,7 +131,7 @@ Vue.component('blog-actions', {
 })
 
 Vue.component('blog-listing', {
-  props: ['blog', 'categories'],
+  props: ['blog', 'categories', 'selection'],
   computed: {
     blogClass () {
       return 'class-' + this.categories.indexOf(this.blog.category)
@@ -140,6 +140,12 @@ Vue.component('blog-listing', {
   methods: {
     loading(bool) {
       this.$emit('loading', bool)
+    },
+    filterCat(event) {
+      this.$emit('filter', event.target.textContent)
+    },
+    clearFilter() {
+      this.$emit('clear-filter', event.target.textContent)
     }
   },
   template: `<div>
@@ -147,7 +153,7 @@ Vue.component('blog-listing', {
   <span v-else class="blog-listing-url"><a v-bind:href="this.blog.url">{{ blog.url }}</a></span>
   <span v-if="this.blog.owned" class="approved-blog"></span>
   <span v-if="this.blog.claimed" class="unapproved-blog"></span>
-  <span v-bind:class="blogClass">{{ this.blog.category }}</span>
+  <span v-bind:class="blogClass" @click="filterCat($event)">{{ this.blog.category }}</span>
   <span v-if="this.blog.failing" class="failing-icon">failing</span>
   <span v-if="this.blog.suspended" class="suspended-icon">suspended</span>
   <span v-if="this.blog.excluded" class="excluded-icon">excluded</span>
@@ -159,12 +165,13 @@ Vue.component('browse-list', {
   props: ['categories'],
   data () {
     return {
-      messages: [],
+      actionsAvailable: false,
       blogs: [],
-      user: null,
       legacy: false,
-      actionsAvailable: false
-      
+      messages: [],
+      selected: [],
+      selection: null,
+      user: null
     }
   },
   mounted () {
@@ -182,6 +189,7 @@ Vue.component('browse-list', {
       }
       this.blogs = res.data.blogs
       this.legacy = res.data.legacy
+      this.selected = res.data.blogs
       this.user = res.data.user
       this.actionsAvailable = this.user && (this.legacy || this.user.pocket)
     })
@@ -199,18 +207,33 @@ Vue.component('browse-list', {
     removeMessage(msg) {
       // fired when click on X to get rid of it
       Vue.delete(this.messages, this.messages.indexOf(msg))
+    },
+    filterCat(category) {
+      this.selection = category
+      this.selected = this.blogs.filter( blog => blog.category === category)
+    },
+    clearFilter() {
+      this.selection = null
+      this.selected = this.blogs
     }
   },
   template: `
-    <section>
+    <section id="browse-page">
       <message-list v-bind:messages="messages" @remove-message="removeMessage"></message-list>
-      <h2>Browse all blogs</h2>
-      <div v-if="blogs.length">
-        <ul v-for="blog in blogs" class="browse-blogs">
+      <span  v-if="selection">
+        <h2>Browse {{ selection }}</h2> 
+        <button id="clear-selection-button" @click="clearFilter()">Show all categories</button>
+      </span>
+      <h2 v-else>Browse all blogs</h2>
+      <div v-if="selected.length">
+        <ul v-for="blog in selected" class="browse-blogs">
           <li v-bind:class="{failing:blog.failing, suspended:blog.suspended, excluded:blog.excluded}">
             <blog-listing 
               v-bind:blog="blog"
               v-bind:categories="categories"
+              v-bind:selection="selection"
+              @filter="filterCat"
+              @clear-filter="clearFilter"
               @loading="loading"
             ></blog-listing>
             <blog-actions 
