@@ -221,8 +221,7 @@ textarea {
   background-color: $background-color;
 }
 
-.admins-list div button,
-.assign-admin button {
+.admins-list div button{
   float: right;
 }
 
@@ -726,6 +725,21 @@ ul.browse-blogs {
 
  .feed-link {
   color: $highlight-color;
+ }
+
+ .section-admin {
+   padding: 1em 15%;
+ }
+
+ .section-admin input,
+ .section-admin option,
+ .section-admin textarea {
+   width: 100%;
+   display: block;
+ }
+
+ .section-admin button {
+   margin-top: 0.5em;
  }
 
  /* #################

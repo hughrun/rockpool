@@ -959,6 +959,19 @@ awaitDb.then( function() {
       #############
   */
 
+  // get all blogs that are not suspended and return URLs in an array
+  app.get('/api/v1/admin/unsuspended-blogs', function(req, res) {
+    db.getBlogs({
+      query: {
+        suspended: {$in: [null, false]} // not suspended
+      }
+    })
+    .then( args => {
+      let urls = args.blogs.map( x => x.url)
+      res.json(urls)
+    })
+  })
+
   app.get('/api/v1/admin/blogs-for-approval', function(req, res) {
     let query = {$where: "this.blogsForApproval && this.blogsForApproval.length > 0"}
     db.getUsers({query: query})
@@ -971,7 +984,8 @@ awaitDb.then( function() {
           user.claims = res.blogs
           return user
         })
-      }) // TODO: why use Promise.all when there is only one promise?
+      })
+
       return Promise.all(mapped).then(users => {
         let vals = users.map( user => {
           return {
