@@ -32,7 +32,7 @@ db.connect().then( function() {
   debug.log("running..")
 
   // require locals
-  const db = require('./lib/queries.js') // local database queries module
+  const queries = require('./lib/queries.js') // local database queries module
   const { updateUserContacts, updateUserBlogs, updateUserPocketFilters, unsubscribeFromPocket, updateUserPermission } = require('./lib/users.js') // local database updates module
   const { approveBlog, deleteBlog, editBlog, registerBlog, suspendBlog } = require('./lib/blogs.js') // local database updates module
   const { authorisePocket, finalisePocketAuthentication, makeOpml, sendEmail } = require('./lib/utilities.js') // local pocket functions
@@ -147,7 +147,7 @@ db.connect().then( function() {
 
   // home
   app.get('/', (req, res) =>
-    Promise.all([db.getArticles(), db.getTopTags])
+    Promise.all([queries.getArticles(), queries.getTopTags])
     .then( function(vals) {
       newVals = vals.reduce( function(result, item, index) {
         let key = Object.keys(item)[0];
@@ -174,7 +174,7 @@ db.connect().then( function() {
   )
 
   // search
-  app.get('/search/', (req, res) => db.getArticles(req.query.tag, req.query.page, req.query.q, req.query.month)
+  app.get('/search/', (req, res) => queries.getArticles(req.query.tag, req.query.page, req.query.q, req.query.month)
     .then( docs => res.render('tag', {
         partials: {
           articleList: __dirname+'/views/partials/articleList.html',
@@ -345,7 +345,7 @@ db.connect().then( function() {
     (req, res) => {
       var args = {}
       args.user = req.user 
-      db.getUserDetails(args)
+      queries.getUserDetails(args)
       .then(authorisePocket)
       .then( args => {
         req.session.pocketCode = args.code
@@ -388,7 +388,7 @@ db.connect().then( function() {
     function (req, res, next) {
       var args = {}
       args.user = req.user 
-      db.getUserDetails(args)
+      queries.getUserDetails(args)
       .then( doc => {
         if (doc.user.permission && doc.user.permission === "admin") {
           next()
@@ -478,13 +478,15 @@ db.connect().then( function() {
   */
 
   app.get('/api/v1/browse', function (req, res) {
-    db.getBlogs({query: {
-      approved: true
-    }})
+    queries.getBlogs({
+      query: {
+        approved: true
+      }
+    })
     .then( data => {
       if (req.user) {
         data.query = {email: req.user}
-        db.getUsers(data)
+        queries.getUsers(data)
         .then( response => {
           if (response.users[0] && response.users[0].blogs) {
             for (let blog of data.blogs) {
@@ -533,7 +535,7 @@ db.connect().then( function() {
   */
 
   app.get('/api/v1/user/info', function(req, res) {
-    db.getUsers({query: {"email" : req.user}})
+    queries.getUsers({query: {"email" : req.user}})
     .then(
       doc => {
         var data = {}
@@ -556,7 +558,7 @@ db.connect().then( function() {
   })
 
   app.get('/api/v1/user/blogs', function(req, res) {
-    db.getUsers({query: {"email" : req.user}})
+    queries.getUsers({query: {"email" : req.user}})
     .then( // now get the approved blogs
       doc => {
         if (doc.users.length > 0 && doc.users[0].blogs) {
@@ -566,7 +568,7 @@ db.connect().then( function() {
         }
         return doc
       })
-    .then(db.getBlogs)
+    .then(queries.getBlogs)
     .then( data => {
       let user = data.users.length > 0 ? data.users[0].idString : null
       res.json({user: user, blogs: data.blogs})
@@ -578,7 +580,7 @@ db.connect().then( function() {
   })
 
   app.get('/api/v1/user/unapproved-blogs', function(req, res) {
-    db.getUsers({query: {"email" : req.user}})
+    queries.getUsers({query: {"email" : req.user}})
     .then( // now get the unapproved blogs
       doc => {
         if (doc.users.length > 0 && doc.users[0].blogsForApproval) {
@@ -590,7 +592,7 @@ db.connect().then( function() {
         }
         return doc
       })
-    .then(db.getBlogs)
+    .then(queries.getBlogs)
     .then( data => {
       res.json(data.blogs)
     })
@@ -637,7 +639,7 @@ db.connect().then( function() {
     } else { // if no validation errors
       var args = req.body
       args.user = req.user
-      db.checkEmailIsUnique(args)
+      queries.checkEmailIsUnique(args)
       .then(updateUserContacts)
       .then(args => {
         if (args.user.email != req.user) {
@@ -687,7 +689,7 @@ db.connect().then( function() {
       args.query = {feed: args.feed}
       return args
     })
-    .then(db.getBlogs) // check the blog isn't already registered
+    .then(queries.getBlogs) // check the blog isn't already registered
     .then(
       args => { 
       if (args.blogs.length < 1) {
@@ -720,7 +722,7 @@ db.connect().then( function() {
     args.query = { "_id" : ObjectId(args.idString)}
     args.action = "register"
     args.user = req.user
-    db.getBlogs(args)
+    queries.getBlogs(args)
       // then check users for any claiming this blog
       .then( args => {
         if (args.blogs.length < 1) {
@@ -736,7 +738,7 @@ db.connect().then( function() {
           return args
         }
       })
-      .then(db.getUsers)
+      .then(queries.getUsers)
       .then( args => {
         if (args.users.length < 1) {
           return args
@@ -763,7 +765,7 @@ db.connect().then( function() {
     args.user = req.user
     args.query = {"_id" : ObjectId(args.blog)} // for getBlogs
     updateUserBlogs(args)
-    .then(db.getBlogs)
+    .then(queries.getBlogs)
     .then( args => {
       if (args.blogs[0].approved) {
         return args // if the blog is approved then this was a legacy claim
@@ -904,7 +906,7 @@ db.connect().then( function() {
     function (req, res, next) {
       var args = {}
       args.user = req.user 
-      db.getUserDetails(args)
+      queries.getUserDetails(args)
       .then( doc => {
         if (doc.user.permission && doc.user.permission === "admin") {
           next()
@@ -924,7 +926,7 @@ db.connect().then( function() {
     function (req, res, next) {
       var args = {}
       args.user = req.user
-      db.getUserDetails(args)
+      queries.getUserDetails(args)
       .then( doc => {
         if (doc.user.permission && doc.user.permission === "admin") {
           next()
@@ -950,7 +952,7 @@ db.connect().then( function() {
 
   // get all blogs that are not suspended and return URLs in an array
   app.get('/api/v1/admin/unsuspended-blogs', function(req, res) {
-    db.getBlogs({
+    queries.getBlogs({
       query: {
         suspended: {$in: [null, false]} // not suspended
       }
@@ -963,13 +965,13 @@ db.connect().then( function() {
 
   app.get('/api/v1/admin/blogs-for-approval', function(req, res) {
     let query = {$where: "this.blogsForApproval && this.blogsForApproval.length > 0"}
-    db.getUsers({query: query})
+    queries.getUsers({query: query})
     .then( args => {
       // find the claimed blogs from the users
       // mapping the array returns a Promise for each item in the array
       // so we need to return Promise.all() to get a result
       var mapped = args.users.map( user => {
-        return db.getBlogs({query: {_id: {$in: user.blogsForApproval}}}).then( res => {
+        return queries.getBlogs({query: {_id: {$in: user.blogsForApproval}}}).then( res => {
           user.claims = res.blogs
           return user
         })
@@ -997,7 +999,7 @@ db.connect().then( function() {
   app.get('/api/v1/admin/failing-blogs', function(req, res) {
     const args = req.body
     args.query = {failing: true}
-    db.getBlogs(args)
+    queries.getBlogs(args)
     .then( args => {
       let failing = args.blogs.filter( x => x.suspended !== true)
       let data = failing.map( blog => {
@@ -1017,7 +1019,7 @@ db.connect().then( function() {
 
   app.get('/api/v1/admin/admins', function(req, res) {
     const args = { query: { permission: 'admin' } }
-    db.getUsers(args)
+    queries.getUsers(args)
     .then( args => {
       // remove this user from admins
       // this prevents the user from accidentally removing themself as an admin
@@ -1042,7 +1044,7 @@ db.connect().then( function() {
   app.get('/api/v1/admin/suspended-blogs', function(req, res) {
     const args = req.body
     args.query = {suspended: true}
-    db.getBlogs(args)
+    queries.getBlogs(args)
     .then( args => {
       let data = args.blogs.map( blog => {
         return {
@@ -1081,7 +1083,7 @@ db.connect().then( function() {
       args.title = ff.title
       return args
     })
-    .then(db.getUsers) // get the user ID 
+    .then(queries.getUsers) // get the user ID 
     .then(approveBlog) // set blog to approved: true and update title if needed
     .then(updateUserBlogs) // move from blogsForApproval to blogs
     .then( args => {
@@ -1118,7 +1120,7 @@ db.connect().then( function() {
         args.query = {"_id" : ObjectId(args.blog)}
         return args
       })
-      .then(db.getBlogs)
+      .then(queries.getBlogs)
       .then( args => {
         if (args.blogs[0] && args.blogs[0].approved) {
           // if approved is true then the blog is a legacy one and this is a 'claim'
@@ -1151,12 +1153,12 @@ db.connect().then( function() {
     args.query = {url: args.url} // query for getBlogs
     suspendBlog(args)
     .then( args => {
-      db.getBlogs(args)
+      queries.getBlogs(args)
       .then( args => {
         args.query = {blogs: args.blogs[0]._id}
         return args
       })
-      .then(db.getUsers)
+      .then(queries.getUsers)
       .then( args => {
         if (args.users.length > 0) {
           message = {
@@ -1186,12 +1188,12 @@ db.connect().then( function() {
     args.query = {url: args.url} // query for getBlogs
     suspendBlog(args)
     .then( args => {
-      db.getBlogs(args)
+      queries.getBlogs(args)
       .then( args => {
         args.query = {blogs: args.blogs[0]._id}
         return args
       })
-      .then(db.getUsers)
+      .then(queries.getUsers)
       .then( args => {
         if (args.users.length > 0) {
           message = {
@@ -1221,7 +1223,7 @@ db.connect().then( function() {
       const args = req.body
       args.action = "delete"
       args.query = {'blogs' : ObjectId(args.blog)}
-      db.getUsers(args) // get the user with this blog in their 'blogs' array
+      queries.getUsers(args) // get the user with this blog in their 'blogs' array
         .then( args => {
           if (args.users[0]) { // if this is a legacy DB there may be no users with this blog listed
             args.user = args.users[0].email // for deleteBlog and sendEmail

@@ -33,6 +33,7 @@ h1, h2, h3, h4, h5, h6 {
 a {
   color: #3b3b3b;
   text-decoration: dashed underline #A6C5E5;
+  -webkit-text-decoration: dashed underline #A6C5E5;
 }
 
 button {
@@ -296,6 +297,7 @@ header {
 header a {
   color: #fff;
   text-decoration: underline #A6C5E5;
+  -webkit-text-decoration: underline #A6C5E5;
 }
 
 .nav {

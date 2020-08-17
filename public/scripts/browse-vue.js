@@ -259,7 +259,7 @@ new Vue({
   el: '#main',
   data () {
     return {
-      categories: null,
+      categories: [],
       processing: false
     }
   },
