@@ -16,30 +16,19 @@ const path = require('path') // nodejs native package
 const express = require('express') // express
 const app = express(); // create local instance of express
 const engines = require('consolidate') // use consolidate with whiskers template engine
-// Mongo
-const { MongoClient, ObjectId } = require('mongodb') // Mongo
-const mongoUrl = `mongodb://${settings.mongo_user}:${settings.mongo_password}@${settings.mongo_url}/${settings.mongo_db}`
-// WAIT FOR DATABASE TO CONNECT
-// This is important for running in Docker
-// Otherwise the app starts trying to connect to Mongo before it's ready
-const awaitDb = new Promise( function (resolve, reject) {
-  function checkMongo() {
-    debug.log('Waiting for DB...')
-    return MongoClient.connect(mongoUrl, { useNewUrlParser: true}, function(err, client) {
-      if (err) {
-        debug.log(err)
-        setTimeout(checkMongo, 5000)
-      }
-      else {
-        debug.log('ready..')
-        client.close().then( () => resolve() )
-      }
-    })
-  }
-  setTimeout(checkMongo, 5000)
-})
 
-awaitDb.then( function() {
+// Mongo
+const { ObjectId } = require('mongodb')
+const mongoUrl = `mongodb://${settings.mongo_user}:${settings.mongo_password}@${settings.mongo_url}/${settings.mongo_db}`
+const db = require('./lib/db')
+
+/*  ######################################
+    ###            start               ###
+    ######################################
+*/
+
+// wait for database to connect before doing anything
+db.connect().then( function() {
   debug.log("running..")
 
   // require locals
