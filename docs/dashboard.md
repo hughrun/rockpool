@@ -48,6 +48,7 @@ To unsubscribe, simply click the **Cancel Pocket subscription** button in the us
 [Home](/README.md)  
 [Database structure](database.md)  
 [Installation](installation.md)  
+[Maintenance](maintenance.md)  
 [Search](search.md)  
 [User dashboard](dashboard.md)  
 [Admin dashboard](admin.md)  

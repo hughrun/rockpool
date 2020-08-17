@@ -42,3 +42,13 @@ npm run test
 
 The current test suite is not really world's best practice so if you're a mocha wizard feel free to send a pull request with improvements to the existing test suite. Note that notwithstanding the demand for tests on all new features, currently vuejs components are not part of the test suite.
 
+---
+[Home](/README.md)  
+[Database structure](database.md)  
+[Installation](installation.md)  
+[Maintenance](maintenance.md)  
+[Search](search.md)  
+[User dashboard](dashboard.md)  
+[Admin dashboard](admin.md)  
+[Browse page](browse.md)  
+[Contributing](docs/contributing.md)  

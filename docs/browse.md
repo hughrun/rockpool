@@ -22,6 +22,7 @@ If there are no actions available, you will simply not see the 'actions' button.
 [Home](/README.md)  
 [Database structure](database.md)  
 [Installation](installation.md)  
+[Maintenance](maintenance.md)  
 [Search](search.md)  
 [User dashboard](dashboard.md)  
 [Admin dashboard](admin.md)  
