@@ -51,6 +51,7 @@ Both text searching and tag browsing can be filtered by publication date 'this m
 [Home](/README.md)  
 [Database structure](database.md)  
 [Installation](installation.md)  
+[Maintenance](maintenance.md)  
 [Search](search.md)  
 [User dashboard](dashboard.md)  
 [Admin dashboard](admin.md)  

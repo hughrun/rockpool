@@ -41,6 +41,7 @@ You can make another user an administrator by entering their email address in th
 [Home](/README.md)  
 [Database structure](database.md)  
 [Installation](installation.md)  
+[Maintenance](maintenance.md)  
 [Search](search.md)  
 [User dashboard](dashboard.md)  
 [Admin dashboard](admin.md)  
