@@ -512,11 +512,11 @@ db.connect().then( function() {
     })
   })
 
-  app.get('/api/v1/categories', function (req, res, next) {
+  app.get('/api/v1/categories', function (req, res) {
     res.json({categories: settings.blog_categories})
   })
 
-  app.get('/api/v1/legacy', function (req, res, next) {
+  app.get('/api/v1/legacy', function (req, res) {
     res.json({legacy: settings.legacy_db})
   })
 
@@ -673,7 +673,7 @@ db.connect().then( function() {
 
   // register blog
   app.post( '/api/v1/update/user/register-blog', 
-  function(req, res, next) {
+  function(req, res) {
     feedfinder.getFeed(req.body.url)
     .then( ff => {
       const args = req.body
@@ -836,7 +836,7 @@ db.connect().then( function() {
 
   // edit blog category or update title andnd/or feed
   app.post('/api/v1/update/user/edit-blog', 
-    (req, res, next) => {
+    (req, res) => {
       feedfinder.getFeed(req.body.url)
       .then( ff => {
         const args = req.body // url and category
@@ -861,7 +861,7 @@ db.connect().then( function() {
 
   // exclude or include (un-exclude) a blog from pocket
   app.post('/api/v1/update/user/filter-pocket', 
-    (req, res, next) => {
+    (req, res) => {
       let args = req.body // blog (idString) and exclude (true/false)
       args.user = req.user
       updateUserPocketFilters(args)
@@ -880,7 +880,7 @@ db.connect().then( function() {
 
   // unsubscribe from Pocket
   app.post('/api/v1/update/user/remove-pocket', 
-    (req, res, next) => {
+    (req, res) => {
       unsubscribeFromPocket(req.user)
       .then( () => {
         res.send({
@@ -1069,7 +1069,7 @@ db.connect().then( function() {
       #############
   */
 
-  app.post('/api/v1/update/admin/approve-blog', function(req, res, next) {
+  app.post('/api/v1/update/admin/approve-blog', function(req, res) {
     const args = req.body 
     // user will be the owner email
     // url is blog url
@@ -1290,7 +1290,7 @@ db.connect().then( function() {
   })
 
   // 404 errors: this should always be the last route
-  app.use(function (req, res, next) {
+  app.use(function (req, res) {
     res.status(404).render("404")
   })
 
