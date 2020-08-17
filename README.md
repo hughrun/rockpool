@@ -9,7 +9,7 @@ Rockpool is an Express app using MongoDB, designed to run with Docker Compose. I
 ## Documentation
 
 1. [Installation](docs/installation.md)
-2. [Maintenance](maintenance.md)
+2. [Maintenance](docs/maintenance.md)
 3. [Database structure](docs/database.md)
 4. [Searching](docs/search.md)
 5. [User dashboard](docs/dashboard.md)
