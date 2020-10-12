@@ -1296,16 +1296,76 @@ db.connect().then( function() {
     res.status(404).render("404")
   })
 
-  if (process.env.NODE_ENV !== "test") {
-  // Trigger the app to periodically check RSS feeds and send announcements
-  let checkFeedsTime = settings.minutes_between_checking_feeds * 60000; // time between checking feeds
-  let announceTime = settings.minutes_between_announcements * 60000; // time between announcements
-  let checkAnnouncementsTime =  settings.minutes_between_checking_announcements * 60000; // time between queuing announcements
+  function Timer(fn, t) {
 
-  const checkFeedsTrigger = setInterval(feeds.checkFeeds, checkFeedsTime);
-  const checkAnnouncementsTrigger = setInterval(announcements.checkArticleAnnouncements, checkAnnouncementsTime);
-  const announceTrigger = setInterval(announcements.announce, announceTime);
+    var timerObj = setInterval(fn, t)
+    
+    this.count = 0
+
+    this.start = function() {
+        if (!timerObj) {
+            this.stop();
+            timerObj = setInterval(fn, t)
+        }
+        return this;
+    }
+
+    this.stop = function() {
+        if (timerObj) {
+            clearInterval(timerObj)
+            timerObj = null;
+        }
+        return this;
+    }
+
+    // reset both the count and the setInterval object
+    this.reset = function() {
+        this.count = 0
+        return this.stop().start()
+    }
+
+    this.increment = function() {
+        this.count++
+    }
+
   }
+
+  if (process.env.NODE_ENV !== "test") {
+    // Trigger the app to periodically check RSS feeds and send announcements
+    let checkFeedsTime = settings.minutes_between_checking_feeds * 60000; // time between checking feeds
+    let announceTime = settings.minutes_between_announcements * 60000; // time between announcements
+    let checkAnnouncementsTime =  settings.minutes_between_checking_announcements * 60000; // time between queuing announcements
+
+    const checkFeedsTrigger = new Timer( () => {
+        feeds.checkFeeds().then( () => {
+            checkFeedsTrigger.increment()
+            if (checkFeedsTrigger.count > 10) { // change this to 12 once tested
+                checkFeedsTrigger.reset()
+            }
+        })
+    }, checkFeedsTime);
+
+    const checkAnnouncementsTrigger = new Timer( () => {
+        announcements.checkArticleAnnouncements().then( () => {
+            checkAnnouncementsTrigger.increment()
+            if (checkAnnouncementsTrigger.count > 10) { // change this to 20 once tested
+                checkAnnouncementsTrigger.reset()
+            }
+        })
+    }, checkAnnouncementsTime);
+    
+    const announceTrigger = new Timer( () => {
+        announcements.announce().then( () => {
+            announceTrigger.increment()
+            if (announceTrigger.count > 10) { // change this to 20 once tested
+                announceTrigger.reset()
+            }
+        })
+    }, announceTime);
+
+  }
+
+
 
   // listen on server
   app.listen(3000, function() {
