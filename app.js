@@ -1296,38 +1296,10 @@ db.connect().then( function() {
     res.status(404).render("404")
   })
 
-  function Timer(fn, t) {
-
-    var timerObj = setInterval(fn, t)
-    
-    this.count = 0
-
-    this.start = function() {
-        if (!timerObj) {
-            this.stop();
-            timerObj = setInterval(fn, t)
-        }
-        return this;
-    }
-
-    this.stop = function() {
-        if (timerObj) {
-            clearInterval(timerObj)
-            timerObj = null;
-        }
-        return this;
-    }
-
-    // reset both the count and the setInterval object
-    this.reset = function() {
-        this.count = 0
-        return this.stop().start()
-    }
-
-    this.increment = function() {
-        this.count++
-    }
-
+  // rest the mongo connection
+  function resetMongo() {
+    db.disconnect()
+    db.connect()
   }
 
   if (process.env.NODE_ENV !== "test") {
@@ -1336,33 +1308,10 @@ db.connect().then( function() {
     let announceTime = settings.minutes_between_announcements * 60000; // time between announcements
     let checkAnnouncementsTime =  settings.minutes_between_checking_announcements * 60000; // time between queuing announcements
 
-    const checkFeedsTrigger = new Timer( () => {
-        feeds.checkFeeds().then( () => {
-            checkFeedsTrigger.increment()
-            if (checkFeedsTrigger.count > 10) { // change this to 12 once tested
-                checkFeedsTrigger.reset()
-            }
-        })
-    }, checkFeedsTime);
-
-    const checkAnnouncementsTrigger = new Timer( () => {
-        announcements.checkArticleAnnouncements().then( () => {
-            checkAnnouncementsTrigger.increment()
-            if (checkAnnouncementsTrigger.count > 10) { // change this to 20 once tested
-                checkAnnouncementsTrigger.reset()
-            }
-        })
-    }, checkAnnouncementsTime);
-    
-    const announceTrigger = new Timer( () => {
-        announcements.announce().then( () => {
-            announceTrigger.increment()
-            if (announceTrigger.count > 10) { // change this to 20 once tested
-                announceTrigger.reset()
-            }
-        })
-    }, announceTime);
-
+    setInterval(feeds.checkFeeds, checkFeedsTime);
+    setInterval(announcements.checkArticleAnnouncements, checkAnnouncementsTime);
+    setInterval(announcements.announce, announceTime);
+    setInterval(resetMongo, checkFeedsTime * 1.1)
   }
 
 
