@@ -5,6 +5,8 @@ services:
     build: .
     container_name: rockpool_app
     restart: unless-stopped
+    environment: 
+      TZ: Australia/Melbourne
     logging:
       driver: json-file
       options:

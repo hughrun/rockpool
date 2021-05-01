@@ -1314,8 +1314,6 @@ db.connect().then( function() {
     setInterval(resetMongo, checkFeedsTime * 1.1)
   }
 
-
-
   // listen on server
   app.listen(3000, function() {
     if (env !== 'test') {
