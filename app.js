@@ -371,7 +371,8 @@ db.connect().then( function() {
           res.redirect('/user')
         })
         .catch(e => {
-          req.flash('error', e)
+          req.flash('error', e.message)
+          console.log(JSON.stringify(e))
           res.redirect('/subscribe')
         })
     })
