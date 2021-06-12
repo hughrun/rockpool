@@ -684,7 +684,7 @@ db.connect().then( function() {
       args.title = ff.title
       args.feed = ff.feed // add the feed to the form data object
       args.action = "register" // this is used in updateUserBlogs
-      args.url = args.url.replace(/\/*$/, "") // get rid of trailing slashes
+      args.url = args.url.replace(/\/+$/, "") // get rid of trailing slashes
       // we match on the FEED rather than the URL (below)
       // because if there is a redirect, the URL might not match even though it's the same blog
       args.query = {feed: args.feed}
