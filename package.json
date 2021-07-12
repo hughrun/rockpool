@@ -34,7 +34,7 @@
     "express-flash": "0.0.2",
     "express-session": "^1.17.1",
     "express-validator": "^5.3.1",
-    "feedparser-promised": "^2.0.1",
+    "feedparser": "^2.2.10",
     "mastodon": "^1.2.2",
     "moment": "^2.29.0",
     "mongodb": "^3.6.2",
