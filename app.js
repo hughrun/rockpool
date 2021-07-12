@@ -148,6 +148,10 @@ db.connect().then( function() {
   // home
   app.get('/', (req, res) =>
     Promise.all([queries.getArticles(), queries.getTopTags])
+    .catch( err => {
+      console.error(`DB error: ${err}`)
+      res.sendStatus(500)
+    })
     .then( function(vals) {
       newVals = vals.reduce( function(result, item, index) {
         let key = Object.keys(item)[0];
@@ -175,6 +179,10 @@ db.connect().then( function() {
 
   // search
   app.get('/search/', (req, res) => queries.getArticles(req.query.tag, req.query.page, req.query.q, req.query.month)
+    .catch( err => {
+      console.error(`DB error: ${err}`)
+      res.sendStatus(500)
+    })
     .then( docs => res.render('tag', {
         partials: {
           articleList: __dirname+'/views/partials/articleList.html',
@@ -512,7 +520,8 @@ db.connect().then( function() {
           user: null
         })
       }
-    })
+    }) // FIXME: do something more useful
+    .catch( err => console.error(`DB error: ${err}`))
   })
 
   app.get('/api/v1/categories', function (req, res) {
