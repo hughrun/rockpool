@@ -1,4 +1,4 @@
-FROM node:carbon-alpine
+FROM node:lts-alpine
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN apk add --no-cache tzdata
