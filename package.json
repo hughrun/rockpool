@@ -1,6 +1,6 @@
 {
   "name": "rockpool-app",
-  "version": "1.3.6",
+  "version": "1.3.9",
   "description": "An aggregator for community blogs, making subscriptions available via a Twitter bot, Mastodon bot, RSS, email, Pocket, or OPML file.",
   "main": "index.js",
   "scripts": {
