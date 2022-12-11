@@ -1,0 +1,12 @@
+{>head}
+	{>header}
+    <section class="main">
+    <form class="login-form" action="/send-codes" method="POST">
+      <input type="hidden" name="delivery" value={delivery}>
+      <label for="user">Enter your email to get your login codes</label><br/>
+      <input class="email-signup" name="user" type="email" required><br>
+      <input class="search-button" type="submit" value="Get login codes">
+    </form>
+    </section>
+  {>footer}
+{>foot}
