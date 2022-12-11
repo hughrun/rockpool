@@ -91,6 +91,27 @@ db.connect().then( function() {
       })
   })
 
+  // Users can manually enter the codes if corporate email scanning tools
+  // are triggering the URL prematurely
+  passwordless.addDelivery('manual',
+    function(tokenToSend, uidToSend, recipient, callback, req) {
+      var message =  {
+        text: `Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please access your account here: ${settings.app_url}/login-with-token\n\nYour login token is: ${tokenToSend}`,
+        to: recipient,
+        subject: `Your code to log in to ${settings.app_name}`,
+        attachment: [
+          {data: `<html><p>Somebody is trying to log in to ${settings.app_name} with this email address. If it was you, please <a href="${settings.app_url}/login-with-token?uid=${encodeURIComponent(uidToSend)}">access your account here</a>:</p>
+          <p>Your login token is: <code style="color: maroon">${tokenToSend}</code></p>
+          <p>If it wasn't you, simply delete this email.</p></html>`, alternative: true}
+        ]
+      }
+      sendEmail(message)
+      .then( err => {
+        callback(err)
+      })
+  })
+
+
   // passwordless for dev (bypass email and send the token to the clipboard instead)
   passwordless.addDelivery('clipboard',
     function(tokenToSend, uidToSend, recipient, callback, req) {
@@ -317,6 +338,61 @@ db.connect().then( function() {
       },
       user: req.session.passwordless
     })
+  })
+
+  /* GET login screen for showing tokens. */
+  app.get('/get-login-token', function(req, res) {
+    if (req.session.passwordless) {
+      res.redirect('/user')
+    } else {
+      res.render('getLoginToken', {
+        partials: {
+          head: __dirname+'/views/partials/head.html',
+          header: __dirname+'/views/partials/header.html',
+          foot: __dirname+'/views/partials/foot.html',
+          footer: __dirname+'/views/partials/footer.html'
+        },
+        user: req.session.passwordless,
+        delivery: 'manual'
+      })
+    }
+  })
+
+  app.post('/send-manual-token',
+  passwordless.requestToken(
+    function(user, passwordlessManual, callback, req) {
+      body('user').isEmail().normalizeEmail() 
+      if (validationResult(req).isEmpty()) {
+        return callback(null, user)
+      } else {
+        debug.log('ERROR: %O', validationResult(req)) 
+        return res.status(422) 
+      }
+    },
+    { failureRedirect: '/logged-out' }
+  ),
+  function(req, res) {
+    // success!
+    res.redirect('/token-sent')
+})
+
+  app.get('/login-with-token', function(req,res) {
+    res.render('loginWithToken', {
+    partials: {
+        head: __dirname+'/views/partials/head.html',
+        header: __dirname+'/views/partials/header.html',
+        foot: __dirname+'/views/partials/foot.html',
+        footer: __dirname+'/views/partials/footer.html'
+        },
+    user: req.query.user,
+    uid: req.query.uid
+    })
+  })
+
+  app.post('/login-with-token', function(req,res) {
+    let token = req.body.token
+    let uid = req.body.uid
+    res.redirect(`/tokens/?token=${token}&uid=${uid}`)
   })
 
   /*  

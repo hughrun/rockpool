@@ -1,0 +1,13 @@
+{>head}
+	{>header}
+    <section class="main">
+    <form class="login-form" action="/login-with-token" method="POST">
+        <p>Please enter the token that was emailed to you:</p>
+        <label for="token">Token: </label>
+        <input name="token" type="text" required><br>
+        <input name="uid" type="email" hidden value={uid}>
+        <input class="search-button" type="submit" value="Let me in!">
+    </form>
+    </section>
+  {>footer}
+{>foot}
