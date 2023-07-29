@@ -37,7 +37,7 @@
     "feedparser": "^2.2.10",
     "mastodon": "^1.2.2",
     "moment": "^2.29.4",
-    "mongodb": "^3.6.2",
+    "mongodb": "^3.7.4",
     "passwordless": "^1.1.3",
     "passwordless-mongostore-bcryptjs": "^1.1.1",
     "showdown": "^1.9.1",
@@ -46,7 +46,7 @@
     "whiskers": "^0.4.0"
   },
   "devDependencies": {
-    "clipboardy": "^2.3.0",
+    "clipboardy": "^3.0.0",
     "debug": "^4.2.0",
     "mocha": "^10.1.0",
     "nock": "^12.0.3",
