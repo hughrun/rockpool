@@ -1,5 +1,8 @@
-# Rockpool
+# NOTE
 
+Rockpool has been replaced with [Aus GLAMR](https://github.com/hughrun/ausglamr)
+
+---
 Support a community and store what you need from the ocean of information.
 
 Successor to and complete rewrite of [CommunityTweets](https://github.com/hughrun/CommunityTweets).
